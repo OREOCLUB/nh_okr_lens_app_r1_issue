@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# okr-lens-app 은 자체 .gitignore 보유 (node_modules/.next/.env* 무시).
+# 아래는 향후 중첩 repo를 부모로 평탄화할 때 대비한 방어용.
+okr-lens-app/node_modules/
+okr-lens-app/.next/
+okr-lens-app/out/
+okr-lens-app/.env*.local
