@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 표준 평가 매트릭스</title>
+<style>/* ============================================================
+   OKR LENS — Design System
+   colors_and_type.css
+   사내 OKR 평가·코칭 AI 서비스 — 친근한 SaaS 톤 · 넉넉한 여백
+   ============================================================ */
+
+/* ---------- 1. Fonts ---------- */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- 2. Color — Brand / Primary (Friendly Blue) ---------- */
+  /* 참고 이미지의 SSO 버튼/CTA 컬러에서 추출. 인디고가 아닌 더 밝은 'Friendly Blue'. */
+  --brand-900: #142250;   /* deepest — text accent on light bg */
+  --brand-800: #1B2A4E;   /* dark navy — sidebar, hero text accent (참고 이미지 좌측 다크 카드) */
+  --brand-700: #213A8C;
+  --brand-600: #2C49B8;
+  --brand-500: #3B5BDB;   /* PRIMARY — SSO 버튼 컬러 */
+  --brand-400: #5C7AE6;
+  --brand-300: #91A6F0;
+  --brand-200: #C5D0F7;
+  --brand-100: #E5EBFB;
+  --brand-50:  #F1F4FD;
+
+  /* ---------- 3. Role Accents (3역할 컬러 코딩) ---------- */
+  /* 참고 이미지: 피평가자=블루, 평가자=그린, 인사담당자=오렌지/코랄 */
+  --role-r1-bg:   #E8F0FF;
+  --role-r1-fg:   #3B5BDB;
+  --role-r1-mark: #3B5BDB;
+
+  --role-r2-bg:   #E3F4EA;
+  --role-r2-fg:   #2F9E5E;
+  --role-r2-mark: #2F9E5E;
+
+  --role-r3-bg:   #FFEDE2;
+  --role-r3-fg:   #E07A3C;
+  --role-r3-mark: #E07A3C;
+
+  /* ---------- 4. Color — Neutrals (Cool Slate, softer than v1) ---------- */
+  --ink-900: #0F1A36;     /* heading */
+  --ink-800: #1F2A4A;
+  --ink-700: #3A4565;     /* body strong */
+  --ink-600: #5B6685;     /* body */
+  --ink-500: #7C87A4;     /* secondary */
+  --ink-400: #A4ADC4;     /* tertiary, icon */
+  --ink-300: #C8CFDF;     /* disabled */
+  --ink-200: #E1E5EF;     /* divider */
+  --ink-150: #ECEFF5;
+  --ink-100: #F4F7FB;     /* PAGE BACKGROUND — 참고 이미지 베이스 */
+  --ink-50:  #F9FAFC;
+  --ink-0:   #FFFFFF;
+
+  /* ---------- 5. Color — Semantic (Status) ---------- */
+  /* 친근한 톤 — 채도 더 낮춤. "코칭" 시선 유지. */
+  --risk-high-fg:   #D14343;
+  --risk-high-bg:   #FFF0F0;
+  --risk-high-bd:   #FFD4D4;
+
+  --risk-mid-fg:    #D98023;
+  --risk-mid-bg:    #FFF7EC;
+  --risk-mid-bd:    #FFE0BA;
+
+  --risk-low-fg:    #2F9E5E;
+  --risk-low-bg:    #ECFAF1;
+  --risk-low-bd:    #BBE9CC;
+
+  --info-fg:        #2B5DD9;
+  --info-bg:        #EFF4FE;
+  --info-bd:        #C5D5F7;
+
+  /* ---------- 6. Status — 승인 enum (D5) ---------- */
+  --status-draft-fg:    #5B6685;
+  --status-draft-bg:    #F1F3F8;
+  --status-pending-fg:  #2B5DD9;
+  --status-pending-bg:  #EFF4FE;
+  --status-approved-fg: #2F9E5E;
+  --status-approved-bg: #ECFAF1;
+  --status-rejected-fg: #D14343;
+  --status-rejected-bg: #FFF0F0;
+  --status-adjust-fg:   #D98023;
+  --status-adjust-bg:   #FFF7EC;
+
+  /* ---------- 7. Difficulty / Grade ---------- */
+  --diff-high: #7C4DD9;
+  --diff-mid:  #3B5BDB;
+  --diff-low:  #7C87A4;
+
+  --grade-s: #6B47E0;
+  --grade-a: #3B5BDB;
+  --grade-b: #2F9E5E;
+  --grade-c: #D98023;
+  --grade-d: #7C87A4;
+
+  /* ---------- 8. Data viz / Heatmap ---------- */
+  --heat-0: #F1F4FD;
+  --heat-1: #DCE3F8;
+  --heat-2: #B7C4F0;
+  --heat-3: #8FA1E5;
+  --heat-4: #5C7AE6;
+  --heat-5: #3B5BDB;
+
+  /* ---------- 9. Typography — Stacks ---------- */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+               'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- 10. Type — Sizes & line-heights ---------- */
+  /* base 15px — 참고 이미지의 넉넉한 밀도에 맞춰 한 단계 키움 */
+  --fs-hero:     48px;   /* 랜딩 메인 헤드라인 */
+  --fs-display:  36px;
+  --fs-h1:       28px;
+  --fs-h2:       22px;
+  --fs-h3:       18px;
+  --fs-body-lg:  16px;
+  --fs-body:     15px;   /* body default */
+  --fs-sm:       13.5px;
+  --fs-xs:       12.5px;
+  --fs-micro:    11.5px;
+
+  --lh-tight:    1.25;
+  --lh-snug:     1.45;
+  --lh-normal:   1.7;
+  --lh-relaxed:  1.85;
+
+  --tracking-tight:  -0.025em;
+  --tracking-normal: -0.005em;
+  --tracking-wide:   0.04em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* ---------- 11. Spacing scale (4pt grid) ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+  --sp-12: 96px;
+
+  /* ---------- 12. Radius — 더 부드럽게 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;    /* 기본 카드 */
+  --radius-xl: 20px;    /* 큰 카드, 패널 */
+  --radius-2xl: 28px;   /* 히어로 일러스트 박스 */
+  --radius-pill: 999px;
+
+  /* ---------- 13. Shadow / Elevation — 부드럽고 옅음 ---------- */
+  --shadow-xs: 0 1px 2px rgba(31, 42, 74, 0.04);
+  --shadow-sm: 0 2px 6px rgba(31, 42, 74, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(31, 42, 74, 0.08);
+  --shadow-lg: 0 16px 40px -10px rgba(31, 42, 74, 0.10);
+  --shadow-xl: 0 30px 60px -16px rgba(31, 42, 74, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(59, 91, 219, 0.16);
+  --shadow-card-hover: 0 12px 28px -8px rgba(59, 91, 219, 0.18);
+
+  /* ---------- 14. Borders ---------- */
+  --bd-subtle: 1px solid var(--ink-150);
+  --bd-default: 1px solid var(--ink-200);
+  --bd-strong: 1px solid var(--ink-300);
+  --bd-focus: 1.5px solid var(--brand-500);
+
+  /* ---------- 15. Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+
+  /* ---------- 16. Layout ---------- */
+  --sidebar-w: 256px;
+  --topbar-h: 64px;
+  --content-max: 1440px;
+  --page-pad-x: 40px;
+  --page-pad-y: 32px;
+}
+
+/* ============================================================
+   Semantic typography classes
+   ============================================================ */
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+.ds-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-500);
+}
+.ds-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-700);
+  font-feature-settings: "tnum" 1;
+}
+.ds-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ds-reset, .ds-reset * { box-sizing: border-box; }
+.ds-reset {
+  font-family: var(--font-sans);
+  color: var(--ink-600);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   OKR LENS Responsive — 2026 리브랜드
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: auto; }
+body { font-size: 16px; }
+
+.okrlens-sidebar,
+aside[class*="Sidebar"] {
+  transition: width 220ms cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 1024px) {
+  .okrlens-sidebar { width: 76px !important; min-width: 76px !important; padding-left: 10px !important; padding-right: 10px !important; }
+  .okrlens-sidebar > div:first-child > span:not(:first-child),
+  .okrlens-sidebar > div:first-child > span:last-child { display: none !important; }
+  .okrlens-sidebar > div:first-child { justify-content: center !important; padding: 4px 0 22px !important; }
+  .okrlens-sidebar a > div span:last-child,
+  .okrlens-sidebar > div > div:last-child > div:last-child { display: none !important; }
+  .okrlens-sidebar a > div,
+  .okrlens-sidebar > div > div {
+    justify-content: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+@media (max-width: 900px) {
+  .okrlens-sidebar { width: 72px !important; min-width: 72px !important; padding-left: 8px !important; padding-right: 8px !important; }
+}
+@media (max-width: 640px) {
+  .okrlens-sidebar { position: fixed; z-index: 100; height: 100vh; transform: translateX(-100%); }
+  .okrlens-sidebar.open { transform: translateX(0); }
+  #app > div > div:last-child,
+  main { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+main, [class*="page-content"] {
+  padding-left: clamp(16px, 3vw, 40px);
+  padding-right: clamp(16px, 3vw, 40px);
+}
+
+@media (max-width: 900px) {
+  [style*="gridTemplateColumns"][style*="1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  [style*="repeat(3, 1fr)"],
+  [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  [style*="gap: 56px"], [style*="gap:56px"] { gap: 24px !important; }
+  [style*="gap: 40px"], [style*="gap:40px"] { gap: 20px !important; }
+}
+
+.okrlens-topbar {
+  flex-wrap: wrap;
+  gap: 12px !important;
+  padding: 12px 20px !important;
+}
+@media (max-width: 900px) {
+  .okrlens-search { width: 100% !important; order: 10; }
+  .okrlens-period { display: none !important; }
+}
+
+body, .ds-body { font-size: 16px; }
+h1, .ds-h1 { font-size: clamp(22px, 3vw, 28px); }
+h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
+
+
+</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button, input, textarea, select { font-family: inherit; }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div id="__splash" style="position:fixed;inset:0;background:#F5F6F4;display:flex;align-items:center;justify-content:center;z-index:2147483647;transition:opacity .25s ease">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <rect x="500" y="320" width="200" height="160" rx="32" fill="transparent"/>
+    <circle cx="600" cy="400" r="36" fill="none" stroke="#fff" stroke-width="8" opacity="0.7"/>
+    <circle cx="600" cy="400" r="10" fill="#fff"/>
+    <text x="600" y="540" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#0F1A36" text-anchor="middle" letter-spacing="2">OKR LENS</text>
+    <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
+  </svg>
+</div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
+// Usage: <Icon name="dashboard" size={18} />
+const ICONS = {
+  dashboard: <><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></>,
+  clipboard: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+  sliders: <><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="12" cy="4" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="20" r="2"/></>,
+  library: <><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></>,
+  barchart: <><path d="M3 3v18h18"/><path d="M7 16V9m5 7V5m5 11v-4"/></>,
+  piechart: <path d="M21 12A9 9 0 1 1 12 3v9z"/>,
+  search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>,
+  sort: <path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>,
+  more: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></>,
+  chevronDown: <path d="m6 9 6 6 6-6"/>,
+  chevronRight: <path d="m9 6 6 6-6 6"/>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  check: <path d="M20 6 9 17l-5-5"/>,
+  x: <><path d="M18 6 6 18M6 6l12 12"/></>,
+  refresh: <><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.78.95 6.5 2.5L21 3"/><path d="M21 3v6h-6"/></>,
+  alert: <><path d="m21.7 16.6-8.9-15a1 1 0 0 0-1.8 0L2.1 16.6A1 1 0 0 0 3 18h18a1 1 0 0 0 .8-1.4z"/><path d="M12 9v4M12 17h.01"/></>,
+  sparkles: <><path d="M9.94 14.34A2.5 2.5 0 1 1 12 12.94"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6 7.7 7.7m8.6 8.6 2.1 2.1m0-13L16.3 7.7M5.6 18.4l2.1-2.1"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+};
+
+function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
+  const path = ICONS[name];
+  if (!path) return null;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+      {...rest}
+    >
+      {path}
+    </svg>
+  );
+}
+
+window.Icon = Icon;
+</script>
+<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
+  const base = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    lineHeight: 1,
+    letterSpacing: "-0.005em",
+    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
+    opacity: disabled ? 0.42 : 1,
+  };
+  const sizes = {
+    sm: { fontSize: 12.5, padding: "7px 12px" },
+    md: { fontSize: 13.5, padding: "10px 16px" },
+    lg: { fontSize: 15, padding: "12px 22px" },
+  };
+  const variants = {
+    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
+    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
+    ghost:     { background: "transparent", color: "#3A4565" },
+    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
+    success:   { background: "#2F9E5E", color: "#fff" },
+    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hoverStyles = {
+    primary:   { background: "#2C49B8" },
+    secondary: { background: "#F4F7FB" },
+    ghost:     { background: "#F4F7FB" },
+    danger:    { background: "#FFF0F0" },
+    success:   { background: "#268F52" },
+    ai:        { background: "#E5EBFB" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
+    >
+      {leftIcon}
+      {children}
+      {rightIcon}
+    </button>
+  );
+}
+window.Button = Button;
+</script>
+<script type="text/babel">function TopBar({ title, subtitle }) {
+  return (
+    <header style={{
+      height: 64, minHeight: 64,
+      display: "flex", alignItems: "center",
+      padding: "0 32px",
+      background: "#fff",
+      borderBottom: "1px solid #E1E5EF",
+      gap: 18,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: "#F4F7FB",
+        borderRadius: 10, padding: "8px 14px",
+        width: 300,
+        color: "#7C87A4",
+      }}>
+        <Icon name="search" size={15}/>
+        <input
+          placeholder="팀원 이름, KR ID 검색"
+          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
+        />
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px",
+        border: "1px solid #E1E5EF", borderRadius: 10,
+        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
+      }}>
+        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
+        2026 상반기
+        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
+      </div>
+
+      <button style={{
+        position: "relative",
+        width: 40, height: 40, borderRadius: 10,
+        border: "1px solid #E1E5EF", background: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#3A4565",
+      }}>
+        <Icon name="bell" size={17}/>
+        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
+      </button>
+    </header>
+  );
+}
+
+window.TopBar = TopBar;
+</script>
+<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
+// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
+// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
+function SidebarR3({ active = "operation" }) {
+  const steps = [
+    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
+    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
+    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
+    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
+    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
+    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+  ];
+  return (
+    <aside className="okrlens-sidebar" style={{
+      width: 244, minWidth: 244,
+      background: "#0A1F17", color: "#A4ADC4",
+      display: "flex", flexDirection: "column",
+      height: "100%", padding: "20px 14px", gap: 4,
+      overflowY: "auto",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+      </div>
+
+      {/* Role chip — orange */}
+      <div style={{
+        margin: "0 4px 14px",
+        background: "rgba(224,122,60,0.16)",
+        border: "1px solid rgba(224,122,60,0.32)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        display: "flex", alignItems: "center", gap: 9,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
+        <div>
+          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
+        </div>
+      </div>
+
+      {/* Section label */}
+      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        운영 흐름 · 6단계
+      </div>
+
+      {steps.map((it, idx) => {
+        const on = it.id === active;
+        const isLast = idx === steps.length - 1;
+        return (
+          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 11px", borderRadius: 10,
+              background: on ? "rgba(224,122,60,0.18)" : "transparent",
+              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 140ms ease-out",
+              position: "relative",
+            }}>
+              {/* Step number badge */}
+              <div style={{
+                width: 24, height: 24, borderRadius: 7,
+                background: on ? "#E07A3C" : "#243759",
+                color: on ? "#fff" : "#91A6F0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+                flexShrink: 0,
+              }}>{it.step}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: on ? 700 : 600,
+                  color: on ? "#fff" : "#C8CFDF",
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.label}</div>
+                <div style={{
+                  fontSize: 10.5,
+                  color: on ? "#F4C9A8" : "#7E89B0",
+                  marginTop: 1,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.desc}</div>
+              </div>
+              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
+            </div>
+            {/* Connector line between steps */}
+            {!isLast && (
+              <div style={{
+                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
+                background: on ? "#E07A3C" : "#243759",
+                opacity: 0.4,
+              }}/>
+            )}
+          </a>
+        );
+      })}
+
+      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+        <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9,
+            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
+          }}>
+            <Icon name="refresh" size={15}/>
+            <span>역할 전환</span>
+          </div>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
+            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+window.SidebarR3 = SidebarR3;
+</script>
+<script type="text/babel">// R3Matrix.jsx — 표준 매트릭스 "도출" 워크플로우
+// 2026년 OKR 첫 도입 → 표준이 아직 없음
+// 인사담당자가 작성된 286개 KR에서 측정 지표를 추출하고,
+// 동의어 통합 → 검증 → 표준 승인 → 다음 분기 배포하는 워크플로우
+
+// ============ Data ============
+// AI가 286개 KR에서 추출한 "후보" 지표들 (동의어 그룹화 전)
+const DISCOVERED = [
+  {
+    id: "D001",
+    canonical: "고객만족도",
+    aliases: ["고객만족도", "고객 만족 점수", "CSAT", "Customer Satisfaction", "NPS 점수"],
+    occurrences: 24, orgs: 8, uniqueWriters: 18,
+    krSamples: [
+      { kr: "고객만족도 82 → 88",                 base: "82", goal: "88",  member: "사업본부 SI",   year: "2026" },
+      { kr: "고객 NPS 점수 +12점 향상 (72 → 84)", base: "72", goal: "84",  member: "고객본부 SM",   year: "2026" },
+      { kr: "분기 고객만족도 평균 78 → 85",       base: "78", goal: "85",  member: "고객본부 SM",   year: "2026" },
+      { kr: "CSAT 4.2 → 4.6",                     base: "4.2",goal: "4.6", member: "사업본부 PM",   year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "고객 설문 5점 척도 평균 × 20", votes: 12, source: "12명 작성" },
+      { formula: "NPS = 추천 % - 비추천 %",       votes: 8,  source: "8명 작성" },
+      { formula: "5점 척도 가중평균",              votes: 4,  source: "4명 작성" },
+    ],
+    suggestedUnit: "점",
+    risks: ["통제불가 (외부 응답 의존)", "측정모호 (계산식 3종 혼재)"],
+    aiSuggestion: "계산식이 3종 혼재해요. 본부별로 다른 표준을 쓰고 있어요. 통일 필요.",
+    status: "discovery", // discovery → consolidation → validation → approved
+    step: 1,
+  },
+  {
+    id: "D002",
+    canonical: "MTTR (평균 복구시간)",
+    aliases: ["MTTR", "평균 복구시간", "복구 시간", "Mean Time To Recovery"],
+    occurrences: 31, orgs: 6, uniqueWriters: 22,
+    krSamples: [
+      { kr: "MTTR 4시간 → 2시간",                base: "4h",   goal: "2h",  member: "운영본부 SE", year: "2026" },
+      { kr: "P1 장애 MTTR 35분 → 15분 단축",     base: "35m",  goal: "15m", member: "운영본부 SE", year: "2026" },
+      { kr: "결제 게이트웨이 MTTR 90분 이내 유지", base: "120m", goal: "90m", member: "DX본부 SE",   year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "SUM(복구시간) / 장애 건수", votes: 26, source: "26명 작성 · 84%" },
+      { formula: "AVG(복구시간 분 단위)",     votes: 5,  source: "5명 작성" },
+    ],
+    suggestedUnit: "분 (표준화 필요)",
+    risks: ["단위 혼재 (시간/분)"],
+    aiSuggestion: "계산식 합의도 84% (높음). 단위만 '분'으로 통일하면 표준 승인 가능해요.",
+    status: "consolidation",
+    step: 2,
+  },
+  {
+    id: "D003",
+    canonical: "이직률",
+    aliases: ["이직률", "조직 이탈률", "퇴사율", "Attrition Rate"],
+    occurrences: 6, orgs: 2, uniqueWriters: 5,
+    krSamples: [
+      { kr: "이직률 8% → 5%",                base: "8%",  goal: "5%", member: "인사노무팀 PM",   year: "2026" },
+      { kr: "조직 이탈률 12% → 7% 개선",     base: "12%", goal: "7%", member: "경영지원팀 PM",   year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "퇴사자수 / 평균 재직자수 × 100", votes: 6, source: "6명 작성 · 100%" },
+    ],
+    suggestedUnit: "%",
+    risks: ["외부 노동시장 영향 — 통제 가능 범위 정의 필요"],
+    aiSuggestion: "계산식 100% 합의. 외부 영향 주의 노트만 추가하면 표준 승인 가능해요.",
+    status: "validation",
+    step: 3,
+  },
+  {
+    id: "D004",
+    canonical: "교육 이수율",
+    aliases: ["교육이수율", "교육 이수율", "필수교육 이수", "Training Completion"],
+    occurrences: 9, orgs: 3, uniqueWriters: 8,
+    krSamples: [
+      { kr: "교육이수율 95%",                       base: "—",   goal: "95%",  member: "인사노무팀 PM", year: "2026" },
+      { kr: "필수 교육 이수율 87% → 100%",         base: "87%", goal: "100%", member: "경영지원팀 PM", year: "2026" },
+      { kr: "보안 교육 분기 이수율 80% 이상 유지", base: "65%", goal: "80%",  member: "운영본부 SE",   year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "이수자 / 대상자 × 100", votes: 9, source: "9명 작성 · 100%" },
+    ],
+    suggestedUnit: "%",
+    risks: [],
+    aiSuggestion: "전 분기 표준 승인 완료. 다음 분기부터 R1 작성 가이드에 자동 포함됩니다.",
+    status: "approved",
+    step: 4,
+  },
+  {
+    id: "D005",
+    canonical: "신규 회원수",
+    aliases: ["신규 회원수", "신규 가입자", "신규 회원 확보", "신규 고객사"],
+    occurrences: 18, orgs: 4, uniqueWriters: 14,
+    krSamples: [
+      { kr: "신규회원 1만 명 확보",            base: "0",     goal: "10,000", member: "사업본부 PM",   year: "2026" },
+      { kr: "분기 신규 가입자 3,500 → 5,000명",base: "3,500", goal: "5,000",  member: "마케팅본부 PM", year: "2026" },
+      { kr: "B2B 신규 고객사 12 → 20개사",     base: "12",    goal: "20",     member: "사업본부 PM",   year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "COUNT(신규가입) WHERE 기간",      votes: 11, source: "11명 작성" },
+      { formula: "COUNT(가입사번 IS NULL → NOT NULL)", votes: 4, source: "4명 작성" },
+      { formula: "신규 고객 수 (월말 스냅샷)",         votes: 3, source: "3명 작성" },
+    ],
+    suggestedUnit: "명",
+    risks: ["건수형 — 질적 후속 지표(잔존율 등)와 함께 사용 권장"],
+    aiSuggestion: "측정 시점이 본부마다 달라요. 회원 정의도 다름(개인/B2B). 정규화 필요.",
+    status: "consolidation",
+    step: 2,
+  },
+  {
+    id: "D006",
+    canonical: "APM p95 응답속도",
+    aliases: ["APM p95", "p95 응답속도", "API p95", "응답시간 p95"],
+    occurrences: 27, orgs: 6, uniqueWriters: 20,
+    krSamples: [
+      { kr: "결제 게이트웨이 APM p95 850ms → 500ms", base: "850", goal: "500", member: "운영본부 SE",  year: "2026" },
+      { kr: "API p95 응답시간 1200ms → 800ms",       base: "1200",goal: "800", member: "개발본부 SE",  year: "2026" },
+      { kr: "메인 페이지 p95 응답속도 < 600ms 유지",  base: "750", goal: "600", member: "프론트팀 SE",  year: "2026" },
+    ],
+    formulaCandidates: [
+      { formula: "P95(response_time) · 월평균", votes: 23, source: "23명 작성 · 85%" },
+      { formula: "P95(api_latency) · 일평균",   votes: 4,  source: "4명 작성" },
+    ],
+    suggestedUnit: "ms",
+    risks: [],
+    aiSuggestion: "계산식 합의도 85%. 집계 주기(월/일)만 합의하면 표준 승인 가능해요.",
+    status: "validation",
+    step: 3,
+  },
+];
+
+const STAGES = [
+  { id: 1, name: "발견",   icon: "🔍", color: "#7C4DD9", desc: "KR에서 측정 지표 추출" },
+  { id: 2, name: "통합",   icon: "🔄", color: "#D98023", desc: "동의어·계산식 정규화" },
+  { id: 3, name: "검증",   icon: "🛡️", color: "#3B5BDB", desc: "위험 검토·임계값 확정" },
+  { id: 4, name: "승인",   icon: "✓",  color: "#2F9E5E", desc: "표준 라이브러리 등록" },
+];
+
+// ============ Atoms ============
+function StatusChip({ stage, size = "sm" }) {
+  const s = STAGES.find(x => x.id === stage);
+  return (
+    <span style={{
+      padding: size === "sm" ? "3px 9px" : "5px 12px",
+      borderRadius: 999,
+      background: `${s.color}15`, color: s.color,
+      fontSize: size === "sm" ? 10.5 : 12, fontWeight: 700,
+      display: "inline-flex", alignItems: "center", gap: 5,
+    }}>
+      <span>{s.icon}</span> {s.name}
+    </span>
+  );
+}
+
+// ============ Funnel header (4 stages with counts) ============
+function StageFunnel({ counts, activeStage, onStageClick }) {
+  return (
+    <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "22px 26px", marginBottom: 22 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>표준 도출 파이프라인 · 4단계</div>
+          <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 3 }}>2026년 첫 도입 · AI가 286개 KR에서 측정 지표를 추출하여 표준 후보를 구성했어요. 인사담당자가 단계별로 승인합니다.</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <a href="#" style={{ fontSize: 12, color: "#3B5BDB", textDecoration: "none", fontWeight: 600 }}>플라이휠 보기 →</a>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {STAGES.map((s, i) => {
+          const isActive = activeStage === s.id || activeStage === "all";
+          const c = counts[s.id] || 0;
+          return (
+            <div key={s.id} onClick={() => onStageClick(s.id)} style={{
+              padding: "18px 18px",
+              background: isActive ? "#fff" : "#F9FAFC",
+              border: `2px solid ${activeStage === s.id ? s.color : isActive ? `${s.color}33` : "#E1E5EF"}`,
+              borderRadius: 12, cursor: "pointer",
+              transition: "all 180ms",
+              position: "relative",
+              opacity: isActive ? 1 : 0.55,
+            }}>
+              {/* Top: number + icon */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 9,
+                  background: `${s.color}15`, color: s.color,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 16,
+                }}>{s.icon}</div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#7C87A4", letterSpacing: "0.06em", fontWeight: 700 }}>STAGE {s.id}</span>
+              </div>
+              {/* Stage name */}
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4, letterSpacing: "-0.01em" }}>{s.name}</div>
+              <div style={{ fontSize: 11, color: "#7C87A4", marginBottom: 12, lineHeight: 1.45 }}>{s.desc}</div>
+              {/* Count */}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 700, color: s.color, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>{c}</span>
+                <span style={{ fontSize: 12, color: "#7C87A4" }}>건</span>
+              </div>
+              {/* Arrow to next */}
+              {i < STAGES.length - 1 && (
+                <div style={{
+                  position: "absolute", right: -20, top: "50%", transform: "translateY(-50%)",
+                  color: "#C8CFDF", fontSize: 18, zIndex: 1,
+                }}>→</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============ Discovery Card (each candidate) ============
+function CandidateCard({ candidate, expanded, onToggle }) {
+  const stage = STAGES.find(s => s.id === candidate.step);
+  const totalVotes = candidate.formulaCandidates.reduce((sum, f) => sum + f.votes, 0);
+  const topFormula = candidate.formulaCandidates[0];
+  const consensus = Math.round((topFormula.votes / totalVotes) * 100);
+
+  return (
+    <div style={{
+      background: "#fff",
+      border: `1px solid ${expanded ? stage.color : "#E1E5EF"}`,
+      borderRadius: 13, overflow: "hidden",
+      boxShadow: expanded ? `0 10px 24px -8px ${stage.color}33` : "0 1px 2px rgba(31,42,74,.04)",
+      transition: "all 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+      borderLeft: `4px solid ${stage.color}`,
+    }}>
+      {/* Header */}
+      <div onClick={onToggle} style={{
+        display: "grid",
+        gridTemplateColumns: "44px 1fr 220px 110px 90px 90px 32px",
+        gap: 14, alignItems: "center",
+        padding: "16px 20px 16px 18px",
+        cursor: "pointer",
+        background: expanded ? "#FAFBFE" : "#fff",
+      }}>
+        {/* ID */}
+        <div style={{
+          fontFamily: "var(--font-mono)", fontSize: 11, color: "#7C87A4", fontWeight: 700,
+          padding: "4px 8px", background: "#F4F7FB", borderRadius: 6, textAlign: "center",
+        }}>{candidate.id}</div>
+
+        {/* Canonical name + aliases */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>{candidate.canonical}</span>
+            {candidate.aliases.length > 1 && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, padding: "2px 7px", background: "#F0E9FB", color: "#7C4DD9", borderRadius: 5, fontWeight: 700 }}>
+                동의어 {candidate.aliases.length}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "#7C87A4", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {candidate.aliases.slice(0, 4).join(" · ")}{candidate.aliases.length > 4 ? ` · +${candidate.aliases.length - 4}` : ""}
+          </div>
+        </div>
+
+        {/* Top formula + consensus */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            padding: "6px 10px",
+            background: candidate.formulaCandidates.length > 1 ? "#FFF7EC" : "#ECFAF1",
+            border: `1px solid ${candidate.formulaCandidates.length > 1 ? "#FFE0BA" : "#BBE9CC"}`,
+            borderRadius: 7,
+            fontFamily: "var(--font-mono)", fontSize: 10.5,
+            color: candidate.formulaCandidates.length > 1 ? "#7A4A14" : "#1F5C3A",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            fontWeight: 600,
+          }}>{topFormula.formula}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4, fontSize: 10.5 }}>
+            <span style={{ color: "#7C87A4" }}>합의도</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: consensus >= 80 ? "#2F9E5E" : consensus >= 60 ? "#D98023" : "#D14343" }}>{consensus}%</span>
+            {candidate.formulaCandidates.length > 1 && (
+              <span style={{ color: "#D98023", fontSize: 10 }}>· 계산식 {candidate.formulaCandidates.length}종</span>
+            )}
+          </div>
+        </div>
+
+        {/* Occurrences */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 700, color: "#0F1A36", fontVariantNumeric: "tabular-nums" }}>{candidate.occurrences}</div>
+          <div style={{ fontSize: 10, color: "#7C87A4", marginTop: 1 }}>KR 등장</div>
+        </div>
+
+        {/* Orgs */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 700, color: "#0F1A36", fontVariantNumeric: "tabular-nums" }}>{candidate.orgs}</div>
+          <div style={{ fontSize: 10, color: "#7C87A4", marginTop: 1 }}>본부 사용</div>
+        </div>
+
+        {/* Status */}
+        <div>
+          <StatusChip stage={candidate.step}/>
+        </div>
+
+        {/* Chevron */}
+        <span style={{
+          width: 26, height: 26, borderRadius: 7,
+          background: "#F9FAFC", border: "1px solid #E1E5EF",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "transform 220ms",
+          transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+        }}>
+          <Icon name="chevronDown" size={12} style={{ color: "#5B6685" }}/>
+        </span>
+      </div>
+
+      {/* Expanded */}
+      {expanded && (
+        <div style={{ padding: "0 22px 22px", borderTop: "1px solid #ECEFF5" }}>
+
+          {/* AI suggestion */}
+          <div style={{
+            marginTop: 16, padding: "12px 16px",
+            background: "linear-gradient(135deg, #F1F4FD, #fff)",
+            border: "1px solid #C5D0F7", borderRadius: 10,
+            display: "flex", gap: 12, alignItems: "flex-start",
+          }}>
+            <span style={{ width: 28, height: 28, borderRadius: 8, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>✨</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 4, fontFamily: "var(--font-mono)" }}>AI 진단</div>
+              <div style={{ fontSize: 12.5, color: "#1B2A4E", lineHeight: 1.6 }}>{candidate.aiSuggestion}</div>
+            </div>
+          </div>
+
+          {/* 2 columns: 동의어 통합 + 계산식 후보 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 }}>
+
+            {/* Aliases consolidation */}
+            <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: "#7C4DD9", letterSpacing: "0.04em", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>▸ 동의어 통합</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#7C87A4" }}>{candidate.aliases.length}개 → 1개</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {candidate.aliases.map((a, i) => {
+                  const isCanonical = a === candidate.canonical;
+                  return (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      padding: "7px 11px",
+                      background: isCanonical ? "#F0E9FB" : "#F9FAFC",
+                      border: `1px solid ${isCanonical ? "#7C4DD9" : "#ECEFF5"}`,
+                      borderRadius: 7,
+                    }}>
+                      <input type="radio" name={`canon-${candidate.id}`} defaultChecked={isCanonical} style={{ accentColor: "#7C4DD9", margin: 0 }}/>
+                      <span style={{ fontSize: 12, fontWeight: isCanonical ? 700 : 500, color: isCanonical ? "#5D38B0" : "#3A4565", flex: 1 }}>{a}</span>
+                      {isCanonical && <span style={{ fontSize: 10, color: "#7C4DD9", fontWeight: 700, fontFamily: "var(--font-mono)" }}>대표명</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              <button style={{
+                width: "100%", marginTop: 10,
+                padding: "7px 12px",
+                background: "transparent", border: "1px dashed #C8CFDF",
+                borderRadius: 7, color: "#5B6685",
+                fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)",
+              }}>+ 새 동의어 추가</button>
+            </div>
+
+            {/* Formula candidates */}
+            <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: "#D98023", letterSpacing: "0.04em", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>▸ 계산식 후보</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#7C87A4" }}>가장 많이 쓰인 식 선택</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {candidate.formulaCandidates.map((f, i) => {
+                  const pct = Math.round((f.votes / totalVotes) * 100);
+                  return (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "9px 11px",
+                      background: i === 0 ? "#FFF7EC" : "#F9FAFC",
+                      border: `1px solid ${i === 0 ? "#FFE0BA" : "#ECEFF5"}`,
+                      borderRadius: 7,
+                    }}>
+                      <input type="radio" name={`formula-${candidate.id}`} defaultChecked={i === 0} style={{ accentColor: "#D98023", margin: 0 }}/>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#1F2A4A", fontWeight: 600 }}>{f.formula}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                          <div style={{ flex: 1, height: 4, background: "#F4F7FB", borderRadius: 2, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, background: i === 0 ? "#D98023" : "#A4ADC4", borderRadius: 2 }}/>
+                          </div>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: i === 0 ? "#D98023" : "#7C87A4", fontWeight: 700, minWidth: 36, textAlign: "right" }}>{pct}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* KR samples */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>▸ 실제 KR 예시 · {candidate.krSamples.length}건</span>
+              <div style={{ flex: 1 }}/>
+              <span style={{ fontSize: 10.5, color: "#7C87A4" }}>2026년 작성된 KR에서 추출</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {candidate.krSamples.map((s, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "1fr 110px 90px 110px 60px",
+                  gap: 12, alignItems: "center",
+                  padding: "10px 14px",
+                  background: "#fff", border: "1px solid #E1E5EF", borderRadius: 8,
+                }}>
+                  <div style={{ fontSize: 12.5, color: "#0F1A36", lineHeight: 1.45, fontStyle: "italic" }}>"{s.kr}"</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#7C87A4" }}>baseline</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "#D98023", fontWeight: 700 }}>{s.base}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ color: "#A4ADC4", fontSize: 10 }}>→</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "#2F9E5E", fontWeight: 700 }}>{s.goal}</span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#5B6685", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.member}</div>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#7C87A4", textAlign: "right" }}>{s.year}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Risks */}
+          {candidate.risks.length > 0 && (
+            <div style={{
+              marginTop: 14, padding: "10px 14px",
+              background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 9,
+              display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#7A4A14",
+            }}>
+              <span style={{ fontSize: 14 }}>⚠️</span>
+              <span style={{ flex: 1 }}><b>승인 전 주의:</b> {candidate.risks.join(" · ")}</span>
+            </div>
+          )}
+
+          {/* Action footer */}
+          <div style={{ display: "flex", gap: 10, marginTop: 18, paddingTop: 14, borderTop: "1px dashed #E1E5EF", alignItems: "center" }}>
+            <span style={{ fontSize: 11.5, color: "#7C87A4" }}>
+              현재 단계: <StatusChip stage={candidate.step}/>
+            </span>
+            <div style={{ flex: 1 }}/>
+            <Button variant="danger" size="sm" leftIcon={<Icon name="x" size={12}/>}>비권장 처리</Button>
+            <Button variant="secondary" size="sm" leftIcon={<Icon name="refresh" size={12}/>}>이전 단계로</Button>
+            {candidate.step < 4 ? (
+              <Button variant="primary" size="sm" rightIcon={<Icon name="chevronRight" size={13}/>}>
+                {candidate.step === 1 ? "통합 단계로" : candidate.step === 2 ? "검증 단계로" : "표준 승인"}
+              </Button>
+            ) : (
+              <Button variant="success" size="sm" leftIcon={<Icon name="check" size={12}/>}>표준 승인됨 · R1 가이드 노출</Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ MAIN ============
+function R3Matrix() {
+  const [activeStage, setActiveStage] = React.useState("all");
+  const [expandedId, setExpandedId] = React.useState("D001"); // 고객만족도 펼침
+
+  const filtered = activeStage === "all" ? DISCOVERED : DISCOVERED.filter(d => d.step === activeStage);
+  const stageCounts = STAGES.reduce((acc, s) => ({ ...acc, [s.id]: DISCOVERED.filter(d => d.step === s.id).length }), {});
+  const totalKRs = 286;
+  const extractedKRs = DISCOVERED.reduce((sum, d) => sum + d.occurrences, 0);
+
+  return (
+    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
+      <TopBar title="표준 매트릭스 도출" subtitle={`2026 첫 도입 · ${totalKRs}개 KR에서 ${DISCOVERED.length}개 후보 추출`}/>
+      <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px 56px" }}>
+
+        {/* Step indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.06em" }}>STEP 04 / 06</span>
+          <div style={{ flex: 1, height: 2, background: "#E1E5EF", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ width: "66%", height: "100%", background: "#E07A3C" }}/>
+          </div>
+          <a href="R3_인사담당자_01_인사이트.html" style={{ fontSize: 12, color: "#3B5BDB", textDecoration: "none", fontWeight: 600 }}>다음: 캘리브레이션 인사이트 →</a>
+        </div>
+
+        {/* Hero */}
+        <div style={{
+          background: "linear-gradient(135deg, #1B2A4E, #2C3E68)", color: "#fff",
+          borderRadius: 14, padding: "24px 28px", marginBottom: 22,
+          display: "flex", alignItems: "center", gap: 22,
+        }}>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(255,255,255,0.1)", color: "#F4C9A8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>🧬</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#F4C9A8", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 6 }}>2026 첫 도입 · 표준이 아직 없습니다</div>
+            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.25 }}>데이터에서 우리 회사의 표준을 도출합니다</div>
+            <div style={{ fontSize: 13, color: "#91A6F0", marginTop: 8, lineHeight: 1.65, maxWidth: 720 }}>
+              AI가 2026 상반기 작성된 286개 KR을 분석해서 동의어를 그룹화하고 계산식을 통계 냈어요.
+              인사담당자가 4단계로 검토·승인하면, 다음 평가 분기부터 R1·R2 화면에 표준으로 자동 반영됩니다.
+            </div>
+          </div>
+          <div style={{ textAlign: "right", paddingLeft: 22, borderLeft: "1px solid rgba(255,255,255,0.15)" }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#91A6F0", letterSpacing: "0.06em", fontWeight: 700, marginBottom: 6 }}>분석 대상</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 700, color: "#fff", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>{totalKRs}</div>
+            <div style={{ fontSize: 11, color: "#91A6F0", marginTop: 4 }}>2026 상반기 KR</div>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.15)", margin: "12px 0 10px" }}/>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 700, color: "#A3E5BD" }}>{extractedKRs}</div>
+            <div style={{ fontSize: 11, color: "#91A6F0", marginTop: 2 }}>{Math.round(extractedKRs / totalKRs * 100)}% 추출 완료</div>
+          </div>
+        </div>
+
+        {/* Stage Funnel */}
+        <StageFunnel counts={stageCounts} activeStage={activeStage} onStageClick={(s) => setActiveStage(activeStage === s ? "all" : s)}/>
+
+        {/* Filter bar */}
+        <div style={{
+          background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12,
+          padding: "12px 18px", marginBottom: 16,
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <div style={{ position: "relative", flex: 1, maxWidth: 300 }}>
+            <Icon name="search" size={14} style={{ position: "absolute", left: 12, top: 10, color: "#A4ADC4" }}/>
+            <input placeholder="후보 지표명 · 동의어 검색" style={{
+              width: "100%", padding: "9px 12px 9px 34px",
+              background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 8,
+              fontSize: 12.5, color: "#0F1A36", outline: "none",
+            }}/>
+          </div>
+
+          <div style={{ display: "inline-flex", background: "#F4F7FB", borderRadius: 9, padding: 3, gap: 2 }}>
+            <button onClick={() => setActiveStage("all")} style={{
+              background: activeStage === "all" ? "#fff" : "transparent",
+              color: activeStage === "all" ? "#0F1A36" : "#5B6685",
+              fontWeight: activeStage === "all" ? 700 : 500,
+              border: "none", borderRadius: 7, padding: "7px 14px", fontSize: 12, cursor: "pointer",
+              boxShadow: activeStage === "all" ? "0 1px 2px rgba(31,42,74,.06)" : "none", fontFamily: "var(--font-sans)",
+              display: "flex", alignItems: "center", gap: 5,
+            }}>
+              전체 <span style={{ fontFamily: "var(--font-mono)", color: "#7C87A4", fontSize: 10.5 }}>{DISCOVERED.length}</span>
+            </button>
+            {STAGES.map((s) => {
+              const on = activeStage === s.id;
+              return (
+                <button key={s.id} onClick={() => setActiveStage(s.id)} style={{
+                  background: on ? "#fff" : "transparent",
+                  color: on ? s.color : "#5B6685",
+                  fontWeight: on ? 700 : 500,
+                  border: "none", borderRadius: 7, padding: "7px 12px", fontSize: 12, cursor: "pointer",
+                  boxShadow: on ? "0 1px 2px rgba(31,42,74,.06)" : "none", fontFamily: "var(--font-sans)",
+                  display: "flex", alignItems: "center", gap: 5,
+                }}>
+                  <span>{s.icon}</span> {s.name} <span style={{ fontFamily: "var(--font-mono)", color: "#7C87A4", fontSize: 10.5 }}>{stageCounts[s.id]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ flex: 1 }}/>
+          <Button variant="ai" size="sm" leftIcon={<span>✨</span>}>AI 재분석 실행</Button>
+          <Button variant="secondary" size="sm" leftIcon={<span>📥</span>}>표준 후보 Excel</Button>
+          <Button variant="primary" size="sm" leftIcon={<Icon name="plus" size={13}/>}>수동 후보 추가</Button>
+        </div>
+
+        {/* Column header */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "44px 1fr 220px 110px 90px 90px 32px",
+          gap: 14, alignItems: "center",
+          padding: "10px 22px 10px",
+          fontSize: 10.5, fontWeight: 700, color: "#7C87A4",
+          letterSpacing: "0.04em", textTransform: "uppercase", fontFamily: "var(--font-mono)",
+        }}>
+          <div style={{ textAlign: "center" }}>ID</div>
+          <div>후보 지표 (대표명 · 동의어)</div>
+          <div>최다 계산식 · 합의도</div>
+          <div style={{ textAlign: "center" }}>KR 등장</div>
+          <div style={{ textAlign: "center" }}>본부 사용</div>
+          <div>단계</div>
+          <div></div>
+        </div>
+
+        {/* Candidate list */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filtered.map((d) => (
+            <CandidateCard
+              key={d.id} candidate={d}
+              expanded={expandedId === d.id}
+              onToggle={() => setExpandedId(expandedId === d.id ? null : d.id)}
+            />
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div style={{
+            padding: "60px 20px", textAlign: "center",
+            background: "#fff", border: "1px dashed #C8CFDF", borderRadius: 14,
+            color: "#7C87A4", fontSize: 13,
+          }}>
+            🔍 이 단계의 후보가 없어요.
+          </div>
+        )}
+
+        {/* Footer note */}
+        <div style={{
+          marginTop: 22, padding: "18px 22px",
+          background: "linear-gradient(135deg, #F1F4FD, #fff)",
+          border: "1px solid #C5D0F7", borderRadius: 14,
+          display: "flex", gap: 16, alignItems: "flex-start",
+        }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>📅</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#1B2A4E", marginBottom: 6 }}>표준 도출 일정</div>
+            <div style={{ fontSize: 12.5, color: "#3A4565", lineHeight: 1.7 }}>
+              · <b>2026 상반기 (~7월):</b> AI가 KR에서 지표 추출 (지금 단계)<br/>
+              · <b>2026 8~9월:</b> 인사담당자가 4단계 검토·승인 (목표: 표준 30개 확정)<br/>
+              · <b>2026 4분기:</b> 다음 평가 분기 R1 작성 가이드에 표준 라이브러리 자동 반영<br/>
+              · <b>2027 상반기:</b> 표준 사용률 70% 이상 목표 · 추가 후보 발견 → 매트릭스 v2
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+window.R3Matrix = R3Matrix;
+</script>
+<script data-om-id="1abebba2:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:64488:64637" data-om-id="83ab4596:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:64362:64511" data-om-id="224b008e:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:64236:64385" data-om-id="e36ef0e5:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:64047:64196" data-om-id="74292486:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:63829:63978" data-om-id="33365d37:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:63675:63824" data-om-id="733a8798:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:61091:61240" data-om-id="b7724f63:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:60965:61114" data-om-id="45da3673:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:61253:61402" data-om-id="4c0418b3:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:61011:61160" data-om-id="922cae18:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_05_평가매트릭스.html:60701:60850" type="text/babel">
+  function App() { return (<><SidebarR3 active="metrics"/><R3Matrix/></>); }
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

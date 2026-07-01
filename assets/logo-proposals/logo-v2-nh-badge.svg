@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 44" fill="none">
+  <!-- Circular NH badge -->
+  <circle cx="22" cy="22" r="22" fill="#009A44"/>
+  <!-- NH letters -->
+  <text x="22" y="18" text-anchor="middle" font-family="Pretendard, -apple-system, sans-serif"
+        font-size="9" font-weight="800" fill="#F8B62D" letter-spacing="0.05em">NH</text>
+  <!-- Lens rings -->
+  <circle cx="22" cy="27" r="8" stroke="#fff" stroke-width="1.8" opacity="0.55"/>
+  <circle cx="22" cy="27" r="4" stroke="#fff" stroke-width="1.8"/>
+  <circle cx="22" cy="27" r="1.4" fill="#fff"/>
+  <!-- Divider -->
+  <rect x="54" y="10" width="1.5" height="24" rx="0.75" fill="#E1E5EA"/>
+  <!-- Wordmark -->
+  <text x="66" y="22" font-family="Pretendard, -apple-system, sans-serif"
+        font-size="10" font-weight="600" fill="#5B6474" letter-spacing="0.1em">
+    NH 농협
+  </text>
+  <text x="66" y="37" font-family="Pretendard, -apple-system, sans-serif"
+        font-size="20" font-weight="800" fill="#0F1A36" letter-spacing="-0.02em">
+    OKR<tspan fill="#009A44"> LENS</tspan>
+  </text>
+</svg>

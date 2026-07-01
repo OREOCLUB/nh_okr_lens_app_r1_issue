@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 전체 화면 미리보기</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  .header {
+    background: #fff; border-bottom: 1px solid #E1E5EF;
+    padding: 24px 40px;
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center;
+    font-size: 26px; letter-spacing: -0.03em; color: #0A1F17;
+  }
+  .wordmark .okr { font-weight: 800; }
+  .wordmark .dot-g { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #00A968; margin: 0 9px 0 6px; }
+  .wordmark .lens { font-weight: 300; }
+  .divider { width: 1px; height: 34px; background: #E5E7E4; margin: 0 6px; }
+  /* legacy hidden */
+  .logo-mark { display: none; }
+  .logo-mark .ring, .logo-mark .dot { display: none; }
+  h1 { margin: 0; font-size: 18px; font-weight: 600; color: #0A1F17; letter-spacing: -0.015em; }
+  .meta { font-size: 13px; color: #6B7770; margin-top: 2px; }
+  .badge {
+    margin-left: auto;
+    padding: 6px 14px; border-radius: 999px;
+    background: #ECFAF1; color: #2F9E5E;
+    font-size: 12.5px; font-weight: 600;
+  }
+  .container { max-width: 1440px; margin: 0 auto; padding: 32px 40px 60px; }
+
+  .group-title {
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #7C87A4;
+    margin: 32px 0 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .group-title:first-child { margin-top: 0; }
+  .group-title .pill {
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0;
+  }
+  .group-title .pill.r1 { background: #E5EBFB; color: #213A8C; text-transform: none; }
+  .group-title .pill.r2 { background: #E0F7EC; color: #00A968; text-transform: none; }
+  .group-title .pill.r3 { background: #FFEDE2; color: #E07A3C; text-transform: none; }
+  .group-title .pill.neutral { background: #F4F7FB; color: #5B6685; text-transform: none; }
+  .group-subtitle { font-size: 13px; color: #7C87A4; font-weight: 500; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #fff; border: 1px solid #E1E5EF; border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(31,42,74,.04);
+    transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px -8px rgba(0,169,104,.20);
+    border-color: #00A968;
+  }
+  .card .img-wrap {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: #F4F7FB;
+    overflow: hidden;
+    border-bottom: 1px solid #ECEFF5;
+  }
+  .card .img-wrap img {
+    width: 100%; height: 100%; object-fit: cover; object-position: top left;
+    display: block;
+  }
+  .card .num {
+    position: absolute; top: 12px; left: 12px;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(15,26,54,0.78); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; font-family: var(--font-mono);
+    backdrop-filter: blur(4px);
+  }
+  .card .role-chip {
+    position: absolute; top: 12px; right: 12px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.94);
+    font-size: 10.5px; font-weight: 700;
+    backdrop-filter: blur(4px);
+  }
+  .role-chip.r1 { color: #213A8C; }
+  .role-chip.r2 { color: #00A968; }
+  .role-chip.r3 { color: #E07A3C; }
+  .role-chip.neutral { color: #5B6685; }
+
+  .card .body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .card .title { font-size: 15px; font-weight: 700; color: #0F1A36; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+  .card .desc { font-size: 12.5px; color: #5B6685; line-height: 1.55; flex: 1; }
+  .card .footer {
+    padding: 10px 18px;
+    background: #F9FAFC; border-top: 1px solid #ECEFF5;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11.5px;
+  }
+  .card .file { font-family: var(--font-mono); color: #7C87A4; }
+  .card .arrow { color: #00A968; font-weight: 700; }
+
+  .featured .img-wrap { aspect-ratio: 16 / 9; }
+  .featured .star { color: #D98023; font-size: 13px; }
+  .wizard-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .wizard-grid .card .img-wrap { aspect-ratio: 16 / 10; }
+
+  footer {
+    text-align: center; padding: 30px 20px; font-size: 12px; color: #7C87A4;
+    border-top: 1px solid #E1E5EF; background: #fff;
+  }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#F4F7FB">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <text x="600" y="410" font-family="Pretendard,system-ui,sans-serif" font-size="56" font-weight="800" fill="#0A1F17" text-anchor="middle" letter-spacing="-2">OKR</text>
+    <circle cx="600" cy="440" r="8" fill="#00A968"/>
+    <text x="600" y="510" font-family="Pretendard,system-ui,sans-serif" font-size="56" font-weight="300" fill="#0A1F17" text-anchor="middle" letter-spacing="-1">LENS</text>
+    <text x="600" y="580" font-family="Pretendard,system-ui,sans-serif" font-size="15" fill="#6B7770" text-anchor="middle" letter-spacing="2">불러오는 중</text>
+  </svg>
+</template>
+</head>
+<body>
+
+<header class="header">
+  <div class="wordmark">
+    <span class="okr">OKR</span><span class="dot-g"></span><span class="lens">LENS</span>
+  </div>
+  <div class="divider"></div>
+  <div>
+    <h1>디자인 시스템 — 전체 미리보기</h1>
+    <div class="meta">31개 화면 · 진입 2 + R1(3 + 위저드 8) + R2(4) + R3(13) · v3.4</div>
+  </div>
+  <div class="badge">v3.4 ✓</div>
+</header>
+
+<div class="container">
+
+  <!-- 진입 -->
+  <div class="group-title">
+    <span class="pill neutral">진입</span>
+    <span class="group-subtitle">로그인 → 역할 선택</span>
+  </div>
+  <div class="grid">
+    <a href="ui_kits/web/index.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/preview/01-login.jpg" alt="로그인"/>
+        <div class="num">01</div>
+        <div class="role-chip neutral">🔒 진입</div>
+      </div>
+      <div class="body">
+        <div class="title">로그인 <span class="star">★ 대표</span></div>
+        <div class="desc">Hero "성과를 연결하고, 성장을 가속화합니다" + 3-feature + 다크 신뢰 카드 + 큰 SSO 카드.</div>
+      </div>
+      <div class="footer"><span class="file">index.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/role-select.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/02-role-select.jpg" alt="역할 선택"/>
+        <div class="num">02</div>
+        <div class="role-chip neutral">👋 환영</div>
+      </div>
+      <div class="body">
+        <div class="title">역할 선택</div>
+        <div class="desc">로그인 직후 · 환영 + 사용자 chip + 3개 큰 역할 카드 (블루/그린/오렌지 hover).</div>
+      </div>
+      <div class="footer"><span class="file">role-select.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+  <!-- R1 -->
+  <div class="group-title">
+    <span class="pill r1">R1 피평가자</span>
+    <span class="group-subtitle">나의 OKR을 작성·관리하고 AI 코칭을 받아요</span>
+  </div>
+  <div class="grid">
+    <a href="ui_kits/web/r1/r1-employee.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/03-r1-home.jpg" alt="피평가자 홈"/>
+        <div class="num">03</div>
+        <div class="role-chip r1">👤 R1</div>
+      </div>
+      <div class="body">
+        <div class="title">홈</div>
+        <div class="desc">"안녕하세요, 김지훈 님 👋" 인사 + 4 stat + 나의 OKR 3개 + AI 코칭 다크 카드 + 다가오는 일정.</div>
+      </div>
+      <div class="footer"><span class="file">r1-employee.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-my-okr.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/04-r1-myokr.jpg" alt="나의 OKR"/>
+        <div class="num">04</div>
+        <div class="role-chip r1">👤 R1</div>
+      </div>
+      <div class="body">
+        <div class="title">나의 OKR 상세</div>
+        <div class="desc">16주 주간 달성률 차트 + 종합 다크 카드 + KR별 가중치 + 펼침 카드 (히스토리 + 평가자 코멘트).</div>
+      </div>
+      <div class="footer"><span class="file">r1-my-okr.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-coaching.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/06-r1-coaching.jpg" alt="AI 코칭"/>
+        <div class="num">06</div>
+        <div class="role-chip r1">👤 R1</div>
+      </div>
+      <div class="body">
+        <div class="title">AI 코칭 채팅</div>
+        <div class="desc">3컬럼 (주제 리스트 + 채팅 + 컨텍스트 KR). 액션 아이템 자동 추출.</div>
+      </div>
+      <div class="footer"><span class="file">r1-coaching.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-calendar.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/preview/r1-calendar.jpg" alt="평가 캘린더"/>
+        <div class="num">R1-C</div>
+        <div class="role-chip r1">👤 R1 · NEW</div>
+      </div>
+      <div class="body">
+        <div class="title">평가 캘린더 ★ NEW</div>
+        <div class="desc">D-Day 배너 + 7월 캘린더 + 코칭 요청(⏱승인 대기) + 평가자 1on1 연동(🔗) + 이전 평가 이력 + 6단계 타임라인.</div>
+      </div>
+      <div class="footer"><span class="file">r1-calendar.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+  <!-- OKR 작성 위저드 6단계 -->
+  <div class="group-title">
+    <span class="pill r1">R1 · OKR 작성 위저드 (6단계)</span>
+    <span class="group-subtitle">유형 선택 → 기초 정보 → AI 정제 → KR 형태 → 상세 수립 → 최종 검토 + 제출</span>
+  </div>
+  <div class="grid wizard-grid">
+    <a href="ui_kits/web/r1/r1-write-step1.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-01.jpg" alt="STEP 1"/>
+        <div class="num">W1</div>
+        <div class="role-chip r1">STEP 1</div>
+      </div>
+      <div class="body">
+        <div class="title">OKR 유형 선택</div>
+        <div class="desc">운영 vs 전략혁신 비교 + 혼합 비중 (7:3 / 5:5 등) + 지난 3분기 회고 + AI 패턴 분석 제안.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step1.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-write-step2.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-02.jpg" alt="STEP 2"/>
+        <div class="num">W2</div>
+        <div class="role-chip r1">STEP 2</div>
+      </div>
+      <div class="body">
+        <div class="title">기초 정보 입력</div>
+        <div class="desc">대화형/직접 작성 2채널 · AI 코치 채팅 + 내 정보 + 키워드 자동 추출 + 주관성 자동 점검.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step2.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-write-step3.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-03.jpg" alt="STEP 3"/>
+        <div class="num">W3</div>
+        <div class="role-chip r1">STEP 3</div>
+      </div>
+      <div class="body">
+        <div class="title">AI 정제 대화</div>
+        <div class="desc">객관성 검증 (Before/After 정제 카드) + 주관성 알림 + KR 후보 사이드패널 + 11항목 실시간 통과율.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step3.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-write-step4.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-04.jpg" alt="STEP 4"/>
+        <div class="num">W4</div>
+        <div class="role-chip r1">STEP 4</div>
+      </div>
+      <div class="body">
+        <div class="title">KR 형태 선택</div>
+        <div class="desc">4가지 형태 (수치 · 마일스톤 · 루브릭 · 이산) 비교 카드 + AI 형태 추천 + 형태별 특성 비교표.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step4.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-write-step5.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-05.jpg" alt="STEP 5"/>
+        <div class="num">W5</div>
+        <div class="role-chip r1">STEP 5</div>
+      </div>
+      <div class="body">
+        <div class="title">상세 수립 (등급 기준)</div>
+        <div class="desc">3 KR × 4단계 좌측 네비게이터 + Objective/KR/측정 + S/A/B/C/D 등급 기준 정의 + 강제배분 참고.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step5.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r1/r1-write-step6.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/preview/wizard-06.jpg" alt="STEP 6"/>
+        <div class="num">W6</div>
+        <div class="role-chip r1">STEP 6</div>
+      </div>
+      <div class="body">
+        <div class="title">최종 검토 + 제출 <span class="star">★ 종료</span></div>
+        <div class="desc">요약 stat 4개 + 3 KR 카드 요약 + 11항목 AI 검토 + 종합 코멘트 + 다크 제출 패널.</div>
+      </div>
+      <div class="footer"><span class="file">r1-write-step6.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+  <!-- R2 -->
+  <div class="group-title">
+    <span class="pill r2">R2 평가자</span>
+    <span class="group-subtitle">팀원의 OKR을 검토·승인하고 코칭해요</span>
+  </div>
+  <div class="grid">
+    <a href="ui_kits/web/r2/dashboard.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/07-r2-dashboard.jpg" alt="평가자 대시보드"/>
+        <div class="num">07</div>
+        <div class="role-chip r2">👥 R2</div>
+      </div>
+      <div class="body">
+        <div class="title">대시보드</div>
+        <div class="desc">"팀원 14명의 OKR을 함께 정제합니다." + 4 stat + AI 인사이트 + 팀원 테이블 + 위험유형 차트.</div>
+      </div>
+      <div class="footer"><span class="file">dashboard.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r2/r2-review.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/preview/08-r2-review.jpg" alt="OKR 검토"/>
+        <div class="num">08</div>
+        <div class="role-chip r2">👥 R2</div>
+      </div>
+      <div class="body">
+        <div class="title">OKR 검토 + AI Validation <span class="star">★ 핵심</span></div>
+        <div class="desc">3컬럼 (팀원 리스트 + KR 상세 + 처리 패널) · 11항목 AI 자동 검토 + 평가자 라디오 수정 + 작년 OKR 이력 + 조정요청 메시지.</div>
+      </div>
+      <div class="footer"><span class="file">r2-review.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r2/r2-member.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/09-r2-member.jpg" alt="팀원 상세"/>
+        <div class="num">09</div>
+        <div class="role-chip r2">👥 R2</div>
+      </div>
+      <div class="body">
+        <div class="title">팀원 상세</div>
+        <div class="desc">프로필 + 5 metric strip + OKR 카드 + 6분기 등급 추이 + AI 코칭 제안 다크 카드 + 활동 타임라인 + 코칭 메모.</div>
+      </div>
+      <div class="footer"><span class="file">r2-member.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r2/r2-calendar.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/10-r2-calendar.jpg" alt="코칭 캘린더"/>
+        <div class="num">10</div>
+        <div class="role-chip r2">👥 R2</div>
+      </div>
+      <div class="body">
+        <div class="title">코칭 캘린더</div>
+        <div class="desc">월간 캘린더 + 오늘 일정 + 이번 달 요약 + 1on1 아직 진행하지 않은 팀원 알림.</div>
+      </div>
+      <div class="footer"><span class="file">r2-calendar.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+  <!-- R3 -->
+  <div class="group-title">
+    <span class="pill r3">R3 인사담당자</span>
+    <span class="group-subtitle">전사 인사이트와 평가 기준을 관리해요</span>
+  </div>
+  <div class="grid">
+    <a href="ui_kits/web/r3/r3-calendar.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/r3_calendar_v1.jpg" alt="평가 일정 관리"/>
+        <div class="num">R3-C</div>
+        <div class="role-chip r3">🛡️ R3 · NEW</div>
+      </div>
+      <div class="body">
+        <div class="title">평가 일정 관리 ★ NEW</div>
+        <div class="desc">전사 마일스톤 등록·수정 + 8단계 트래커 + 알림 발송 히스토리. 등록 시 대상 그룹(R1/R2)에 자동 전파.</div>
+      </div>
+      <div class="footer"><span class="file">r3-calendar.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-env.html" class="card featured">
+      <div class="img-wrap">
+        <img src="screenshots/r3_env_v1.jpg" alt="환경 설정"/>
+        <div class="num">R3-E</div>
+        <div class="role-chip r3">🛡️ R3 · NEW</div>
+      </div>
+      <div class="body">
+        <div class="title">환경 설정 ★ NEW</div>
+        <div class="desc">LLM API 키 3개(Claude·GPT-4o·Gemini) · DB 커넥션 · SSO 연동 · 알림 채널 · Feature Flags.</div>
+      </div>
+      <div class="footer"><span class="file">r3-env.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-hr.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/11-r3-hr.jpg" alt="캘리브레이션"/>
+        <div class="num">11</div>
+        <div class="role-chip r3">🛡️ R3</div>
+      </div>
+      <div class="body">
+        <div class="title">캘리브레이션 인사이트</div>
+        <div class="desc">"전사 OKR 품질을 한눈에" + 4 KPI + 본부×직급 난이도 히트맵 + 사후조정 비중 + 코칭 후보 유형 + 사례 카드 + 활성 기준.</div>
+      </div>
+      <div class="footer"><span class="file">r3-hr.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-criteria.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/12-r3-criteria.jpg" alt="평가 기준"/>
+        <div class="num">12</div>
+        <div class="role-chip r3">🛡️ R3</div>
+      </div>
+      <div class="body">
+        <div class="title">평가 기준 편집</div>
+        <div class="desc">"이 기준이 R1·R2 화면을 움직입니다" · 활성 버전 카드 + 영향 범위 + 5탭 + 11항목 체크리스트 + 위험 임계값.</div>
+      </div>
+      <div class="footer"><span class="file">r3-criteria.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-master.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/13-r3-master.jpg" alt="마스터 데이터"/>
+        <div class="num">13</div>
+        <div class="role-chip r3">🛡️ R3</div>
+      </div>
+      <div class="body">
+        <div class="title">마스터 데이터</div>
+        <div class="desc">조직 트리 (14개 본부) + 사원 테이블 + 결재선/직급 밴드/이전 OKR 이력 4탭.</div>
+      </div>
+      <div class="footer"><span class="file">r3-master.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-metrics.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/14-r3-metrics.jpg" alt="표준 지표"/>
+        <div class="num">14</div>
+        <div class="role-chip r3">🛡️ R3</div>
+      </div>
+      <div class="body">
+        <div class="title">표준 지표 라이브러리</div>
+        <div class="desc">5 KPI + 검색·4탭 필터 + 지표 카드 그리드 (정의·수식·사용 빈도·대표 KR) + 플라이휠 4단계 다크 카드.</div>
+      </div>
+      <div class="footer"><span class="file">r3-metrics.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+  <!-- R3 캘리브레이션 인사이트 5종 (v3.4) -->
+  <div class="group-title">
+    <span class="pill r3">R3 · 캘리브레이션 인사이트 5종 (v3.4)</span>
+    <span class="group-subtitle">난이도 분포 · 사후조정 비중 · 업무군 분류 · 난이도별 확인 · 산출물 내보내기</span>
+  </div>
+  <div class="grid">
+    <a href="ui_kits/web/r3/r3-jobgroup.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/r3-jobgroup.jpg" alt="업무군 분류"/>
+        <div class="num">15</div>
+        <div class="role-chip r3">INSIGHT 03</div>
+      </div>
+      <div class="body">
+        <div class="title">지표별 업무군 분류 <span class="star">v3.4</span></div>
+        <div class="desc">AI 자동 분류 → 인사담당자 확정. 9개 업무군 분포 + 경계 우선 검토 + 재분류 규칙 다크 카드.</div>
+      </div>
+      <div class="footer"><span class="file">r3-jobgroup.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-difficulty.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/r3-difficulty.jpg" alt="난이도별 지표"/>
+        <div class="num">16</div>
+        <div class="role-chip r3">INSIGHT 04</div>
+      </div>
+      <div class="body">
+        <div class="title">난이도별 지표 확인 <span class="star">v3.4</span></div>
+        <div class="desc">상/중/하 분포 + 본부·직급·업무군 드릴다운 필터 + S등급 근거 + ④⑥의존 플래그 알림.</div>
+      </div>
+      <div class="footer"><span class="file">r3-difficulty.html</span><span class="arrow">열기 →</span></div>
+    </a>
+
+    <a href="ui_kits/web/r3/r3-export.html" class="card">
+      <div class="img-wrap">
+        <img src="screenshots/preview/r3-export.jpg" alt="산출물 내보내기"/>
+        <div class="num">17</div>
+        <div class="role-chip r3">INSIGHT 05</div>
+      </div>
+      <div class="body">
+        <div class="title">산출물 내보내기 (Excel) <span class="star">v3.4</span></div>
+        <div class="desc">간이 4시트 + Phase 2 추가 시트 + 검증 게이트 다크 카드 + 옵션 + 발행 이력.</div>
+      </div>
+      <div class="footer"><span class="file">r3-export.html</span><span class="arrow">열기 →</span></div>
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 OKR LENS Design System · 카드를 클릭하면 해당 화면이 열려요
+</footer>
+
+</body>
+</html>

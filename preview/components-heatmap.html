@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:#fff;font-family:var(--font-sans);color:var(--ink-700);}
+  .wrap{padding:20px 24px;}
+  .head{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;}
+  .h-name{font-size:14px;font-weight:600;color:var(--ink-900);}
+  .meta{font-size:12px;color:var(--ink-500);}
+  .grid{display:grid;grid-template-columns:100px repeat(4,1fr);gap:5px;align-items:center;}
+  .hdr{font-size:11px;font-weight:700;color:var(--ink-500);letter-spacing:.04em;text-transform:uppercase;text-align:center;padding:6px 0;}
+  .row-lab{font-size:12px;font-weight:600;color:var(--ink-700);padding:0 8px 0 0;text-align:right;}
+  .cell{aspect-ratio:1/0.5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums;}
+  .legend{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:11px;color:var(--ink-500);}
+  .leg-bar{display:flex;gap:3px;}
+  .leg-bar div{width:20px;height:8px;border-radius:2px;}
+</style></head>
+<body><div class="wrap">
+  <div class="head"><div class="h-name">Heatmap · 본부×직급 난이도</div><div class="meta">R3 인사이트 — 코칭 후보 본부 식별</div></div>
+  <div class="grid">
+    <div></div>
+    <div class="hdr">3급</div><div class="hdr">4급갑</div><div class="hdr">4급을</div><div class="hdr">5급</div>
+
+    <div class="row-lab">운영본부</div>
+    <div class="cell" style="background:#00A968">42%</div>
+    <div class="cell" style="background:#65D6A6;color:#0A1F17">28%</div>
+    <div class="cell" style="background:#A6E4C7;color:#0A1F17">18%</div>
+    <div class="cell" style="background:#D1F0DF;color:#0A1F17">12%</div>
+
+    <div class="row-lab">개발본부</div>
+    <div class="cell" style="background:#3EDDA1">36%</div>
+    <div class="cell" style="background:#3EDDA1">34%</div>
+    <div class="cell" style="background:#65D6A6;color:#0A1F17">22%</div>
+    <div class="cell" style="background:#D1F0DF;color:#0A1F17">8%</div>
+
+    <div class="row-lab">사업본부</div>
+    <div class="cell" style="background:#A6E4C7;color:#0A1F17">18%</div>
+    <div class="cell" style="background:#65D6A6;color:#0A1F17">24%</div>
+    <div class="cell" style="background:#3EDDA1">31%</div>
+    <div class="cell" style="background:#65D6A6;color:#0A1F17">27%</div>
+  </div>
+  <div class="legend">난이도 "상" 비중 ·
+    <div class="leg-bar">
+      <div style="background:#F1FBF6"></div>
+      <div style="background:#D1F0DF"></div>
+      <div style="background:#A6E4C7"></div>
+      <div style="background:#65D6A6"></div>
+      <div style="background:#3EDDA1"></div>
+      <div style="background:#00A968"></div>
+    </div>
+    <span>· 낮음 → 높음</span>
+  </div>
+</div></body></html>

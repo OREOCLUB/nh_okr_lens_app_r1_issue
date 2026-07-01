@@ -1,0 +1,1349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — OKR 작성 · STEP 6 · 3개 AI 비교</title>
+<style>/* ============================================================
+   OKR LENS — Design System
+   colors_and_type.css
+   사내 OKR 평가·코칭 AI 서비스 — 친근한 SaaS 톤 · 넉넉한 여백
+   ============================================================ */
+
+/* ---------- 1. Fonts ---------- */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- 2. Color — Brand / Primary (Friendly Blue) ---------- */
+  /* 참고 이미지의 SSO 버튼/CTA 컬러에서 추출. 인디고가 아닌 더 밝은 'Friendly Blue'. */
+  --brand-900: #142250;   /* deepest — text accent on light bg */
+  --brand-800: #1B2A4E;   /* dark navy — sidebar, hero text accent (참고 이미지 좌측 다크 카드) */
+  --brand-700: #213A8C;
+  --brand-600: #2C49B8;
+  --brand-500: #3B5BDB;   /* PRIMARY — SSO 버튼 컬러 */
+  --brand-400: #5C7AE6;
+  --brand-300: #91A6F0;
+  --brand-200: #C5D0F7;
+  --brand-100: #E5EBFB;
+  --brand-50:  #F1F4FD;
+
+  /* ---------- 3. Role Accents (3역할 컬러 코딩) ---------- */
+  /* 참고 이미지: 피평가자=블루, 평가자=그린, 인사담당자=오렌지/코랄 */
+  --role-r1-bg:   #E8F0FF;
+  --role-r1-fg:   #3B5BDB;
+  --role-r1-mark: #3B5BDB;
+
+  --role-r2-bg:   #E3F4EA;
+  --role-r2-fg:   #2F9E5E;
+  --role-r2-mark: #2F9E5E;
+
+  --role-r3-bg:   #FFEDE2;
+  --role-r3-fg:   #E07A3C;
+  --role-r3-mark: #E07A3C;
+
+  /* ---------- 4. Color — Neutrals (Cool Slate, softer than v1) ---------- */
+  --ink-900: #0F1A36;     /* heading */
+  --ink-800: #1F2A4A;
+  --ink-700: #3A4565;     /* body strong */
+  --ink-600: #5B6685;     /* body */
+  --ink-500: #7C87A4;     /* secondary */
+  --ink-400: #A4ADC4;     /* tertiary, icon */
+  --ink-300: #C8CFDF;     /* disabled */
+  --ink-200: #E1E5EF;     /* divider */
+  --ink-150: #ECEFF5;
+  --ink-100: #F4F7FB;     /* PAGE BACKGROUND — 참고 이미지 베이스 */
+  --ink-50:  #F9FAFC;
+  --ink-0:   #FFFFFF;
+
+  /* ---------- 5. Color — Semantic (Status) ---------- */
+  /* 친근한 톤 — 채도 더 낮춤. "코칭" 시선 유지. */
+  --risk-high-fg:   #D14343;
+  --risk-high-bg:   #FFF0F0;
+  --risk-high-bd:   #FFD4D4;
+
+  --risk-mid-fg:    #D98023;
+  --risk-mid-bg:    #FFF7EC;
+  --risk-mid-bd:    #FFE0BA;
+
+  --risk-low-fg:    #2F9E5E;
+  --risk-low-bg:    #ECFAF1;
+  --risk-low-bd:    #BBE9CC;
+
+  --info-fg:        #2B5DD9;
+  --info-bg:        #EFF4FE;
+  --info-bd:        #C5D5F7;
+
+  /* ---------- 6. Status — 승인 enum (D5) ---------- */
+  --status-draft-fg:    #5B6685;
+  --status-draft-bg:    #F1F3F8;
+  --status-pending-fg:  #2B5DD9;
+  --status-pending-bg:  #EFF4FE;
+  --status-approved-fg: #2F9E5E;
+  --status-approved-bg: #ECFAF1;
+  --status-rejected-fg: #D14343;
+  --status-rejected-bg: #FFF0F0;
+  --status-adjust-fg:   #D98023;
+  --status-adjust-bg:   #FFF7EC;
+
+  /* ---------- 7. Difficulty / Grade ---------- */
+  --diff-high: #7C4DD9;
+  --diff-mid:  #3B5BDB;
+  --diff-low:  #7C87A4;
+
+  --grade-s: #6B47E0;
+  --grade-a: #3B5BDB;
+  --grade-b: #2F9E5E;
+  --grade-c: #D98023;
+  --grade-d: #7C87A4;
+
+  /* ---------- 8. Data viz / Heatmap ---------- */
+  --heat-0: #F1F4FD;
+  --heat-1: #DCE3F8;
+  --heat-2: #B7C4F0;
+  --heat-3: #8FA1E5;
+  --heat-4: #5C7AE6;
+  --heat-5: #3B5BDB;
+
+  /* ---------- 9. Typography — Stacks ---------- */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+               'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- 10. Type — Sizes & line-heights ---------- */
+  /* base 15px — 참고 이미지의 넉넉한 밀도에 맞춰 한 단계 키움 */
+  --fs-hero:     48px;   /* 랜딩 메인 헤드라인 */
+  --fs-display:  36px;
+  --fs-h1:       28px;
+  --fs-h2:       22px;
+  --fs-h3:       18px;
+  --fs-body-lg:  16px;
+  --fs-body:     15px;   /* body default */
+  --fs-sm:       13.5px;
+  --fs-xs:       12.5px;
+  --fs-micro:    11.5px;
+
+  --lh-tight:    1.25;
+  --lh-snug:     1.45;
+  --lh-normal:   1.7;
+  --lh-relaxed:  1.85;
+
+  --tracking-tight:  -0.025em;
+  --tracking-normal: -0.005em;
+  --tracking-wide:   0.04em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* ---------- 11. Spacing scale (4pt grid) ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+  --sp-12: 96px;
+
+  /* ---------- 12. Radius — 더 부드럽게 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;    /* 기본 카드 */
+  --radius-xl: 20px;    /* 큰 카드, 패널 */
+  --radius-2xl: 28px;   /* 히어로 일러스트 박스 */
+  --radius-pill: 999px;
+
+  /* ---------- 13. Shadow / Elevation — 부드럽고 옅음 ---------- */
+  --shadow-xs: 0 1px 2px rgba(31, 42, 74, 0.04);
+  --shadow-sm: 0 2px 6px rgba(31, 42, 74, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(31, 42, 74, 0.08);
+  --shadow-lg: 0 16px 40px -10px rgba(31, 42, 74, 0.10);
+  --shadow-xl: 0 30px 60px -16px rgba(31, 42, 74, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(59, 91, 219, 0.16);
+  --shadow-card-hover: 0 12px 28px -8px rgba(59, 91, 219, 0.18);
+
+  /* ---------- 14. Borders ---------- */
+  --bd-subtle: 1px solid var(--ink-150);
+  --bd-default: 1px solid var(--ink-200);
+  --bd-strong: 1px solid var(--ink-300);
+  --bd-focus: 1.5px solid var(--brand-500);
+
+  /* ---------- 15. Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+
+  /* ---------- 16. Layout ---------- */
+  --sidebar-w: 256px;
+  --topbar-h: 64px;
+  --content-max: 1440px;
+  --page-pad-x: 40px;
+  --page-pad-y: 32px;
+}
+
+/* ============================================================
+   Semantic typography classes
+   ============================================================ */
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+.ds-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-500);
+}
+.ds-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-700);
+  font-feature-settings: "tnum" 1;
+}
+.ds-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ds-reset, .ds-reset * { box-sizing: border-box; }
+.ds-reset {
+  font-family: var(--font-sans);
+  color: var(--ink-600);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   OKR LENS Responsive — 2026 리브랜드
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: auto; }
+body { font-size: 16px; }
+
+/* 사이드바 반응형: 태블릿 이하 아이콘만, 모바일 오프캔버스 */
+.okrlens-sidebar,
+aside[class*="Sidebar"] {
+  transition: width 220ms cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 1024px) {
+  .okrlens-sidebar { width: 76px !important; min-width: 76px !important; padding-left: 10px !important; padding-right: 10px !important; }
+  .okrlens-sidebar > div:first-child > span:not(:first-child),
+  .okrlens-sidebar > div:first-child > span:last-child { display: none !important; }
+  .okrlens-sidebar > div:first-child { justify-content: center !important; padding: 4px 0 22px !important; }
+  .okrlens-sidebar a > div span:last-child,
+  .okrlens-sidebar > div > div:last-child > div:last-child { display: none !important; }
+  .okrlens-sidebar a > div,
+  .okrlens-sidebar > div > div {
+    justify-content: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+@media (max-width: 900px) {
+  .okrlens-sidebar { width: 72px !important; min-width: 72px !important; padding-left: 8px !important; padding-right: 8px !important; }
+}
+@media (max-width: 640px) {
+  .okrlens-sidebar { position: fixed; z-index: 100; height: 100vh; transform: translateX(-100%); }
+  .okrlens-sidebar.open { transform: translateX(0); }
+  #app > div > div:last-child,
+  main { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+/* 페이지 컨텐츠 반응형 여백 */
+main, [class*="page-content"] {
+  padding-left: clamp(16px, 3vw, 40px);
+  padding-right: clamp(16px, 3vw, 40px);
+}
+
+/* 카드/그리드 반응형 - 컬럼 자동 스택 */
+@media (max-width: 900px) {
+  [style*="gridTemplateColumns"][style*="1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  [style*="repeat(3, 1fr)"],
+  [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  [style*="gap: 56px"], [style*="gap:56px"] { gap: 24px !important; }
+  [style*="gap: 40px"], [style*="gap:40px"] { gap: 20px !important; }
+  [style*="padding: \"56px"], [style*="padding: \"48px"] { padding: 24px !important; }
+}
+
+/* 상단바 반응형: 780px 이하부터 줄바꿈 */
+.okrlens-topbar { padding: 0 32px !important; }
+@media (max-width: 780px) {
+  .okrlens-topbar {
+    flex-wrap: wrap;
+    gap: 10px !important;
+    padding: 12px 20px !important;
+  }
+  .okrlens-search { width: 100% !important; order: 10; }
+  .okrlens-period { display: none !important; }
+}
+
+/* 폰트 크기 가독성 상향 */
+body, .ds-body { font-size: 16px; }
+h1, .ds-h1 { font-size: clamp(22px, 3vw, 28px); }
+h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
+
+
+</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; outline: none; }
+  textarea:focus, input:focus { border-color: #3B5BDB; box-shadow: 0 0 0 4px rgba(59,91,219,.14); }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div id="__splash" style="position:fixed;inset:0;background:#F5F6F4;display:flex;align-items:center;justify-content:center;z-index:2147483647;transition:opacity .25s ease">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <rect x="500" y="320" width="200" height="160" rx="32" fill="transparent"/>
+    <circle cx="600" cy="400" r="36" fill="none" stroke="#fff" stroke-width="8" opacity="0.7"/>
+    <circle cx="600" cy="400" r="10" fill="#fff"/>
+    <text x="600" y="540" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#0F1A36" text-anchor="middle" letter-spacing="2">OKR LENS</text>
+    <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
+  </svg>
+</div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
+// Usage: <Icon name="dashboard" size={18} />
+const ICONS = {
+  dashboard: <><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></>,
+  clipboard: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+  sliders: <><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="12" cy="4" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="20" r="2"/></>,
+  library: <><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></>,
+  barchart: <><path d="M3 3v18h18"/><path d="M7 16V9m5 7V5m5 11v-4"/></>,
+  piechart: <path d="M21 12A9 9 0 1 1 12 3v9z"/>,
+  search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>,
+  sort: <path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>,
+  more: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></>,
+  chevronDown: <path d="m6 9 6 6 6-6"/>,
+  chevronRight: <path d="m9 6 6 6-6 6"/>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  check: <path d="M20 6 9 17l-5-5"/>,
+  x: <><path d="M18 6 6 18M6 6l12 12"/></>,
+  refresh: <><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.78.95 6.5 2.5L21 3"/><path d="M21 3v6h-6"/></>,
+  alert: <><path d="m21.7 16.6-8.9-15a1 1 0 0 0-1.8 0L2.1 16.6A1 1 0 0 0 3 18h18a1 1 0 0 0 .8-1.4z"/><path d="M12 9v4M12 17h.01"/></>,
+  sparkles: <><path d="M9.94 14.34A2.5 2.5 0 1 1 12 12.94"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6 7.7 7.7m8.6 8.6 2.1 2.1m0-13L16.3 7.7M5.6 18.4l2.1-2.1"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+};
+
+function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
+  const path = ICONS[name];
+  if (!path) return null;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+      {...rest}
+    >
+      {path}
+    </svg>
+  );
+}
+
+window.Icon = Icon;
+</script>
+<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
+  const base = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    lineHeight: 1,
+    letterSpacing: "-0.005em",
+    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
+    opacity: disabled ? 0.42 : 1,
+  };
+  const sizes = {
+    sm: { fontSize: 12.5, padding: "7px 12px" },
+    md: { fontSize: 13.5, padding: "10px 16px" },
+    lg: { fontSize: 15, padding: "12px 22px" },
+  };
+  const variants = {
+    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
+    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
+    ghost:     { background: "transparent", color: "#3A4565" },
+    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
+    success:   { background: "#2F9E5E", color: "#fff" },
+    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hoverStyles = {
+    primary:   { background: "#2C49B8" },
+    secondary: { background: "#F4F7FB" },
+    ghost:     { background: "#F4F7FB" },
+    danger:    { background: "#FFF0F0" },
+    success:   { background: "#268F52" },
+    ai:        { background: "#E5EBFB" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
+    >
+      {leftIcon}
+      {children}
+      {rightIcon}
+    </button>
+  );
+}
+window.Button = Button;
+</script>
+<script type="text/babel">function TopBar({ title, subtitle }) {
+  return (
+    <header style={{
+      height: 64, minHeight: 64,
+      display: "flex", alignItems: "center",
+      padding: "0 32px",
+      background: "#fff",
+      borderBottom: "1px solid #E1E5EF",
+      gap: 18,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: "#F4F7FB",
+        borderRadius: 10, padding: "8px 14px",
+        width: 300,
+        color: "#7C87A4",
+      }}>
+        <Icon name="search" size={15}/>
+        <input
+          placeholder="팀원 이름, KR ID 검색"
+          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
+        />
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px",
+        border: "1px solid #E1E5EF", borderRadius: 10,
+        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
+      }}>
+        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
+        2026 상반기
+        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
+      </div>
+
+      <button style={{
+        position: "relative",
+        width: 40, height: 40, borderRadius: 10,
+        border: "1px solid #E1E5EF", background: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#3A4565",
+      }}>
+        <Icon name="bell" size={17}/>
+        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
+      </button>
+    </header>
+  );
+}
+
+window.TopBar = TopBar;
+</script>
+<script type="text/babel">// SidebarR1.jsx — R1 피평가자 전용 사이드바
+function SidebarR1({ active = "home" }) {
+  const items = [
+    { id: "home",       label: "홈",            icon: "dashboard", href: "R1_피평가자_01_홈.html" },
+    { id: "profile",    label: "프로필 세팅",   icon: "users",     href: "R1_OKR작성_STEP0_프로필세팅.html" },
+    { id: "my-okr",     label: "나의 OKR",      icon: "clipboard", href: "R1_피평가자_02_나의OKR.html" },
+    { id: "write",      label: "OKR 작성",      icon: "edit",      href: "R1_OKR작성_STEP1.html" },
+    { id: "feedback",   label: "피드백",        icon: "message" },
+    { id: "coaching",   label: "AI 코칭",       icon: "sparkles",  href: "R1_피평가자_03_AI코칭.html" },
+    { id: "history",    label: "이전 평가",     icon: "library" },
+  ];
+  return (
+    <aside className="okrlens-sidebar" style={{
+      width: 244, minWidth: 244,
+      background: "#0A1F17", color: "#A4ADC4",
+      display: "flex", flexDirection: "column",
+      height: "100%", padding: "20px 14px", gap: 4,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+      </div>
+
+      {/* Role chip */}
+      <div style={{
+        margin: "0 4px 12px",
+        background: "rgba(59,91,219,0.18)",
+        border: "1px solid rgba(145,166,240,0.25)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        display: "flex", alignItems: "center", gap: 9,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>
+        <div>
+          <div style={{ fontSize: 11, color: "#91A6F0", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>피평가자</div>
+        </div>
+      </div>
+
+      {items.map((it) => {
+        const on = it.id === active;
+        const inner = (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "9px 12px",
+            borderRadius: 9,
+            fontSize: 13.5, fontWeight: on ? 600 : 500,
+            color: on ? "#fff" : "#C8CFDF",
+            background: on ? "rgba(59,91,219,0.22)" : "transparent",
+            cursor: "pointer",
+            transition: "background 140ms ease-out",
+            whiteSpace: "nowrap",
+          }}>
+            <Icon name={it.icon} size={17}/>
+            <span>{it.label}</span>
+          </div>
+        );
+        return it.href
+          ? <a key={it.id} href={it.href} style={{ textDecoration: "none" }}>{inner}</a>
+          : <div key={it.id}>{inner}</div>;
+      })}
+
+      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+        <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9,
+            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
+          }}>
+            <Icon name="refresh" size={15}/>
+            <span>역할 전환</span>
+          </div>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>김</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>김지훈</div>
+            <div style={{ fontSize: 11, color: "#A4ADC4" }}>4급갑 · SE</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+window.SidebarR1 = SidebarR1;
+</script>
+<script type="text/babel">// WizardShared.jsx — OKR 작성 위저드 공통 컴포넌트 (8단계, v2)
+
+const WIZARD_STEPS = [
+  { num: 0, label: "프로필 세팅",  short: "프로필", href: "R1_OKR작성_STEP0_프로필세팅.html" },
+  { num: 1, label: "OKR 유형",     short: "유형",   href: "R1_OKR작성_STEP1.html" },
+  { num: 2, label: "기초 정보",    short: "정보",   href: "R1_OKR작성_STEP2.html" },
+  { num: 3, label: "AI 정제 대화", short: "정제",   href: "R1_OKR작성_STEP3.html" },
+  { num: 4, label: "KR 형태",      short: "형태",   href: "R1_OKR작성_STEP4.html" },
+  { num: 5, label: "상세 수립",    short: "상세",   href: "R1_OKR작성_STEP5.html" },
+  { num: 6, label: "AI 비교 검토", short: "비교",   href: "R1_OKR작성_STEP6_AI비교.html" },
+  { num: 7, label: "최종 수정·제출", short: "제출",  href: "R1_OKR작성_STEP7_최종제출.html" },
+];
+
+const TOTAL_STEPS = 8; // 0..7
+
+function WizardStepHeader({ current }) {
+  // current = 0..7
+  return (
+    <div style={{
+      background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
+      padding: "14px 18px", marginBottom: 20,
+      display: "flex", alignItems: "center", gap: 4,
+      overflowX: "auto",
+    }}>
+      {WIZARD_STEPS.map((s, i) => {
+        const done = s.num < current;
+        const cur = s.num === current;
+        const next = s.num > current;
+        return (
+          <React.Fragment key={s.num}>
+            <a href={s.href} title={`STEP ${s.num} · ${s.label}`} style={{
+              textDecoration: "none",
+              display: "flex", alignItems: "center", gap: 8,
+              flexShrink: 0,
+              padding: cur ? "5px 11px 5px 5px" : "5px",
+              background: cur ? "#F1F4FD" : "transparent",
+              borderRadius: 10,
+              pointerEvents: next ? "none" : "auto",
+              opacity: next ? 0.55 : 1,
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: cur ? "#3B5BDB" : done ? "#ECFAF1" : "#F4F7FB",
+                color: cur ? "#fff" : done ? "#2F9E5E" : "#7C87A4",
+                border: cur ? "none" : done ? "1px solid #BBE9CC" : "1px solid #E1E5EF",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11.5, fontWeight: 700,
+                fontFamily: "var(--font-mono)",
+                flexShrink: 0,
+              }}>{done ? "✓" : s.num}</div>
+              {cur && (
+                <div style={{
+                  fontSize: 12.5, fontWeight: 700,
+                  color: "#0F1A36",
+                  letterSpacing: "-0.005em",
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.3,
+                }}>STEP {s.num} · {s.label}</div>
+              )}
+            </a>
+            {i < WIZARD_STEPS.length - 1 && (
+              <div style={{ flex: 1, minWidth: 8, height: 2, background: done ? "#BBE9CC" : "#ECEFF5", borderRadius: 1 }}/>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function WizardNav({ current, prevDisabled, nextLabel, prevLabel, nextHref: nextHrefOverride }) {
+  // current = 0..7
+  const prevHref = current > 0 ? WIZARD_STEPS[current].href ? WIZARD_STEPS.find(s => s.num === current - 1).href : "R1_피평가자_01_홈.html" : "R1_피평가자_01_홈.html";
+  const computedPrev = current > 0
+    ? WIZARD_STEPS.find(s => s.num === current - 1).href
+    : "R1_피평가자_01_홈.html";
+  const computedNext = current < 7
+    ? WIZARD_STEPS.find(s => s.num === current + 1).href
+    : "R1_피평가자_01_홈.html";
+  const finalNextHref = nextHrefOverride || computedNext;
+
+  return (
+    <div style={{
+      marginTop: 22, padding: "16px 22px",
+      background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
+      display: "flex", alignItems: "center", gap: 12,
+      boxShadow: "0 1px 2px rgba(31,42,74,.04)",
+    }}>
+      <a href={computedPrev} style={{ textDecoration: "none" }}>
+        <Button variant="ghost" disabled={prevDisabled}>
+          ← {prevLabel || (current === 0 ? "홈으로" : `이전 (STEP ${current - 1})`)}
+        </Button>
+      </a>
+      <div style={{ flex: 1 }}/>
+      <div style={{ fontSize: 12, color: "#7C87A4", display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2F9E5E" }}/>
+        임시 저장됨 · 방금 전
+      </div>
+      <Button variant="secondary">임시 저장</Button>
+      <a href={finalNextHref} style={{ textDecoration: "none" }}>
+        <Button variant="primary">
+          {nextLabel || (current === 7 ? "제출하기 →" : `다음 (STEP ${current + 1}) →`)}
+        </Button>
+      </a>
+    </div>
+  );
+}
+
+function WizardBreadcrumb({ stepLabel }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 12.5, color: "#5B6685" }}>
+      <a href="R1_피평가자_01_홈.html" style={{ color: "#5B6685", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+        <span>←</span> 피평가자 홈
+      </a>
+      <span style={{ color: "#C8CFDF" }}>/</span>
+      <a href="R1_OKR작성_STEP1.html" style={{ color: "#5B6685", textDecoration: "none" }}>OKR 작성</a>
+      <span style={{ color: "#C8CFDF" }}>/</span>
+      <span style={{ color: "#0F1A36", fontWeight: 600 }}>{stepLabel}</span>
+    </div>
+  );
+}
+
+function WizardHero({ stepNum, title, desc, badge, showAIHelp = true }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginBottom: 22 }}>
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
+          STEP {stepNum} / 7
+          {badge && <span style={{ padding: "2px 8px", borderRadius: 999, background: "#F1F4FD", color: "#213A8C", fontSize: 10.5, fontWeight: 700 }}>{badge}</span>}
+        </div>
+        <h1 style={{ margin: "8px 0 0", fontSize: 28, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>
+          {title}
+        </h1>
+        <p style={{ margin: "8px 0 0", fontSize: 14.5, color: "#5B6685", lineHeight: 1.55, maxWidth: 720 }}>
+          {desc}
+        </p>
+      </div>
+      <div style={{ flex: 1 }}/>
+      <Button variant="ghost" size="sm" leftIcon={<span>💡</span>}>도움말</Button>
+      {showAIHelp && <Button variant="ai" size="sm" leftIcon={<span>✨</span>}>AI에게 물어보기</Button>}
+    </div>
+  );
+}
+
+// Shared form styles
+const labelStyle = { display: "block", fontSize: 12.5, fontWeight: 600, color: "#3A4565", marginBottom: 7 };
+const inputStyle = {
+  width: "100%", padding: "11px 14px",
+  background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10,
+  fontSize: 14, color: "#0F1A36", fontFamily: "var(--font-sans)",
+  outline: "none", transition: "all 140ms ease-out",
+};
+const hintStyle = { fontSize: 11.5, color: "#7C87A4", marginTop: 5, lineHeight: 1.5 };
+
+window.WIZARD_STEPS = WIZARD_STEPS;
+window.TOTAL_STEPS = TOTAL_STEPS;
+window.WizardStepHeader = WizardStepHeader;
+window.WizardNav = WizardNav;
+window.WizardBreadcrumb = WizardBreadcrumb;
+window.WizardHero = WizardHero;
+window.wizLabelStyle = labelStyle;
+window.wizInputStyle = inputStyle;
+window.wizHintStyle = hintStyle;
+</script>
+<script type="text/babel">// STEP 6 — 멀티 AI 검토 비교 (Claude · GPT · Gemini 3개 결과 나란히)
+// 명세 1-5: "여러개(3개정도)의 AI API 활용하여 검토 비교"
+
+const AI_VENDORS = [
+  {
+    id: "claude",
+    name: "Claude Sonnet 4.5",
+    short: "Claude",
+    vendor: "Anthropic",
+    avatar: "🌀", // 색상 강조 + 모노그램
+    accent: "#D97757",
+    accentBg: "#FBF0E9",
+    accentBorder: "#F0CDB1",
+  },
+  {
+    id: "gpt",
+    name: "GPT-4o",
+    short: "GPT",
+    vendor: "OpenAI",
+    avatar: "✦",
+    accent: "#10A37F",
+    accentBg: "#E6F5F0",
+    accentBorder: "#A8DDCB",
+  },
+  {
+    id: "gemini",
+    name: "Gemini 1.5 Pro",
+    short: "Gemini",
+    vendor: "Google",
+    avatar: "✧",
+    accent: "#4285F4",
+    accentBg: "#E8F0FE",
+    accentBorder: "#A4C2F4",
+  },
+];
+
+// 각 AI의 KR별 검토 결과 (시연용 — 의도적으로 결과가 약간씩 다름)
+const REVIEW_DATA = {
+  kr1: {
+    title: "KR 01 · 결제 게이트웨이 APM p95 응답속도 850ms → 500ms",
+    format: "수치", weight: 30,
+    reviews: {
+      claude: {
+        score: 9, scoreLabel: "Strong",
+        verdict: "pass",
+        summary: "측정 기준(p95)·도구(APM)·집계 주기가 명확해 매우 객관적이에요. 다만 SRE 의존성은 명시적 협업 계획이 필요해요.",
+        items: [
+          { c: "측정성", v: "pass", note: "APM p95 · 월평균 ─ 완벽" },
+          { c: "도전성", v: "pass", note: "850→500ms는 41% 개선 ─ 도전적" },
+          { c: "증빙",   v: "pass", note: "APM 대시보드 캡처 자동 가능" },
+          { c: "의존성", v: "warn", note: "SRE팀 인프라 변경 필요 시 영향" },
+        ],
+        suggestion: "S등급은 400ms로 두되, 캐시 추가 도입 마일스톤도 함께 적기를 추천해요.",
+      },
+      gpt: {
+        score: 8.5, scoreLabel: "Good",
+        verdict: "pass",
+        summary: "측정 가능성은 좋습니다. C·D 기준이 baseline과 너무 가까워서 변별력이 떨어질 수 있어요.",
+        items: [
+          { c: "측정성", v: "pass", note: "p95 + 월평균 = 객관적" },
+          { c: "도전성", v: "pass", note: "전년 대비 큰 개선폭" },
+          { c: "증빙",   v: "pass", note: "Datadog 자동 리포트 활용" },
+          { c: "변별력", v: "warn", note: "C/D 구간이 너무 좁음 ─ 재조정 추천" },
+        ],
+        suggestion: "C = 700ms, D = 850ms 이상으로 재조정해 baseline 상태와 명확히 구분하세요.",
+      },
+      gemini: {
+        score: 8, scoreLabel: "Good",
+        verdict: "pass",
+        summary: "전반적으로 명확합니다. 다만 응답속도 외에도 처리량(TPS) 추세도 함께 보는 것을 권장해요.",
+        items: [
+          { c: "측정성", v: "pass", note: "p95 — 표준 지표" },
+          { c: "도전성", v: "pass", note: "도전적이지만 달성 가능" },
+          { c: "증빙",   v: "pass", note: "APM 표준 출력" },
+          { c: "완전성", v: "warn", note: "TPS·에러율 보조 지표 추가 권장" },
+        ],
+        suggestion: "주 지표는 p95 응답속도, 보조 지표로 TPS · 에러율을 함께 모니터링하세요.",
+      },
+    },
+  },
+  kr2: {
+    title: "KR 02 · 결제 인증모듈 단위테스트 커버리지 65% → 85%",
+    format: "수치", weight: 25,
+    reviews: {
+      claude: {
+        score: 8, scoreLabel: "Good",
+        verdict: "pass",
+        summary: "회귀 장애 근거를 명시한 점이 매우 좋아요. 다만 '커버리지'는 양적 지표라 질적 검증 보완이 필요해요.",
+        items: [
+          { c: "측정성", v: "pass", note: "Jest coverage report 자동" },
+          { c: "도전성", v: "pass", note: "+20%p는 도전적" },
+          { c: "근거",   v: "pass", note: "회귀 장애 3건 영역 명시" },
+          { c: "질적측면", v: "warn", note: "Mutation testing 보완 권장" },
+        ],
+        suggestion: "Stryker 같은 mutation testing으로 커버리지의 질도 검증하면 더 견고해요.",
+      },
+      gpt: {
+        score: 9, scoreLabel: "Strong",
+        verdict: "pass",
+        summary: "회귀 장애 영역 100% 커버라는 구체적 정량 근거가 탁월합니다. 의존성도 낮아요.",
+        items: [
+          { c: "측정성", v: "pass", note: "자동 수집 가능" },
+          { c: "도전성", v: "pass", note: "현실적이면서 도전적" },
+          { c: "근거",   v: "pass", note: "장애 데이터 근거 ─ 강력" },
+          { c: "독립성", v: "pass", note: "본인 모듈 ─ 외부 의존 없음" },
+        ],
+        suggestion: "추가 보완 없음. 이대로 진행해도 충분합니다.",
+      },
+      gemini: {
+        score: 7.5, scoreLabel: "Acceptable",
+        verdict: "warn",
+        summary: "커버리지 향상은 좋지만, 새 기능 개발 일정과의 균형을 어떻게 잡을지 명시되지 않았어요.",
+        items: [
+          { c: "측정성", v: "pass", note: "자동 측정" },
+          { c: "도전성", v: "pass", note: "20%p 향상" },
+          { c: "근거",   v: "pass", note: "회귀 장애 근거" },
+          { c: "현실성", v: "warn", note: "기능 개발 일정과 충돌 가능성" },
+        ],
+        suggestion: "Sprint 내 'test refactor day'를 격주로 잡아두는 운영 계획을 함께 적어주세요.",
+      },
+    },
+  },
+  kr3: {
+    title: "KR 03 · 장애 알림 룰 자동화 4단계 중 3단계 완료",
+    format: "마일스톤", weight: 20,
+    reviews: {
+      claude: {
+        score: 6.5, scoreLabel: "Needs Work",
+        verdict: "warn",
+        summary: "마일스톤 단계가 무엇인지 구체적이지 않아요. 각 단계의 산출물·검증 방법을 명시해야 평가가 가능해요.",
+        items: [
+          { c: "측정성", v: "warn", note: "4단계가 무엇인지 정의 필요" },
+          { c: "도전성", v: "pass", note: "자동화 자체는 도전적" },
+          { c: "증빙",   v: "fail", note: "PR · 문서 첨부 가이드 없음" },
+          { c: "단계정의", v: "fail", note: "각 단계 산출물 미정의" },
+        ],
+        suggestion: "1단계=룰 정의, 2단계=알림 채널 통합, 3단계=노이즈 필터링, 4단계=onCall 자동화 식으로 명시하세요.",
+      },
+      gpt: {
+        score: 7, scoreLabel: "Acceptable",
+        verdict: "warn",
+        summary: "마일스톤 구조는 적절하지만 각 단계의 완료 기준이 모호해요.",
+        items: [
+          { c: "측정성", v: "warn", note: "단계 완료 기준 모호" },
+          { c: "도전성", v: "pass", note: "신규 자동화 도전" },
+          { c: "증빙",   v: "warn", note: "산출물 명세 필요" },
+          { c: "분할적정성", v: "pass", note: "4단계 분할은 적절" },
+        ],
+        suggestion: "각 단계마다 1줄로 '완료 정의(Definition of Done)'를 작성하세요.",
+      },
+      gemini: {
+        score: 6, scoreLabel: "Needs Work",
+        verdict: "fail",
+        summary: "측정 가능한 산출물이 정의되지 않았어요. 마일스톤형 KR은 단계별 evidence가 필수입니다.",
+        items: [
+          { c: "측정성", v: "fail", note: "단계별 산출물 미정의" },
+          { c: "도전성", v: "pass", note: "자동화 시도 자체 도전적" },
+          { c: "증빙",   v: "fail", note: "PR/문서/감사로그 등 미명시" },
+          { c: "회수성", v: "warn", note: "외부 SRE팀 의존성 고려 필요" },
+        ],
+        suggestion: "STEP 5로 돌아가서 각 단계의 산출물(PR/Runbook/Dashboard 등)을 정의해주세요.",
+      },
+    },
+  },
+};
+
+function AIBadge({ vendor, size = "md" }) {
+  const s = size === "sm" ? { w: 24, h: 24, font: 11 } : { w: 32, h: 32, font: 14 };
+  return (
+    <div style={{
+      width: s.w, height: s.h, borderRadius: 8,
+      background: vendor.accent, color: "#fff",
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      fontSize: s.font, fontWeight: 700, flexShrink: 0,
+    }}>{vendor.avatar}</div>
+  );
+}
+
+function VerdictPill({ verdict }) {
+  const v = {
+    pass: { bg: "#ECFAF1", fg: "#2F9E5E", border: "#BBE9CC", ico: "✓", label: "통과" },
+    warn: { bg: "#FFF7EC", fg: "#D98023", border: "#FFE0BA", ico: "!", label: "보완" },
+    fail: { bg: "#FFF0F0", fg: "#D14343", border: "#FFD4D4", ico: "✗", label: "필수보완" },
+  }[verdict];
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "2px 8px", borderRadius: 999,
+      background: v.bg, color: v.fg, border: `1px solid ${v.border}`,
+      fontSize: 10.5, fontWeight: 700,
+    }}>
+      <span>{v.ico}</span> {v.label}
+    </span>
+  );
+}
+
+function ItemRow({ c, v, note }) {
+  const tone = {
+    pass: { c: "#2F9E5E", ico: "✓" },
+    warn: { c: "#D98023", ico: "!" },
+    fail: { c: "#D14343", ico: "✗" },
+  }[v];
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 0", borderBottom: "1px dashed #ECEFF5" }}>
+      <span style={{ color: tone.c, fontWeight: 700, fontSize: 13, lineHeight: 1.5, width: 12, flexShrink: 0 }}>{tone.ico}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11.5, fontWeight: 700, color: "#0F1A36" }}>{c}</div>
+        <div style={{ fontSize: 11, color: "#5B6685", lineHeight: 1.5, marginTop: 1 }}>{note}</div>
+      </div>
+    </div>
+  );
+}
+
+function AIReviewCard({ vendor, review, krNum, isChosen, onChoose }) {
+  return (
+    <div style={{
+      background: "#fff",
+      border: `${isChosen ? 2 : 1}px solid ${isChosen ? vendor.accent : "#E1E5EF"}`,
+      borderRadius: 13,
+      padding: "16px 16px",
+      display: "flex", flexDirection: "column", gap: 11,
+      boxShadow: isChosen ? `0 12px 28px -8px ${vendor.accent}30` : "0 1px 2px rgba(31,42,74,.04)",
+      transition: "all 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+      position: "relative",
+    }}>
+      {isChosen && (
+        <div style={{ position: "absolute", top: -8, right: 14, padding: "3px 10px", background: vendor.accent, color: "#fff", borderRadius: 999, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em" }}>
+          ✓ 채택
+        </div>
+      )}
+
+      {/* Vendor header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <AIBadge vendor={vendor}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>{vendor.short}</div>
+          <div style={{ fontSize: 10.5, color: "#7C87A4", marginTop: 1 }}>{vendor.vendor} · {vendor.name.split(" ").slice(-1)[0]}</div>
+        </div>
+        <VerdictPill verdict={review.verdict}/>
+      </div>
+
+      {/* Score */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 8, padding: "10px 13px", background: vendor.accentBg, borderRadius: 9, border: `1px solid ${vendor.accentBorder}` }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 700, color: vendor.accent, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          {review.score}<span style={{ fontSize: 14, color: "#7C87A4", fontWeight: 500 }}>/10</span>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: vendor.accent, marginBottom: 3 }}>{review.scoreLabel}</div>
+      </div>
+
+      {/* Summary */}
+      <div style={{ fontSize: 12, color: "#1F2A4A", lineHeight: 1.6 }}>{review.summary}</div>
+
+      {/* Items */}
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 5 }}>항목별 검토</div>
+        {review.items.map((it, i) => <ItemRow key={i} {...it}/>)}
+      </div>
+
+      {/* Suggestion */}
+      <div style={{ padding: "10px 12px", background: "#F9FAFC", borderRadius: 8, border: "1px dashed #C8CFDF" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: vendor.accent, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 4 }}>💡 보완 제안</div>
+        <div style={{ fontSize: 11.5, color: "#1F2A4A", lineHeight: 1.55 }}>{review.suggestion}</div>
+      </div>
+
+      {/* Choose button */}
+      <button onClick={onChoose} style={{
+        marginTop: "auto",
+        padding: "9px 12px",
+        background: isChosen ? vendor.accent : "#F4F7FB",
+        color: isChosen ? "#fff" : "#3A4565",
+        border: `1px solid ${isChosen ? vendor.accent : "#E1E5EF"}`,
+        borderRadius: 9,
+        fontSize: 12, fontWeight: 700,
+        cursor: "pointer", fontFamily: "var(--font-sans)",
+        transition: "all 140ms ease-out",
+      }}>
+        {isChosen ? "✓ 채택된 의견" : "이 의견 채택"}
+      </button>
+    </div>
+  );
+}
+
+function ConsensusBar({ pass, warn, fail }) {
+  const total = pass + warn + fail;
+  return (
+    <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", background: "#F4F7FB" }}>
+      {pass > 0 && <div style={{ flex: pass, background: "#2F9E5E" }}/>}
+      {warn > 0 && <div style={{ flex: warn, background: "#D98023" }}/>}
+      {fail > 0 && <div style={{ flex: fail, background: "#D14343" }}/>}
+    </div>
+  );
+}
+
+function R1WriteStep6() {
+  const [activeKR, setActiveKR] = React.useState("kr1");
+  const [chosen, setChosen] = React.useState({ kr1: "claude", kr2: "gpt", kr3: null });
+
+  const krData = REVIEW_DATA[activeKR];
+  const krs = [
+    { id: "kr1", label: "KR 01", short: "응답속도 850→500ms", weight: 30 },
+    { id: "kr2", label: "KR 02", short: "테스트 커버리지 65→85%", weight: 25 },
+    { id: "kr3", label: "KR 03", short: "장애 알림 자동화", weight: 20 },
+  ];
+
+  // 전체 consensus 계산
+  const allVerdicts = Object.values(REVIEW_DATA).flatMap(kr => Object.values(kr.reviews).map(r => r.verdict));
+  const passCt = allVerdicts.filter(v => v === "pass").length;
+  const warnCt = allVerdicts.filter(v => v === "warn").length;
+  const failCt = allVerdicts.filter(v => v === "fail").length;
+  const avgScore = (Object.values(REVIEW_DATA).flatMap(kr => Object.values(kr.reviews).map(r => r.score)).reduce((a, b) => a + b, 0) / 9).toFixed(1);
+
+  return (
+    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
+      <TopBar title="OKR 작성" subtitle="STEP 6 / 7 · 3개 AI 검토 비교"/>
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 40px 32px" }}>
+
+        <WizardBreadcrumb stepLabel="STEP 6 · AI 비교 검토"/>
+        <WizardStepHeader current={6}/>
+
+        <WizardHero
+          stepNum={6}
+          title="3개 AI가 본 KR — 함께 비교해볼까요?"
+          desc="Claude · GPT · Gemini 세 가지 AI 모델이 동시에 KR을 검토했어요. 각 AI의 관점을 비교해 가장 공감되는 의견을 채택하면, STEP 7 최종 수정에 자동 반영됩니다."
+          badge="✨ MULTI-AI"
+          showAIHelp={false}
+        />
+
+        {/* TOP — 종합 합의도 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
+          {/* 종합 합의도 카드 */}
+          <div style={{ background: "linear-gradient(135deg, #1B2A4E, #2C3E68)", color: "#fff", borderRadius: 14, padding: "18px 22px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤝</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700 }}>3개 AI 종합 합의도</div>
+                <div style={{ fontSize: 11, color: "#91A6F0", marginTop: 2 }}>KR 3개 × AI 3사 = 9건 검토</div>
+              </div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                {avgScore}<span style={{ fontSize: 13, color: "#91A6F0", fontWeight: 500 }}>/10</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
+                <ConsensusBar pass={passCt} warn={warnCt} fail={failCt}/>
+              </div>
+              <div style={{ display: "flex", gap: 10, fontSize: 11, color: "#C5D0F7" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#2F9E5E" }}/> 통과 {passCt}
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#D98023" }}/> 보완 {warnCt}
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#D14343" }}/> 필수 {failCt}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 채택 현황 */}
+          <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "16px 18px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>의견 채택 현황</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.02em" }}>
+              {Object.values(chosen).filter(Boolean).length} <span style={{ color: "#7C87A4", fontWeight: 500 }}>/ 3</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: "#5B6685", marginTop: 4 }}>KR별로 채택할 AI를 선택해주세요</div>
+          </div>
+
+          {/* AI별 평균 */}
+          <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "16px 18px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>AI별 평균 점수</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {AI_VENDORS.map(v => {
+                const scores = Object.values(REVIEW_DATA).map(kr => kr.reviews[v.id].score);
+                const avg = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+                return (
+                  <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <AIBadge vendor={v} size="sm"/>
+                    <div style={{ flex: 1, fontSize: 12, color: "#3A4565" }}>{v.short}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: v.accent, fontVariantNumeric: "tabular-nums" }}>{avg}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* KR Tabs */}
+        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "8px 8px", marginBottom: 16, display: "flex", gap: 6 }}>
+          {krs.map(k => {
+            const on = activeKR === k.id;
+            const isChosen = !!chosen[k.id];
+            return (
+              <button key={k.id} onClick={() => setActiveKR(k.id)} style={{
+                flex: 1,
+                padding: "12px 14px",
+                background: on ? "#F1F4FD" : "transparent",
+                border: `1.5px solid ${on ? "#3B5BDB" : "transparent"}`,
+                borderRadius: 10, cursor: "pointer", fontFamily: "var(--font-sans)",
+                textAlign: "left", transition: "all 140ms ease-out",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: on ? "#213A8C" : "#7C87A4" }}>{k.label}</span>
+                  <span style={{ padding: "1px 7px", borderRadius: 4, background: "#F4F7FB", color: "#5B6685", fontSize: 10, fontWeight: 600 }}>가중치 {k.weight}%</span>
+                  {isChosen && (
+                    <span style={{ padding: "1px 7px", borderRadius: 4, background: "#ECFAF1", color: "#2F9E5E", fontSize: 10, fontWeight: 700 }}>채택 ✓</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12.5, fontWeight: on ? 700 : 500, color: on ? "#0F1A36" : "#5B6685", lineHeight: 1.4 }}>{k.short}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Selected KR title */}
+        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "14px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ padding: "3px 10px", borderRadius: 999, background: "#F1F4FD", color: "#213A8C", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{krData.title.split("·")[0].trim()}</span>
+          <span style={{ padding: "3px 10px", borderRadius: 999, background: krData.format === "수치" ? "#E5EBFB" : "#F0E9FB", color: krData.format === "수치" ? "#213A8C" : "#7C4DD9", fontSize: 11, fontWeight: 600 }}>{krData.format}형</span>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0F1A36", flex: 1, lineHeight: 1.5 }}>
+            {krData.title.split("·").slice(1).join("·").trim()}
+          </div>
+        </div>
+
+        {/* 3 AI cards side-by-side */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 18 }}>
+          {AI_VENDORS.map(v => (
+            <AIReviewCard
+              key={v.id}
+              vendor={v}
+              review={krData.reviews[v.id]}
+              krNum={activeKR}
+              isChosen={chosen[activeKR] === v.id}
+              onChoose={() => setChosen({ ...chosen, [activeKR]: chosen[activeKR] === v.id ? null : v.id })}
+            />
+          ))}
+        </div>
+
+        {/* Merged synthesis card */}
+        <div style={{ background: "linear-gradient(135deg, #1B2A4E, #2C3E68)", color: "#fff", borderRadius: 14, padding: "22px 26px", marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 11, background: "rgba(63,193,209,0.22)", color: "#3FC1D1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⚗️</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>3개 AI 종합 의견 (합집합)</div>
+              <div style={{ fontSize: 11.5, color: "#91A6F0", marginTop: 2 }}>{krData.title.split("·")[0].trim()} · 공통 / 차이 의견 정리</div>
+            </div>
+            <Button variant="ai" size="sm" leftIcon={<span>⚗️</span>}>합집합으로 자동 반영</Button>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {/* 공통 */}
+            <div style={{ padding: "14px 16px", background: "rgba(187, 233, 204, 0.08)", border: "1px solid rgba(187, 233, 204, 0.30)", borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#A3E5BD", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>✓ 3사 공통 의견</div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12.5, color: "#E5EBFB", lineHeight: 1.65 }}>
+                {activeKR === "kr1" && <>
+                  <li>측정 기준(p95)·도구(APM)·집계 주기가 명확</li>
+                  <li>850→500ms는 도전적이면서 달성 가능한 수치</li>
+                </>}
+                {activeKR === "kr2" && <>
+                  <li>회귀 장애 영역 100% 커버 — 근거 강력</li>
+                  <li>Jest coverage 자동 수집으로 측정 가능</li>
+                </>}
+                {activeKR === "kr3" && <>
+                  <li>마일스톤 자동화 시도 자체는 도전적이고 가치 있음</li>
+                  <li>각 단계의 산출물·완료 기준 정의가 부족하다는 점에 3사 모두 동의</li>
+                </>}
+              </ul>
+            </div>
+
+            {/* 차이 */}
+            <div style={{ padding: "14px 16px", background: "rgba(255, 195, 100, 0.08)", border: "1px solid rgba(255, 195, 100, 0.30)", borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#FFC369", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>! AI별 차이 의견</div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12.5, color: "#E5EBFB", lineHeight: 1.65 }}>
+                {activeKR === "kr1" && <>
+                  <li><b style={{ color: "#FBD0AC" }}>Claude:</b> SRE 의존성에 주목 — 협업 계획 추가 권장</li>
+                  <li><b style={{ color: "#A8DDCB" }}>GPT:</b> C/D 등급 변별력 부족 — 재조정 추천</li>
+                  <li><b style={{ color: "#A4C2F4" }}>Gemini:</b> TPS·에러율 보조 지표 추가 권장</li>
+                </>}
+                {activeKR === "kr2" && <>
+                  <li><b style={{ color: "#FBD0AC" }}>Claude:</b> Mutation testing으로 질적 검증 권장</li>
+                  <li><b style={{ color: "#A8DDCB" }}>GPT:</b> 가장 높은 점수 — 추가 보완 불필요</li>
+                  <li><b style={{ color: "#A4C2F4" }}>Gemini:</b> 기능 개발 일정과의 균형 명시 필요</li>
+                </>}
+                {activeKR === "kr3" && <>
+                  <li><b style={{ color: "#FBD0AC" }}>Claude:</b> 1~4단계 구체 예시 제시</li>
+                  <li><b style={{ color: "#A8DDCB" }}>GPT:</b> Definition of Done 작성 권장</li>
+                  <li><b style={{ color: "#A4C2F4" }}>Gemini:</b> STEP 5로 복귀 권고 (가장 엄격)</li>
+                </>}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 액션 */}
+        <div style={{
+          padding: "16px 22px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <div style={{ fontSize: 12.5, color: "#5B6685" }}>
+            <b style={{ color: "#0F1A36" }}>KR 3개 모두 의견을 채택</b>하시면 STEP 7에서 채택된 의견 기반으로 최종 수정할 수 있어요.
+          </div>
+          <div style={{ flex: 1 }}/>
+          <Button variant="secondary">전체 합집합 자동 채택</Button>
+          {activeKR !== "kr3" && (
+            <Button variant="primary" onClick={() => setActiveKR(activeKR === "kr1" ? "kr2" : "kr3")}>
+              다음 KR 검토 →
+            </Button>
+          )}
+        </div>
+
+        <WizardNav current={6}/>
+      </div>
+    </main>
+  );
+}
+
+window.R1WriteStep6 = R1WriteStep6;
+</script>
+<script type="text/babel">
+  function App() { return (<><SidebarR1 active="write"/><R1WriteStep6/></>); }
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

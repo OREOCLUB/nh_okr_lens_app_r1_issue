@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" fill="none">
+  <!-- Background organic blob -->
+  <path d="M60 250 C 40 180, 110 100, 200 90 C 290 80, 360 130, 410 200 C 460 270, 380 320, 290 320 C 200 320, 100 320, 60 250 Z"
+        fill="#E5EBFB" opacity="0.55"/>
+
+  <!-- Plant (left) -->
+  <g transform="translate(30, 250)">
+    <ellipse cx="22" cy="80" rx="22" ry="6" fill="#C5D0F7" opacity="0.6"/>
+    <rect x="6" y="46" width="32" height="36" rx="3" fill="#3B5BDB" opacity="0.85"/>
+    <path d="M22 46 C 20 30 8 22 4 26 C 2 36 12 44 22 46 Z" fill="#5C7AE6"/>
+    <path d="M22 46 C 24 28 36 18 42 22 C 44 34 32 44 22 46 Z" fill="#91A6F0"/>
+    <path d="M22 46 C 22 30 22 18 22 14" stroke="#3B5BDB" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Laptop -->
+  <g transform="translate(110, 220)">
+    <path d="M0 80 L 200 80 L 210 95 L -10 95 Z" fill="#1F2A4A"/>
+    <rect x="10" y="0" width="180" height="80" rx="6" fill="#C8CFDF"/>
+    <rect x="18" y="8" width="164" height="64" rx="3" fill="#fff"/>
+    <!-- screen content -->
+    <rect x="26" y="16" width="40" height="4" rx="2" fill="#3B5BDB"/>
+    <rect x="26" y="26" width="80" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="26" y="34" width="68" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="26" y="42" width="76" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="120" y="20" width="50" height="40" rx="4" fill="#F1F4FD"/>
+    <path d="M124 50 L 134 40 L 144 46 L 156 30 L 166 36" stroke="#3B5BDB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Person -->
+  <g transform="translate(120, 110)">
+    <!-- Hair back -->
+    <path d="M30 30 C 26 14 52 6 70 8 C 88 10 100 22 96 42 L 96 70 L 28 70 Z" fill="#2A3548"/>
+    <!-- Body / sweater -->
+    <path d="M14 130 C 14 96 40 78 60 78 C 80 78 110 92 110 130 L 110 165 L 14 165 Z" fill="#91A6F0"/>
+    <!-- Neck -->
+    <rect x="50" y="62" width="20" height="20" rx="6" fill="#F4C9A8"/>
+    <!-- Face -->
+    <ellipse cx="60" cy="48" rx="24" ry="26" fill="#F4C9A8"/>
+    <!-- Hair front -->
+    <path d="M36 38 C 34 22 50 14 60 16 C 78 18 84 28 88 40 C 84 32 70 28 56 30 C 50 32 42 38 36 38 Z" fill="#2A3548"/>
+    <!-- Eyes (closed/smiling) -->
+    <path d="M48 50 Q 51 52 54 50" stroke="#1F2A4A" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M66 50 Q 69 52 72 50" stroke="#1F2A4A" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <!-- Smile -->
+    <path d="M55 60 Q 60 64 65 60" stroke="#1F2A4A" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <!-- Cheek -->
+    <circle cx="47" cy="58" r="2.5" fill="#F7B89C" opacity="0.7"/>
+    <circle cx="73" cy="58" r="2.5" fill="#F7B89C" opacity="0.7"/>
+    <!-- Sweater detail -->
+    <path d="M55 84 L 60 100 L 65 84" stroke="#5C7AE6" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- KR card (top right) -->
+  <g transform="translate(260, 60)">
+    <rect width="120" height="86" rx="10" fill="#fff" stroke="#E1E5EF" stroke-width="1"/>
+    <rect width="120" height="86" rx="10" fill="#fff"/>
+    <rect x="12" y="12" width="56" height="6" rx="2" fill="#3B5BDB"/>
+    <!-- check list -->
+    <circle cx="18" cy="32" r="5" fill="#3B5BDB"/>
+    <path d="M15 32 L 17 34 L 21 30" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="29" width="74" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="30" y="35" width="56" height="3" rx="1.5" fill="#E1E5EF"/>
+
+    <circle cx="18" cy="50" r="5" fill="#3B5BDB"/>
+    <path d="M15 50 L 17 52 L 21 48" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="47" width="68" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="30" y="53" width="52" height="3" rx="1.5" fill="#E1E5EF"/>
+
+    <circle cx="18" cy="68" r="5" fill="#3B5BDB"/>
+    <path d="M15 68 L 17 70 L 21 66" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="65" width="60" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="30" y="71" width="42" height="3" rx="1.5" fill="#E1E5EF"/>
+  </g>
+
+  <!-- Objective tag (left of person, smaller) -->
+  <g transform="translate(40, 130)">
+    <rect width="100" height="60" rx="10" fill="#fff" stroke="#E1E5EF"/>
+    <circle cx="20" cy="22" r="10" fill="#E5EBFB"/>
+    <circle cx="20" cy="22" r="6" stroke="#3B5BDB" stroke-width="1.8" fill="none"/>
+    <circle cx="20" cy="22" r="2" fill="#3B5BDB"/>
+    <rect x="36" y="17" width="50" height="5" rx="2" fill="#0F1A36"/>
+    <rect x="36" y="25" width="34" height="3" rx="1.5" fill="#A4ADC4"/>
+    <rect x="14" y="40" width="72" height="3" rx="1.5" fill="#E1E5EF"/>
+    <rect x="14" y="48" width="50" height="3" rx="1.5" fill="#E1E5EF"/>
+  </g>
+
+  <!-- Mini chart card (right of laptop) -->
+  <g transform="translate(290, 180)">
+    <rect width="86" height="56" rx="10" fill="#fff" stroke="#E1E5EF"/>
+    <polyline points="10,40 22,30 32,34 44,20 56,26 68,14 76,18"
+              stroke="#3B5BDB" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="76" cy="18" r="3" fill="#3B5BDB"/>
+  </g>
+
+  <!-- AI Coaching speech bubble -->
+  <g transform="translate(230, 250)">
+    <path d="M0 12 Q 0 0 12 0 L 130 0 Q 142 0 142 12 L 142 36 Q 142 48 130 48 L 28 48 L 18 60 L 20 48 L 12 48 Q 0 48 0 36 Z" fill="#ECFAF1" stroke="#BBE9CC"/>
+    <!-- sparkle icon -->
+    <g transform="translate(14, 18)">
+      <path d="M8 0 L 9.5 6.5 L 16 8 L 9.5 9.5 L 8 16 L 6.5 9.5 L 0 8 L 6.5 6.5 Z" fill="#2F9E5E"/>
+    </g>
+    <rect x="38" y="14" width="50" height="5" rx="2" fill="#2F9E5E"/>
+    <rect x="38" y="24" width="86" height="4" rx="2" fill="#BBE9CC"/>
+    <rect x="38" y="32" width="64" height="4" rx="2" fill="#BBE9CC"/>
+  </g>
+
+  <!-- Decorative dots -->
+  <circle cx="380" cy="80" r="3" fill="#3B5BDB" opacity="0.4"/>
+  <circle cx="410" cy="120" r="2" fill="#3B5BDB" opacity="0.3"/>
+  <circle cx="90" cy="90" r="2.5" fill="#3B5BDB" opacity="0.35"/>
+  <circle cx="430" cy="240" r="3" fill="#3B5BDB" opacity="0.3"/>
+  <path d="M40 50 L 46 50 M 43 47 L 43 53" stroke="#3B5BDB" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M400 290 L 408 290 M 404 286 L 404 294" stroke="#3B5BDB" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+</svg>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:#fff;font-family:var(--font-sans);color:var(--ink-700);}
+  .wrap{padding:22px 26px;}
+  .head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;}
+  .h-name{font-size:14px;font-weight:600;color:var(--ink-900);}
+  .meta{font-size:12px;color:var(--ink-500);}
+  .grid{display:grid;grid-template-columns:1fr 1.4fr 1.6fr;gap:18px;}
+  .col-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-500);margin-bottom:10px;}
+  .pills{display:flex;flex-direction:column;gap:7px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:600;width:fit-content;}
+  .grade-row{display:flex;gap:5px;}
+  .grade{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:var(--font-mono);font-size:15px;}
+  .heat-row{display:flex;gap:4px;}
+  .heat{height:42px;flex:1;border-radius:6px;}
+  .note{font-size:11px;color:var(--ink-500);margin-top:10px;line-height:1.55;}
+</style></head>
+<body><div class="wrap">
+  <div class="head"><div class="h-name">Difficulty · Grade · Heatmap</div><div class="meta">난이도 · 등급 5색 · 분포 히트맵 6-step</div></div>
+  <div class="grid">
+    <div>
+      <div class="col-label">Difficulty</div>
+      <div class="pills">
+        <span class="pill" style="background:#F0E9FB;color:#7C4DD9">상 · 도전적</span>
+        <span class="pill" style="background:#E0F7EC;color:#007048">중 · 표준</span>
+        <span class="pill" style="background:#F1F3F8;color:#5B6685">하 · 기본</span>
+      </div>
+    </div>
+    <div>
+      <div class="col-label">Grade S~D</div>
+      <div class="grade-row">
+        <div class="grade" style="background:#6B47E0">S</div>
+        <div class="grade" style="background:#00A968">A</div>
+        <div class="grade" style="background:#2F9E5E">B</div>
+        <div class="grade" style="background:#D98023">C</div>
+        <div class="grade" style="background:#7C87A4">D</div>
+      </div>
+      <div class="note" style="margin-top:10px">강제배분 — S 5 · A 10 · B 75 · C ≤10</div>
+    </div>
+    <div>
+      <div class="col-label">Heatmap (6 step)</div>
+      <div class="heat-row">
+        <div class="heat" style="background:#F1FBF6"></div>
+        <div class="heat" style="background:#D1F0DF"></div>
+        <div class="heat" style="background:#A6E4C7"></div>
+        <div class="heat" style="background:#65D6A6"></div>
+        <div class="heat" style="background:#3EDDA1"></div>
+        <div class="heat" style="background:#00A968"></div>
+      </div>
+      <div class="note" style="margin-top:10px">본부 × 직급 난이도 분포</div>
+    </div>
+  </div>
+</div></body></html>

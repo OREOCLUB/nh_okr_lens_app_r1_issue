@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 인사담당자</title>
+<style>/* ============================================================
+   OKR LENS — Design System
+   colors_and_type.css
+   사내 OKR 평가·코칭 AI 서비스 — 친근한 SaaS 톤 · 넉넉한 여백
+   ============================================================ */
+
+/* ---------- 1. Fonts ---------- */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- 2. Color — Brand / Primary (Friendly Blue) ---------- */
+  /* 참고 이미지의 SSO 버튼/CTA 컬러에서 추출. 인디고가 아닌 더 밝은 'Friendly Blue'. */
+  --brand-900: #142250;   /* deepest — text accent on light bg */
+  --brand-800: #1B2A4E;   /* dark navy — sidebar, hero text accent (참고 이미지 좌측 다크 카드) */
+  --brand-700: #213A8C;
+  --brand-600: #2C49B8;
+  --brand-500: #3B5BDB;   /* PRIMARY — SSO 버튼 컬러 */
+  --brand-400: #5C7AE6;
+  --brand-300: #91A6F0;
+  --brand-200: #C5D0F7;
+  --brand-100: #E5EBFB;
+  --brand-50:  #F1F4FD;
+
+  /* ---------- 3. Role Accents (3역할 컬러 코딩) ---------- */
+  /* 참고 이미지: 피평가자=블루, 평가자=그린, 인사담당자=오렌지/코랄 */
+  --role-r1-bg:   #E8F0FF;
+  --role-r1-fg:   #3B5BDB;
+  --role-r1-mark: #3B5BDB;
+
+  --role-r2-bg:   #E3F4EA;
+  --role-r2-fg:   #2F9E5E;
+  --role-r2-mark: #2F9E5E;
+
+  --role-r3-bg:   #FFEDE2;
+  --role-r3-fg:   #E07A3C;
+  --role-r3-mark: #E07A3C;
+
+  /* ---------- 4. Color — Neutrals (Cool Slate, softer than v1) ---------- */
+  --ink-900: #0F1A36;     /* heading */
+  --ink-800: #1F2A4A;
+  --ink-700: #3A4565;     /* body strong */
+  --ink-600: #5B6685;     /* body */
+  --ink-500: #7C87A4;     /* secondary */
+  --ink-400: #A4ADC4;     /* tertiary, icon */
+  --ink-300: #C8CFDF;     /* disabled */
+  --ink-200: #E1E5EF;     /* divider */
+  --ink-150: #ECEFF5;
+  --ink-100: #F4F7FB;     /* PAGE BACKGROUND — 참고 이미지 베이스 */
+  --ink-50:  #F9FAFC;
+  --ink-0:   #FFFFFF;
+
+  /* ---------- 5. Color — Semantic (Status) ---------- */
+  /* 친근한 톤 — 채도 더 낮춤. "코칭" 시선 유지. */
+  --risk-high-fg:   #D14343;
+  --risk-high-bg:   #FFF0F0;
+  --risk-high-bd:   #FFD4D4;
+
+  --risk-mid-fg:    #D98023;
+  --risk-mid-bg:    #FFF7EC;
+  --risk-mid-bd:    #FFE0BA;
+
+  --risk-low-fg:    #2F9E5E;
+  --risk-low-bg:    #ECFAF1;
+  --risk-low-bd:    #BBE9CC;
+
+  --info-fg:        #2B5DD9;
+  --info-bg:        #EFF4FE;
+  --info-bd:        #C5D5F7;
+
+  /* ---------- 6. Status — 승인 enum (D5) ---------- */
+  --status-draft-fg:    #5B6685;
+  --status-draft-bg:    #F1F3F8;
+  --status-pending-fg:  #2B5DD9;
+  --status-pending-bg:  #EFF4FE;
+  --status-approved-fg: #2F9E5E;
+  --status-approved-bg: #ECFAF1;
+  --status-rejected-fg: #D14343;
+  --status-rejected-bg: #FFF0F0;
+  --status-adjust-fg:   #D98023;
+  --status-adjust-bg:   #FFF7EC;
+
+  /* ---------- 7. Difficulty / Grade ---------- */
+  --diff-high: #7C4DD9;
+  --diff-mid:  #3B5BDB;
+  --diff-low:  #7C87A4;
+
+  --grade-s: #6B47E0;
+  --grade-a: #3B5BDB;
+  --grade-b: #2F9E5E;
+  --grade-c: #D98023;
+  --grade-d: #7C87A4;
+
+  /* ---------- 8. Data viz / Heatmap ---------- */
+  --heat-0: #F1F4FD;
+  --heat-1: #DCE3F8;
+  --heat-2: #B7C4F0;
+  --heat-3: #8FA1E5;
+  --heat-4: #5C7AE6;
+  --heat-5: #3B5BDB;
+
+  /* ---------- 9. Typography — Stacks ---------- */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+               'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- 10. Type — Sizes & line-heights ---------- */
+  /* base 15px — 참고 이미지의 넉넉한 밀도에 맞춰 한 단계 키움 */
+  --fs-hero:     48px;   /* 랜딩 메인 헤드라인 */
+  --fs-display:  36px;
+  --fs-h1:       28px;
+  --fs-h2:       22px;
+  --fs-h3:       18px;
+  --fs-body-lg:  16px;
+  --fs-body:     15px;   /* body default */
+  --fs-sm:       13.5px;
+  --fs-xs:       12.5px;
+  --fs-micro:    11.5px;
+
+  --lh-tight:    1.25;
+  --lh-snug:     1.45;
+  --lh-normal:   1.7;
+  --lh-relaxed:  1.85;
+
+  --tracking-tight:  -0.025em;
+  --tracking-normal: -0.005em;
+  --tracking-wide:   0.04em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* ---------- 11. Spacing scale (4pt grid) ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+  --sp-12: 96px;
+
+  /* ---------- 12. Radius — 더 부드럽게 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;    /* 기본 카드 */
+  --radius-xl: 20px;    /* 큰 카드, 패널 */
+  --radius-2xl: 28px;   /* 히어로 일러스트 박스 */
+  --radius-pill: 999px;
+
+  /* ---------- 13. Shadow / Elevation — 부드럽고 옅음 ---------- */
+  --shadow-xs: 0 1px 2px rgba(31, 42, 74, 0.04);
+  --shadow-sm: 0 2px 6px rgba(31, 42, 74, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(31, 42, 74, 0.08);
+  --shadow-lg: 0 16px 40px -10px rgba(31, 42, 74, 0.10);
+  --shadow-xl: 0 30px 60px -16px rgba(31, 42, 74, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(59, 91, 219, 0.16);
+  --shadow-card-hover: 0 12px 28px -8px rgba(59, 91, 219, 0.18);
+
+  /* ---------- 14. Borders ---------- */
+  --bd-subtle: 1px solid var(--ink-150);
+  --bd-default: 1px solid var(--ink-200);
+  --bd-strong: 1px solid var(--ink-300);
+  --bd-focus: 1.5px solid var(--brand-500);
+
+  /* ---------- 15. Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+
+  /* ---------- 16. Layout ---------- */
+  --sidebar-w: 256px;
+  --topbar-h: 64px;
+  --content-max: 1440px;
+  --page-pad-x: 40px;
+  --page-pad-y: 32px;
+}
+
+/* ============================================================
+   Semantic typography classes
+   ============================================================ */
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+.ds-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-500);
+}
+.ds-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-700);
+  font-feature-settings: "tnum" 1;
+}
+.ds-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ds-reset, .ds-reset * { box-sizing: border-box; }
+.ds-reset {
+  font-family: var(--font-sans);
+  color: var(--ink-600);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   OKR LENS Responsive — 2026 리브랜드
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: auto; }
+body { font-size: 16px; }
+
+.okrlens-sidebar,
+aside[class*="Sidebar"] {
+  transition: width 220ms cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 1024px) {
+  .okrlens-sidebar { width: 76px !important; min-width: 76px !important; padding-left: 10px !important; padding-right: 10px !important; }
+  .okrlens-sidebar > div:first-child > span:not(:first-child),
+  .okrlens-sidebar > div:first-child > span:last-child { display: none !important; }
+  .okrlens-sidebar > div:first-child { justify-content: center !important; padding: 4px 0 22px !important; }
+  .okrlens-sidebar a > div span:last-child,
+  .okrlens-sidebar > div > div:last-child > div:last-child { display: none !important; }
+  .okrlens-sidebar a > div,
+  .okrlens-sidebar > div > div {
+    justify-content: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+@media (max-width: 900px) {
+  .okrlens-sidebar { width: 72px !important; min-width: 72px !important; padding-left: 8px !important; padding-right: 8px !important; }
+}
+@media (max-width: 640px) {
+  .okrlens-sidebar { position: fixed; z-index: 100; height: 100vh; transform: translateX(-100%); }
+  .okrlens-sidebar.open { transform: translateX(0); }
+  #app > div > div:last-child,
+  main { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+main, [class*="page-content"] {
+  padding-left: clamp(16px, 3vw, 40px);
+  padding-right: clamp(16px, 3vw, 40px);
+}
+
+@media (max-width: 900px) {
+  [style*="gridTemplateColumns"][style*="1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  [style*="repeat(3, 1fr)"],
+  [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  [style*="gap: 56px"], [style*="gap:56px"] { gap: 24px !important; }
+  [style*="gap: 40px"], [style*="gap:40px"] { gap: 20px !important; }
+}
+
+.okrlens-topbar {
+  flex-wrap: wrap;
+  gap: 12px !important;
+  padding: 12px 20px !important;
+}
+@media (max-width: 900px) {
+  .okrlens-search { width: 100% !important; order: 10; }
+  .okrlens-period { display: none !important; }
+}
+
+body, .ds-body { font-size: 16px; }
+h1, .ds-h1 { font-size: clamp(22px, 3vw, 28px); }
+h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
+
+
+</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; border: 2px solid #F4F7FB; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div id="__splash" style="position:fixed;inset:0;background:#F5F6F4;display:flex;align-items:center;justify-content:center;z-index:2147483647;transition:opacity .25s ease">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <rect x="500" y="320" width="200" height="160" rx="32" fill="transparent"/>
+    <circle cx="600" cy="400" r="36" fill="none" stroke="#fff" stroke-width="8" opacity="0.7"/>
+    <circle cx="600" cy="400" r="10" fill="#fff"/>
+    <text x="600" y="540" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#0F1A36" text-anchor="middle" letter-spacing="2">OKR LENS</text>
+    <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
+  </svg>
+</div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
+// Usage: <Icon name="dashboard" size={18} />
+const ICONS = {
+  dashboard: <><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></>,
+  clipboard: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+  sliders: <><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="12" cy="4" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="20" r="2"/></>,
+  library: <><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></>,
+  barchart: <><path d="M3 3v18h18"/><path d="M7 16V9m5 7V5m5 11v-4"/></>,
+  piechart: <path d="M21 12A9 9 0 1 1 12 3v9z"/>,
+  search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>,
+  sort: <path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>,
+  more: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></>,
+  chevronDown: <path d="m6 9 6 6 6-6"/>,
+  chevronRight: <path d="m9 6 6 6-6 6"/>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  check: <path d="M20 6 9 17l-5-5"/>,
+  x: <><path d="M18 6 6 18M6 6l12 12"/></>,
+  refresh: <><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.78.95 6.5 2.5L21 3"/><path d="M21 3v6h-6"/></>,
+  alert: <><path d="m21.7 16.6-8.9-15a1 1 0 0 0-1.8 0L2.1 16.6A1 1 0 0 0 3 18h18a1 1 0 0 0 .8-1.4z"/><path d="M12 9v4M12 17h.01"/></>,
+  sparkles: <><path d="M9.94 14.34A2.5 2.5 0 1 1 12 12.94"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6 7.7 7.7m8.6 8.6 2.1 2.1m0-13L16.3 7.7M5.6 18.4l2.1-2.1"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+};
+
+function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
+  const path = ICONS[name];
+  if (!path) return null;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+      {...rest}
+    >
+      {path}
+    </svg>
+  );
+}
+
+window.Icon = Icon;
+</script>
+<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
+  const base = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    lineHeight: 1,
+    letterSpacing: "-0.005em",
+    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
+    opacity: disabled ? 0.42 : 1,
+  };
+  const sizes = {
+    sm: { fontSize: 12.5, padding: "7px 12px" },
+    md: { fontSize: 13.5, padding: "10px 16px" },
+    lg: { fontSize: 15, padding: "12px 22px" },
+  };
+  const variants = {
+    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
+    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
+    ghost:     { background: "transparent", color: "#3A4565" },
+    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
+    success:   { background: "#2F9E5E", color: "#fff" },
+    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hoverStyles = {
+    primary:   { background: "#2C49B8" },
+    secondary: { background: "#F4F7FB" },
+    ghost:     { background: "#F4F7FB" },
+    danger:    { background: "#FFF0F0" },
+    success:   { background: "#268F52" },
+    ai:        { background: "#E5EBFB" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
+    >
+      {leftIcon}
+      {children}
+      {rightIcon}
+    </button>
+  );
+}
+window.Button = Button;
+</script>
+<script type="text/babel">function TopBar({ title, subtitle }) {
+  return (
+    <header style={{
+      height: 64, minHeight: 64,
+      display: "flex", alignItems: "center",
+      padding: "0 32px",
+      background: "#fff",
+      borderBottom: "1px solid #E1E5EF",
+      gap: 18,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: "#F4F7FB",
+        borderRadius: 10, padding: "8px 14px",
+        width: 300,
+        color: "#7C87A4",
+      }}>
+        <Icon name="search" size={15}/>
+        <input
+          placeholder="팀원 이름, KR ID 검색"
+          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
+        />
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px",
+        border: "1px solid #E1E5EF", borderRadius: 10,
+        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
+      }}>
+        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
+        2026 상반기
+        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
+      </div>
+
+      <button style={{
+        position: "relative",
+        width: 40, height: 40, borderRadius: 10,
+        border: "1px solid #E1E5EF", background: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#3A4565",
+      }}>
+        <Icon name="bell" size={17}/>
+        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
+      </button>
+    </header>
+  );
+}
+
+window.TopBar = TopBar;
+</script>
+<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
+// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
+// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
+function SidebarR3({ active = "operation" }) {
+  const steps = [
+    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
+    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
+    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
+    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
+    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
+    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+  ];
+  return (
+    <aside className="okrlens-sidebar" style={{
+      width: 244, minWidth: 244,
+      background: "#0A1F17", color: "#A4ADC4",
+      display: "flex", flexDirection: "column",
+      height: "100%", padding: "20px 14px", gap: 4,
+      overflowY: "auto",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+      </div>
+
+      {/* Role chip — orange */}
+      <div style={{
+        margin: "0 4px 14px",
+        background: "rgba(224,122,60,0.16)",
+        border: "1px solid rgba(224,122,60,0.32)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        display: "flex", alignItems: "center", gap: 9,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
+        <div>
+          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
+        </div>
+      </div>
+
+      {/* Section label */}
+      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        운영 흐름 · 6단계
+      </div>
+
+      {steps.map((it, idx) => {
+        const on = it.id === active;
+        const isLast = idx === steps.length - 1;
+        return (
+          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 11px", borderRadius: 10,
+              background: on ? "rgba(224,122,60,0.18)" : "transparent",
+              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 140ms ease-out",
+              position: "relative",
+            }}>
+              {/* Step number badge */}
+              <div style={{
+                width: 24, height: 24, borderRadius: 7,
+                background: on ? "#E07A3C" : "#243759",
+                color: on ? "#fff" : "#91A6F0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+                flexShrink: 0,
+              }}>{it.step}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: on ? 700 : 600,
+                  color: on ? "#fff" : "#C8CFDF",
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.label}</div>
+                <div style={{
+                  fontSize: 10.5,
+                  color: on ? "#F4C9A8" : "#7E89B0",
+                  marginTop: 1,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.desc}</div>
+              </div>
+              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
+            </div>
+            {/* Connector line between steps */}
+            {!isLast && (
+              <div style={{
+                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
+                background: on ? "#E07A3C" : "#243759",
+                opacity: 0.4,
+              }}/>
+            )}
+          </a>
+        );
+      })}
+
+      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+        <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9,
+            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
+          }}>
+            <Icon name="refresh" size={15}/>
+            <span>역할 전환</span>
+          </div>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
+            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+window.SidebarR3 = SidebarR3;
+</script>
+<script type="text/babel">// R3Console.jsx — 인사담당자 캘리브레이션 인사이트 (v4 · 데이터-rich)
+// 이전 두루뭉술한 "5 카드 메뉴" → 실제 분석 위젯으로 교체:
+// 01 본부×직급 히트맵 · 02 위험유형 TOP 분포 · 03 본부별 코칭 워크리스트
+// 04 사후조정 비중 · 05 분기 추세 · 06 사례카드 (AI 추출)
+
+// ============ Tokens ============
+const C = {
+  ink: "#0F1A36", ink2: "#3A4565", ink3: "#5B6685", ink4: "#7C87A4", ink5: "#A4ADC4",
+  brand: "#3B5BDB", brandLight: "#E5EBFB",
+  green: "#2F9E5E", greenLight: "#ECFAF1",
+  amber: "#D98023", amberLight: "#FFF7EC",
+  red: "#D14343", redLight: "#FDECEC",
+  purple: "#7C4DD9", purpleLight: "#F0E9FB",
+  orange: "#E07A3C", orangeLight: "#FFEDE2",
+  border: "#E1E5EF", borderLight: "#ECEFF5",
+  bg: "#F4F7FB", bg2: "#F9FAFC",
+};
+
+// ============ Atoms ============
+function CardShell({ children, padding = "24px 26px", hoverable = false, accent }) {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <div
+      onMouseEnter={() => hoverable && setHover(true)}
+      onMouseLeave={() => hoverable && setHover(false)}
+      style={{
+        background: "#fff", border: `1px solid ${hover && accent ? accent : C.border}`,
+        borderRadius: 16, padding, boxShadow: hover ? "0 12px 28px -10px rgba(31,42,74,.12)" : "0 1px 2px rgba(31,42,74,.04)",
+        transition: "all 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+        cursor: hoverable ? "pointer" : "default",
+      }}
+    >{children}</div>
+  );
+}
+
+function SectionHeader({ num, title, hint, action }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 14, marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: C.ink5, fontWeight: 700, letterSpacing: "0.08em" }}>{num}</span>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.ink, letterSpacing: "-0.015em" }}>{title}</h2>
+        {hint && <span style={{ fontSize: 12, color: C.ink4 }}>· {hint}</span>}
+      </div>
+      <div style={{ flex: 1, height: 1, background: C.borderLight }}/>
+      {action}
+    </div>
+  );
+}
+
+function MonoNum({ children, size = 16, color = C.ink, weight = 700 }) {
+  return <span style={{ fontFamily: "var(--font-mono)", fontSize: size, fontWeight: weight, color, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.015em" }}>{children}</span>;
+}
+
+function Pill({ label, color, bg, size = 11 }) {
+  return <span style={{ padding: "3px 9px", borderRadius: 999, background: bg, color, fontSize: size, fontWeight: 700, letterSpacing: "0.02em" }}>{label}</span>;
+}
+
+// ============ Hero Stats — 데이터-rich KPI ============
+function HeroKpi() {
+  // 4 KPI but each has a sparkline + delta + benchmark
+  const kpis = [
+    {
+      label: "검토 완료율", value: 64, unit: "%", delta: "+12", deltaTone: "ok",
+      sub: "552명 중 354명", spark: [42, 48, 51, 55, 58, 64], color: C.brand,
+      bench: "목표 80%", benchProgress: 80, current: 64,
+    },
+    {
+      label: "코칭 후보 (위험도 ≥ 중)", value: 40, unit: "건", delta: "-8", deltaTone: "ok",
+      sub: "전체 286건 중 14%", spark: [62, 58, 53, 48, 44, 40], color: C.amber,
+      bench: "임계 50건", benchProgress: 100, current: 80,
+    },
+    {
+      label: "사후조정 가능 비중", value: 28.4, unit: "%", delta: "+3.1", deltaTone: "warn",
+      sub: "공모형 · 건수형 · 자기보고형", spark: [22, 23, 25, 26, 27, 28.4], color: C.red,
+      bench: "임계 30%", benchProgress: 100, current: 95,
+    },
+    {
+      label: "기준 통일도", value: 87, unit: "%", delta: "+5", deltaTone: "ok",
+      sub: "평가자 11항목 일치율", spark: [76, 79, 81, 83, 85, 87], color: C.green,
+      bench: "목표 90%", benchProgress: 90, current: 87,
+    },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
+      {kpis.map((k, i) => {
+        const max = Math.max(...k.spark), min = Math.min(...k.spark);
+        const norm = (v) => 1 - (v - min) / (max - min || 1);
+        const W = 100, H = 28;
+        const points = k.spark.map((v, idx) => `${(idx / (k.spark.length - 1)) * W},${norm(v) * H}`).join(" ");
+        return (
+          <div key={i} style={{
+            background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14,
+            padding: "18px 20px", boxShadow: "0 1px 2px rgba(31,42,74,.04)",
+            display: "flex", flexDirection: "column", gap: 12,
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 500, color: C.ink3, lineHeight: 1.4, flex: 1 }}>{k.label}</div>
+              <span style={{
+                padding: "2px 7px", borderRadius: 6,
+                background: k.deltaTone === "ok" ? C.greenLight : C.amberLight,
+                color: k.deltaTone === "ok" ? C.green : C.amber,
+                fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)",
+              }}>{k.delta}{k.unit === "%" ? "%p" : ""}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+              <div>
+                <MonoNum size={30} color={C.ink}>{k.value}</MonoNum>
+                <span style={{ fontSize: 14, color: C.ink4, marginLeft: 4, fontWeight: 500 }}>{k.unit}</span>
+              </div>
+              <svg width={W} height={H} style={{ overflow: "visible" }}>
+                <polyline points={points} fill="none" stroke={k.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx={W} cy={norm(k.spark[k.spark.length - 1]) * H} r="2.5" fill={k.color}/>
+              </svg>
+            </div>
+            <div style={{ fontSize: 11, color: C.ink4 }}>{k.sub}</div>
+            {/* Progress vs benchmark */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 10.5, color: C.ink4 }}>{k.bench}</span>
+                <MonoNum size={10.5} color={C.ink4} weight={600}>{Math.round((k.current / k.benchProgress) * 100)}%</MonoNum>
+              </div>
+              <div style={{ height: 4, background: C.bg2, borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(k.current / k.benchProgress) * 100}%`, background: k.color, borderRadius: 2 }}/>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============ 01 본부×직급 난이도 히트맵 (drill-down) ============
+function HqGradeHeatmap() {
+  const rows = [
+    { name: "운영본부", cells: [42, 28, 18, 12], total: 78 },
+    { name: "개발본부", cells: [36, 34, 22, 8], total: 92 },
+    { name: "사업본부", cells: [18, 24, 31, 27], total: 64 },
+    { name: "DX본부",   cells: [22, 29, 30, 14], total: 52 },
+  ];
+  const cols = ["3급", "4급갑", "4급을", "5급"];
+  const heat = (v) => {
+    if (v >= 40) return { bg: "#1F3FB8", fg: "#fff" };
+    if (v >= 30) return { bg: C.brand, fg: "#fff" };
+    if (v >= 22) return { bg: "#8FA1E5", fg: "#0F1A36" };
+    if (v >= 15) return { bg: "#B7C4F0", fg: "#0F1A36" };
+    return { bg: "#DCE3F8", fg: "#0F1A36" };
+  };
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>본부 × 직급 · 난이도 "상" 비중</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>난이도 통일도가 낮은 셀에 코칭 후보가 몰려 있어요.</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <Pill label="평균 25.8% · 표준편차 9.2" color={C.ink2} bg={C.bg2}/>
+      </div>
+
+      {/* Heatmap */}
+      <div style={{ display: "grid", gridTemplateColumns: "92px repeat(4, 1fr) 60px", gap: 5 }}>
+        <div></div>
+        {cols.map((g) => <div key={g} style={{ fontSize: 10.5, fontWeight: 700, color: C.ink4, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "center", padding: "4px 0" }}>{g}</div>)}
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink4, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "center", padding: "4px 0" }}>합계</div>
+        {rows.map((r) => (
+          <React.Fragment key={r.name}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, textAlign: "right", paddingRight: 10, display: "flex", alignItems: "center", justifyContent: "flex-end" }}>{r.name}</div>
+            {r.cells.map((v, j) => {
+              const c = heat(v);
+              const outlier = v >= 40 || v <= 12;
+              return (
+                <div key={j} style={{
+                  background: c.bg, color: c.fg, position: "relative",
+                  aspectRatio: "1/0.5", borderRadius: 7,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                  outline: outlier ? `2px solid ${C.amber}` : "none", outlineOffset: -2,
+                }}>
+                  {v}%
+                  {outlier && <span style={{ position: "absolute", top: -5, right: -5, width: 14, height: 14, borderRadius: "50%", background: C.amber, color: "#fff", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "var(--font-sans)" }}>!</span>}
+                </div>
+              );
+            })}
+            <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <MonoNum size={12} color={C.ink3}>{r.total}건</MonoNum>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Coaching note */}
+      <div style={{
+        marginTop: 16, padding: "12px 14px",
+        background: C.amberLight, border: `1px solid #FFE0BA`, borderRadius: 10,
+        display: "flex", gap: 10, alignItems: "flex-start",
+      }}>
+        <span style={{ fontSize: 14 }}>⚠️</span>
+        <div style={{ fontSize: 11.5, color: "#7A4A14", lineHeight: 1.55, flex: 1 }}>
+          <b>운영본부 3급 (42%)</b> · <b>사업본부 5급 (27%)</b> · <b>개발본부 5급 (8%)</b> 셀이 평균 대비 ±2σ 밖이에요.
+          업무군과 별개로 난이도 판정 기준이 셀별로 다를 가능성이 있어요. 사례 카드를 확인해주세요.
+        </div>
+        <a href="R3_인사담당자_07_난이도지표.html" style={{ color: C.amber, fontSize: 11.5, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>드릴다운 →</a>
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ 02 위험유형 TOP 분포 ============
+function RiskTypeDistribution() {
+  // 11개 위험태그 중 발생 건수 상위 (소송 톤: "코칭 후보")
+  const types = [
+    { name: "측정모호",   code: "C05", count: 38, pct: 13.3, trend: "+3",  color: C.red,    severity: "high" },
+    { name: "자기보고형", code: "C10", count: 32, pct: 11.2, trend: "+5",  color: C.red,    severity: "high" },
+    { name: "건수형지표", code: "C08", count: 27, pct: 9.4,  trend: "-2",  color: C.amber,  severity: "mid" },
+    { name: "통제불가",   code: "C02", count: 24, pct: 8.4,  trend: "0",   color: C.amber,  severity: "mid" },
+    { name: "공모형",     code: "C06", count: 19, pct: 6.6,  trend: "-4",  color: C.amber,  severity: "mid" },
+    { name: "도전성저하", code: "C03", count: 15, pct: 5.2,  trend: "-1",  color: C.purple, severity: "low" },
+    { name: "표현모호",   code: "C04", count: 14, pct: 4.9,  trend: "+1",  color: C.purple, severity: "low" },
+    { name: "현실성낮음", code: "C04b", count: 11, pct: 3.8, trend: "0",   color: C.purple, severity: "low" },
+  ];
+  const maxCount = Math.max(...types.map(t => t.count));
+
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>위험 유형별 코칭 후보 분포 · TOP 8</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>R2 평가자 11항목 자동판정 집계 · 전 분기 대비 추세 포함</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <a href="R3_인사담당자_11_위험유형.html" style={{ fontSize: 12, color: C.brand, textDecoration: "none", fontWeight: 600 }}>전체 11개 보기 →</a>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {types.map((t) => (
+          <div key={t.code} style={{ display: "grid", gridTemplateColumns: "32px 105px 1fr 56px 52px 40px", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: C.ink5, fontWeight: 700 }}>{t.code}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: C.ink }}>{t.name}</span>
+            <div style={{ position: "relative", height: 22, background: C.bg2, borderRadius: 6, overflow: "hidden" }}>
+              <div style={{
+                position: "absolute", inset: 0, width: `${(t.count / maxCount) * 100}%`,
+                background: `linear-gradient(90deg, ${t.color}dd, ${t.color})`,
+                borderRadius: 6,
+              }}/>
+            </div>
+            <MonoNum size={12.5} color={C.ink}>{t.count}건</MonoNum>
+            <MonoNum size={11.5} color={C.ink4} weight={500}>{t.pct.toFixed(1)}%</MonoNum>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+              padding: "2px 5px", borderRadius: 4, textAlign: "center",
+              background: t.trend.startsWith("-") ? C.greenLight : t.trend === "0" ? C.bg2 : C.redLight,
+              color: t.trend.startsWith("-") ? C.green : t.trend === "0" ? C.ink4 : C.red,
+            }}>{t.trend}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.borderLight}`, display: "flex", justifyContent: "space-between", fontSize: 11, color: C.ink4 }}>
+        <span>총 코칭 후보 <MonoNum size={12} color={C.ink2}>180건</MonoNum> · 평균 1KR당 <MonoNum size={12} color={C.ink2}>0.63개</MonoNum> 태그</span>
+        <span>※ 1KR이 여러 태그를 가질 수 있어요</span>
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ 03 본부별 코칭 워크리스트 ============
+function HqWorklist() {
+  const rows = [
+    { hq: "운영본부", mgr: "정태영",   total: 78, candidates: 23, rate: 29.5, urgent: 6, recent: "2일 전", status: "warn" },
+    { hq: "사업본부", mgr: "박진수",   total: 64, candidates: 18, rate: 28.1, urgent: 4, recent: "오늘",  status: "warn" },
+    { hq: "DX본부",   mgr: "김지훈",   total: 52, candidates: 11, rate: 21.2, urgent: 2, recent: "1일 전", status: "mid" },
+    { hq: "개발본부", mgr: "이수연",   total: 92, candidates: 18, rate: 19.6, urgent: 1, recent: "3일 전", status: "mid" },
+    { hq: "인프라본부", mgr: "최우진", total: 41, candidates: 5,  rate: 12.2, urgent: 0, recent: "5일 전", status: "ok" },
+  ];
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>본부별 코칭 우선순위</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>코칭 후보율 높은 순 · 평가자 1on1 권장 대상</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <a href="R3_인사담당자_12_본부별워크리스트.html" style={{ fontSize: 12, color: C.brand, textDecoration: "none", fontWeight: 600 }}>전체 14본부 →</a>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "100px 70px 64px 70px 1fr 50px 60px", gap: 0, fontSize: 10.5, fontWeight: 700, color: C.ink4, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0", borderBottom: `1px solid ${C.borderLight}` }}>
+        <div>본부</div>
+        <div>평가자</div>
+        <div style={{ textAlign: "right" }}>전체 KR</div>
+        <div style={{ textAlign: "right" }}>코칭 후보</div>
+        <div style={{ paddingLeft: 16 }}>후보율</div>
+        <div style={{ textAlign: "center" }}>긴급</div>
+        <div style={{ textAlign: "right" }}>최근 활동</div>
+      </div>
+
+      {rows.map((r, i) => {
+        const tone = r.status === "warn" ? C.amber : r.status === "mid" ? C.brand : C.green;
+        const toneLight = r.status === "warn" ? C.amberLight : r.status === "mid" ? C.brandLight : C.greenLight;
+        return (
+          <div key={i} style={{
+            display: "grid", gridTemplateColumns: "100px 70px 64px 70px 1fr 50px 60px",
+            gap: 0, alignItems: "center", padding: "12px 0",
+            borderBottom: i === rows.length - 1 ? "none" : `1px solid ${C.borderLight}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: tone }}/>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: C.ink }}>{r.hq}</span>
+            </div>
+            <div style={{ fontSize: 12, color: C.ink2 }}>{r.mgr}</div>
+            <MonoNum size={12.5} color={C.ink3}>{r.total}</MonoNum>
+            <MonoNum size={13} color={tone}>{r.candidates}</MonoNum>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 16 }}>
+              <div style={{ flex: 1, height: 6, background: C.bg2, borderRadius: 3, overflow: "hidden", position: "relative" }}>
+                <div style={{ position: "absolute", left: "30%", top: 0, bottom: 0, width: 1, background: C.red, opacity: 0.5 }}/>
+                <div style={{ height: "100%", width: `${Math.min(r.rate, 50) * 2}%`, background: tone, borderRadius: 3 }}/>
+              </div>
+              <MonoNum size={12} color={tone} weight={700}>{r.rate.toFixed(1)}%</MonoNum>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              {r.urgent > 0 ? (
+                <span style={{ padding: "2px 7px", borderRadius: 999, background: r.urgent >= 5 ? C.redLight : toneLight, color: r.urgent >= 5 ? C.red : tone, fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{r.urgent}</span>
+              ) : <span style={{ color: C.ink5, fontSize: 11 }}>—</span>}
+            </div>
+            <div style={{ fontSize: 10.5, color: C.ink4, textAlign: "right" }}>{r.recent}</div>
+          </div>
+        );
+      })}
+    </CardShell>
+  );
+}
+
+// ============ 04 사후조정 가능 비중 ============
+function PostAdjustment() {
+  const orgs = [
+    { name: "운영본부", value: 42, total: 78, top: ["공모형 11", "건수형 9"] },
+    { name: "사업본부", value: 31, total: 64, top: ["자기보고형 8", "건수형 6"] },
+    { name: "DX본부",   value: 24, total: 52, top: ["공모형 5", "자기보고형 4"] },
+    { name: "개발본부", value: 18, total: 92, top: ["건수형 8", "공모형 5"] },
+  ];
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>사후조정 가능 지표 비중</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>공모형 · 건수형 · 자기보고형 태그 ≥1 KR 비율</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <Pill label="임계 30%" color={C.red} bg={C.redLight}/>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {orgs.map((o, i) => {
+          const isWarn = o.value > 30;
+          const c = isWarn ? C.amber : C.green;
+          return (
+            <div key={i}>
+              <div style={{ display: "flex", alignItems: "baseline", marginBottom: 6 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: C.ink }}>{o.name}</span>
+                <span style={{ fontSize: 11, color: C.ink4, marginLeft: 8 }}>전체 {o.total}건</span>
+                <span style={{ marginLeft: "auto" }}>
+                  <MonoNum size={15} color={c}>{o.value}</MonoNum>
+                  <span style={{ fontSize: 11, color: C.ink4, fontWeight: 500, marginLeft: 2 }}>%</span>
+                </span>
+              </div>
+              <div style={{ height: 7, background: C.bg2, borderRadius: 4, overflow: "hidden", position: "relative", marginBottom: 6 }}>
+                <div style={{ position: "absolute", top: 0, bottom: 0, left: "30%", width: 1.5, background: C.red, opacity: 0.6 }}/>
+                <div style={{ height: "100%", width: `${o.value}%`, background: c, borderRadius: 4 }}/>
+              </div>
+              <div style={{ fontSize: 10.5, color: C.ink4, display: "flex", gap: 8 }}>
+                <span>주요 태그:</span>
+                {o.top.map((t, ti) => <MonoNum key={ti} size={10.5} color={C.ink3} weight={500}>{t}</MonoNum>)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ 05 분기 추세 ============
+function QuarterTrend() {
+  const series = [
+    { label: "코칭 후보율", values: [22.1, 19.4, 16.8, 14.2], color: C.amber, target: 10 },
+    { label: "기준 통일도", values: [76, 81, 85, 87], color: C.green, target: 90, unit: "%" },
+    { label: "검토 완료율", values: [42, 51, 58, 64], color: C.brand, target: 80, unit: "%" },
+  ];
+  const labels = ["25.Q3", "25.Q4", "26.Q1", "26.Q2"];
+  const W = 380, H = 140, P = 28;
+
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>핵심 지표 4분기 추세</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>전 분기 대비 모든 지표 개선 추세 · 목표선 도달까지 한 분기 남음</div>
+        </div>
+      </div>
+
+      <svg width={W} height={H} style={{ display: "block", margin: "0 auto" }}>
+        {/* Y grid */}
+        {[0, 25, 50, 75, 100].map((y) => (
+          <line key={y} x1={P} x2={W - 10} y1={H - P - (y / 100) * (H - P * 1.5)} y2={H - P - (y / 100) * (H - P * 1.5)} stroke="#ECEFF5" strokeWidth="1"/>
+        ))}
+        {/* X labels */}
+        {labels.map((l, i) => (
+          <text key={l} x={P + (i / (labels.length - 1)) * (W - P - 10)} y={H - 8} fontSize="10" fill="#7C87A4" textAnchor="middle" fontFamily="var(--font-mono)">{l}</text>
+        ))}
+        {/* Lines */}
+        {series.map((s) => {
+          const max = Math.max(...s.values, s.target);
+          const pts = s.values.map((v, i) => `${P + (i / (s.values.length - 1)) * (W - P - 10)},${H - P - (v / max) * (H - P * 1.5)}`).join(" ");
+          return (
+            <g key={s.label}>
+              <polyline points={pts} fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              {s.values.map((v, i) => (
+                <circle key={i} cx={P + (i / (s.values.length - 1)) * (W - P - 10)} cy={H - P - (v / max) * (H - P * 1.5)} r="3" fill="#fff" stroke={s.color} strokeWidth="2"/>
+              ))}
+            </g>
+          );
+        })}
+      </svg>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+        {series.map((s) => {
+          const last = s.values[s.values.length - 1];
+          const first = s.values[0];
+          const delta = (last - first).toFixed(1);
+          const isImproving = (s.label === "코칭 후보율") ? delta < 0 : delta > 0;
+          return (
+            <div key={s.label} style={{ display: "grid", gridTemplateColumns: "12px 1fr 60px 56px", alignItems: "center", gap: 8, fontSize: 11.5 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: s.color }}/>
+              <span style={{ color: C.ink2 }}>{s.label}</span>
+              <MonoNum size={12} color={C.ink}>{last}{s.unit || "%"}</MonoNum>
+              <MonoNum size={11} color={isImproving ? C.green : C.red} weight={600}>{delta > 0 ? "+" : ""}{delta}</MonoNum>
+            </div>
+          );
+        })}
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ 06 AI 코칭 사례 카드 ============
+function CaseCards() {
+  const cases = [
+    {
+      hq: "운영본부", member: "정**", role: "5급",
+      kr: "월 이슈 대응 50건 이상 처리",
+      tags: ["건수형지표 C08", "측정모호 C05"],
+      coach: "건수보다 'p95 응답속도 < 800ms 유지' 같은 질적 지표로 함께 정제해볼까요?",
+      severity: "high",
+    },
+    {
+      hq: "사업본부", member: "박**", role: "4급갑",
+      kr: "고객 만족도 향상에 기여",
+      tags: ["통제불가 C02", "표현모호 C04"],
+      coach: "외부 만족도는 통제 밖이에요. '응답 SLA 24h 내 95%' 같은 통제 가능 측정으로 바꿔보세요.",
+      severity: "high",
+    },
+    {
+      hq: "DX본부", member: "김**", role: "4급을",
+      kr: "데이터 거버넌스 체계 수립 (자체 평가)",
+      tags: ["자기보고형 C10"],
+      coach: "외부 증빙(감사 통과 · 시스템 적용 건수)으로 함께 보완해볼까요?",
+      severity: "mid",
+    },
+  ];
+  const sev = (s) => s === "high" ? { c: C.red, bg: C.redLight, label: "코칭 · 상" } : { c: C.amber, bg: C.amberLight, label: "코칭 · 중" };
+
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>AI 추출 코칭 사례 · 3건</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>경계/극단 KR을 사례로 정리 · 평가자와 함께 보세요 (개인정보 마스킹)</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <Pill label="✨ AI 자동 추출" color={C.brand} bg={C.brandLight}/>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+        {cases.map((c, i) => {
+          const s = sev(c.severity);
+          return (
+            <div key={i} style={{
+              background: "#fff", border: `1px solid ${C.border}`, borderRadius: 11,
+              padding: "14px 16px", borderLeft: `4px solid ${s.c}`,
+              display: "flex", flexDirection: "column", gap: 10,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Pill label={s.label} color={s.c} bg={s.bg}/>
+                <span style={{ fontSize: 10.5, color: C.ink4, fontFamily: "var(--font-mono)" }}>{c.hq} · {c.member} · {c.role}</span>
+              </div>
+              <div style={{
+                padding: "10px 12px", background: C.bg2,
+                border: `1px solid ${C.borderLight}`, borderRadius: 8,
+                fontSize: 12.5, color: C.ink, lineHeight: 1.5,
+                fontStyle: "italic",
+              }}>"{c.kr}"</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {c.tags.map((t) => (
+                  <span key={t} style={{
+                    padding: "2px 7px", borderRadius: 5,
+                    background: C.redLight, color: C.red,
+                    fontSize: 10, fontWeight: 700, fontFamily: "var(--font-mono)",
+                  }}>{t}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: 11.5, color: C.ink2, lineHeight: 1.55, paddingTop: 4 }}>
+                <span style={{ color: C.brand, fontWeight: 700 }}>💡 코칭 권고: </span>{c.coach}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ 11항목별 위반율 ============
+function CheckItemBreakdown() {
+  // 11항목 미니 막대
+  const items = [
+    { no: 1, name: "수치 측정 가능", rate: 17 },
+    { no: 2, name: "외부 의존 통제", rate: 11 },
+    { no: 3, name: "도전적 목표", rate: 7 },
+    { no: 4, name: "현실적 달성", rate: 5 },
+    { no: 5, name: "명확한 언어", rate: 14 },
+    { no: 6, name: "타 팀 중복 없음", rate: 9 },
+    { no: 7, name: "신기술 비의존", rate: 3 },
+    { no: 8, name: "질적 지표", rate: 13 },
+    { no: 9, name: "확인 가능 증거", rate: 6 },
+    { no: 10, name: "외부 증빙", rate: 16 },
+    { no: 11, name: "고위험 통제", rate: 4 },
+  ];
+  return (
+    <CardShell padding="22px 24px">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>체크리스트 11항목별 위반율</div>
+          <div style={{ fontSize: 11.5, color: C.ink4, marginTop: 3 }}>전체 286건 중 각 항목 위반(체크 N) 비율</div>
+        </div>
+        <div style={{ flex: 1 }}/>
+        <a href="R3_인사담당자_02_평가기준.html" style={{ fontSize: 12, color: C.brand, textDecoration: "none", fontWeight: 600 }}>기준 편집 →</a>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(11, 1fr)", gap: 6, alignItems: "end", height: 110 }}>
+        {items.map((it) => {
+          const h = (it.rate / 20) * 100;
+          const tone = it.rate >= 14 ? C.red : it.rate >= 8 ? C.amber : C.green;
+          return (
+            <div key={it.no} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <MonoNum size={10.5} color={tone} weight={700}>{it.rate}%</MonoNum>
+              <div style={{ height: 88, width: "100%", display: "flex", alignItems: "flex-end" }}>
+                <div style={{ width: "100%", height: `${Math.max(h, 4)}%`, background: tone, borderRadius: "5px 5px 0 0", opacity: 0.85 }}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(11, 1fr)", gap: 6, marginTop: 8 }}>
+        {items.map((it) => (
+          <div key={it.no} style={{ textAlign: "center", fontSize: 9.5, color: C.ink4, lineHeight: 1.3 }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: C.ink3 }}>{String(it.no).padStart(2, "0")}</div>
+            <div style={{ marginTop: 2 }}>{it.name}</div>
+          </div>
+        ))}
+      </div>
+    </CardShell>
+  );
+}
+
+// ============ MAIN ============
+function R3Console() {
+  return (
+    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: C.bg, overflow: "hidden" }}>
+      <TopBar title="캘리브레이션 인사이트" subtitle="2026 상반기 · 전사 OKR 진단 (Step 05/06)"/>
+      <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px 56px" }}>
+
+        {/* Step indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: C.orange, letterSpacing: "0.06em" }}>STEP 05 / 06</span>
+          <div style={{ flex: 1, height: 2, background: C.border, borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ width: "83%", height: "100%", background: C.orange }}/>
+          </div>
+          <a href="R3_인사담당자_08_산출물내보내기.html" style={{ fontSize: 12, color: C.brand, textDecoration: "none", fontWeight: 600 }}>다음: 산출물 →</a>
+        </div>
+
+        {/* Hero */}
+        <div style={{ display: "flex", alignItems: "flex-end", marginBottom: 22 }}>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: C.ink, letterSpacing: "-0.025em", lineHeight: 1.2 }}>
+              2026 상반기 캘리브레이션 진단
+            </h1>
+            <p style={{ margin: "8px 0 0", fontSize: 13.5, color: C.ink3, lineHeight: 1.65 }}>
+              평가자와 함께 코칭할 후보를 알려드려요. 확정된 위반이 아니라, <b style={{ color: C.ink }}>기준을 함께 정제하는 출발점</b>입니다.
+            </p>
+          </div>
+          {/* Filter chips */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={chipBtn}><Icon name="calendar" size={13} style={{ color: C.ink3 }}/> 2026 상반기 <Icon name="chevronDown" size={11} style={{ color: C.ink5 }}/></button>
+            <button style={chipBtn}><Icon name="filter" size={13} style={{ color: C.ink3 }}/> 전 본부 <Icon name="chevronDown" size={11} style={{ color: C.ink5 }}/></button>
+            <button style={chipBtn}><Icon name="sliders" size={13} style={{ color: C.ink3 }}/> 전 직급 <Icon name="chevronDown" size={11} style={{ color: C.ink5 }}/></button>
+            <a href="R3_인사담당자_08_산출물내보내기.html" style={{ textDecoration: "none" }}>
+              <Button variant="secondary" size="sm" leftIcon={<span>📥</span>}>Excel</Button>
+            </a>
+          </div>
+        </div>
+
+        {/* HERO KPI 4종 */}
+        <HeroKpi/>
+
+        {/* SECTION A — 본부·직급별 진단 */}
+        <SectionHeader num="A" title="조직별 코칭 분포" hint="어디에 코칭이 필요한가"/>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 18, marginBottom: 30 }}>
+          <HqGradeHeatmap/>
+          <PostAdjustment/>
+        </div>
+
+        {/* SECTION B — 어떤 항목이 문제인가 */}
+        <SectionHeader num="B" title="위험 유형 진단" hint="어떤 기준이 가장 자주 부합하지 않는가"/>
+        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18, marginBottom: 30 }}>
+          <RiskTypeDistribution/>
+          <QuarterTrend/>
+        </div>
+
+        {/* SECTION C — 누구를 코칭할 것인가 */}
+        <SectionHeader num="C" title="실행 가능한 액션" hint="누구와 어떻게 코칭할 것인가"/>
+        <div style={{ marginBottom: 18 }}>
+          <HqWorklist/>
+        </div>
+        <div style={{ marginBottom: 30 }}>
+          <CheckItemBreakdown/>
+        </div>
+
+        {/* SECTION D — 사례 */}
+        <SectionHeader num="D" title="코칭 사례 카드" hint="AI 자동 추출 · 평가자 회의용"/>
+        <div style={{ marginBottom: 28 }}>
+          <CaseCards/>
+        </div>
+
+        {/* Footer note */}
+        <div style={{
+          padding: "16px 22px",
+          background: C.brandLight, border: `1px solid #C5D0F7`, borderRadius: 12,
+          display: "flex", alignItems: "center", gap: 14,
+          fontSize: 13, color: "#1B2A4E", lineHeight: 1.6,
+        }}>
+          <span style={{ fontSize: 20 }}>💡</span>
+          <span style={{ flex: 1 }}>
+            모든 인사이트는 <b>"코칭 후보"</b>를 알려주는 신호입니다. 확정된 위반이 아니에요.
+            기준을 바꾸려면 <a href="R3_인사담당자_02_평가기준.html" style={{ color: C.brand, fontWeight: 700, textDecoration: "none" }}>평가 기준 편집 →</a>에서 11항목을 조정해주세요.
+          </span>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+
+const chipBtn = {
+  display: "flex", alignItems: "center", gap: 7,
+  padding: "8px 12px",
+  background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10,
+  fontSize: 12.5, color: "#1F2A4A", fontWeight: 500,
+  cursor: "pointer", fontFamily: "var(--font-sans)",
+};
+
+window.R3Console = R3Console;
+</script>
+<script data-om-id="290c8d7a:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:65080:65252" data-om-id="61f96ab5:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:64960:65132" data-om-id="00f4b45e:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:64840:65012" data-om-id="610ed727:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:64657:64829" data-om-id="6b42ca70:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:64445:64617" data-om-id="7ca4fbab:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:64297:64469" data-om-id="3c916b5e:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:61719:61891" data-om-id="41b67a0f:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:61599:61771" data-om-id="ac4cf2f8:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:61893:62065" data-om-id="f609ca58:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:61657:61829" data-om-id="ddec6fb4:om-script-10" data-om-text-id="txt:standalone/R3_인사담당자_01_인사이트.html:61200:61372" type="text/babel">
+  function App() { return (<><SidebarR3 active="insights"/><R3Console/></>); }
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<App/>);
+</script>
+</body>
+</html>

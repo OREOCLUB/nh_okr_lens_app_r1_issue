@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 평가제도 운영안</title>
+<style>/* ============================================================
+   OKR LENS — Design System
+   colors_and_type.css
+   사내 OKR 평가·코칭 AI 서비스 — 친근한 SaaS 톤 · 넉넉한 여백
+   ============================================================ */
+
+/* ---------- 1. Fonts ---------- */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- 2. Color — Brand / Primary (Friendly Blue) ---------- */
+  /* 참고 이미지의 SSO 버튼/CTA 컬러에서 추출. 인디고가 아닌 더 밝은 'Friendly Blue'. */
+  --brand-900: #142250;   /* deepest — text accent on light bg */
+  --brand-800: #1B2A4E;   /* dark navy — sidebar, hero text accent (참고 이미지 좌측 다크 카드) */
+  --brand-700: #213A8C;
+  --brand-600: #2C49B8;
+  --brand-500: #3B5BDB;   /* PRIMARY — SSO 버튼 컬러 */
+  --brand-400: #5C7AE6;
+  --brand-300: #91A6F0;
+  --brand-200: #C5D0F7;
+  --brand-100: #E5EBFB;
+  --brand-50:  #F1F4FD;
+
+  /* ---------- 3. Role Accents (3역할 컬러 코딩) ---------- */
+  /* 참고 이미지: 피평가자=블루, 평가자=그린, 인사담당자=오렌지/코랄 */
+  --role-r1-bg:   #E8F0FF;
+  --role-r1-fg:   #3B5BDB;
+  --role-r1-mark: #3B5BDB;
+
+  --role-r2-bg:   #E3F4EA;
+  --role-r2-fg:   #2F9E5E;
+  --role-r2-mark: #2F9E5E;
+
+  --role-r3-bg:   #FFEDE2;
+  --role-r3-fg:   #E07A3C;
+  --role-r3-mark: #E07A3C;
+
+  /* ---------- 4. Color — Neutrals (Cool Slate, softer than v1) ---------- */
+  --ink-900: #0F1A36;     /* heading */
+  --ink-800: #1F2A4A;
+  --ink-700: #3A4565;     /* body strong */
+  --ink-600: #5B6685;     /* body */
+  --ink-500: #7C87A4;     /* secondary */
+  --ink-400: #A4ADC4;     /* tertiary, icon */
+  --ink-300: #C8CFDF;     /* disabled */
+  --ink-200: #E1E5EF;     /* divider */
+  --ink-150: #ECEFF5;
+  --ink-100: #F4F7FB;     /* PAGE BACKGROUND — 참고 이미지 베이스 */
+  --ink-50:  #F9FAFC;
+  --ink-0:   #FFFFFF;
+
+  /* ---------- 5. Color — Semantic (Status) ---------- */
+  /* 친근한 톤 — 채도 더 낮춤. "코칭" 시선 유지. */
+  --risk-high-fg:   #D14343;
+  --risk-high-bg:   #FFF0F0;
+  --risk-high-bd:   #FFD4D4;
+
+  --risk-mid-fg:    #D98023;
+  --risk-mid-bg:    #FFF7EC;
+  --risk-mid-bd:    #FFE0BA;
+
+  --risk-low-fg:    #2F9E5E;
+  --risk-low-bg:    #ECFAF1;
+  --risk-low-bd:    #BBE9CC;
+
+  --info-fg:        #2B5DD9;
+  --info-bg:        #EFF4FE;
+  --info-bd:        #C5D5F7;
+
+  /* ---------- 6. Status — 승인 enum (D5) ---------- */
+  --status-draft-fg:    #5B6685;
+  --status-draft-bg:    #F1F3F8;
+  --status-pending-fg:  #2B5DD9;
+  --status-pending-bg:  #EFF4FE;
+  --status-approved-fg: #2F9E5E;
+  --status-approved-bg: #ECFAF1;
+  --status-rejected-fg: #D14343;
+  --status-rejected-bg: #FFF0F0;
+  --status-adjust-fg:   #D98023;
+  --status-adjust-bg:   #FFF7EC;
+
+  /* ---------- 7. Difficulty / Grade ---------- */
+  --diff-high: #7C4DD9;
+  --diff-mid:  #3B5BDB;
+  --diff-low:  #7C87A4;
+
+  --grade-s: #6B47E0;
+  --grade-a: #3B5BDB;
+  --grade-b: #2F9E5E;
+  --grade-c: #D98023;
+  --grade-d: #7C87A4;
+
+  /* ---------- 8. Data viz / Heatmap ---------- */
+  --heat-0: #F1F4FD;
+  --heat-1: #DCE3F8;
+  --heat-2: #B7C4F0;
+  --heat-3: #8FA1E5;
+  --heat-4: #5C7AE6;
+  --heat-5: #3B5BDB;
+
+  /* ---------- 9. Typography — Stacks ---------- */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+               'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- 10. Type — Sizes & line-heights ---------- */
+  /* base 15px — 참고 이미지의 넉넉한 밀도에 맞춰 한 단계 키움 */
+  --fs-hero:     48px;   /* 랜딩 메인 헤드라인 */
+  --fs-display:  36px;
+  --fs-h1:       28px;
+  --fs-h2:       22px;
+  --fs-h3:       18px;
+  --fs-body-lg:  16px;
+  --fs-body:     15px;   /* body default */
+  --fs-sm:       13.5px;
+  --fs-xs:       12.5px;
+  --fs-micro:    11.5px;
+
+  --lh-tight:    1.25;
+  --lh-snug:     1.45;
+  --lh-normal:   1.7;
+  --lh-relaxed:  1.85;
+
+  --tracking-tight:  -0.025em;
+  --tracking-normal: -0.005em;
+  --tracking-wide:   0.04em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* ---------- 11. Spacing scale (4pt grid) ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+  --sp-12: 96px;
+
+  /* ---------- 12. Radius — 더 부드럽게 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;    /* 기본 카드 */
+  --radius-xl: 20px;    /* 큰 카드, 패널 */
+  --radius-2xl: 28px;   /* 히어로 일러스트 박스 */
+  --radius-pill: 999px;
+
+  /* ---------- 13. Shadow / Elevation — 부드럽고 옅음 ---------- */
+  --shadow-xs: 0 1px 2px rgba(31, 42, 74, 0.04);
+  --shadow-sm: 0 2px 6px rgba(31, 42, 74, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(31, 42, 74, 0.08);
+  --shadow-lg: 0 16px 40px -10px rgba(31, 42, 74, 0.10);
+  --shadow-xl: 0 30px 60px -16px rgba(31, 42, 74, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(59, 91, 219, 0.16);
+  --shadow-card-hover: 0 12px 28px -8px rgba(59, 91, 219, 0.18);
+
+  /* ---------- 14. Borders ---------- */
+  --bd-subtle: 1px solid var(--ink-150);
+  --bd-default: 1px solid var(--ink-200);
+  --bd-strong: 1px solid var(--ink-300);
+  --bd-focus: 1.5px solid var(--brand-500);
+
+  /* ---------- 15. Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+
+  /* ---------- 16. Layout ---------- */
+  --sidebar-w: 256px;
+  --topbar-h: 64px;
+  --content-max: 1440px;
+  --page-pad-x: 40px;
+  --page-pad-y: 32px;
+}
+
+/* ============================================================
+   Semantic typography classes
+   ============================================================ */
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+.ds-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-500);
+}
+.ds-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-700);
+  font-feature-settings: "tnum" 1;
+}
+.ds-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ds-reset, .ds-reset * { box-sizing: border-box; }
+.ds-reset {
+  font-family: var(--font-sans);
+  color: var(--ink-600);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   OKR LENS Responsive — 2026 리브랜드
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: auto; }
+body { font-size: 16px; }
+
+.okrlens-sidebar,
+aside[class*="Sidebar"] {
+  transition: width 220ms cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 1024px) {
+  .okrlens-sidebar { width: 76px !important; min-width: 76px !important; padding-left: 10px !important; padding-right: 10px !important; }
+  .okrlens-sidebar > div:first-child > span:not(:first-child),
+  .okrlens-sidebar > div:first-child > span:last-child { display: none !important; }
+  .okrlens-sidebar > div:first-child { justify-content: center !important; padding: 4px 0 22px !important; }
+  .okrlens-sidebar a > div span:last-child,
+  .okrlens-sidebar > div > div:last-child > div:last-child { display: none !important; }
+  .okrlens-sidebar a > div,
+  .okrlens-sidebar > div > div {
+    justify-content: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+@media (max-width: 900px) {
+  .okrlens-sidebar { width: 72px !important; min-width: 72px !important; padding-left: 8px !important; padding-right: 8px !important; }
+}
+@media (max-width: 640px) {
+  .okrlens-sidebar { position: fixed; z-index: 100; height: 100vh; transform: translateX(-100%); }
+  .okrlens-sidebar.open { transform: translateX(0); }
+  #app > div > div:last-child,
+  main { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+main, [class*="page-content"] {
+  padding-left: clamp(16px, 3vw, 40px);
+  padding-right: clamp(16px, 3vw, 40px);
+}
+
+@media (max-width: 900px) {
+  [style*="gridTemplateColumns"][style*="1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  [style*="repeat(3, 1fr)"],
+  [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  [style*="gap: 56px"], [style*="gap:56px"] { gap: 24px !important; }
+  [style*="gap: 40px"], [style*="gap:40px"] { gap: 20px !important; }
+}
+
+.okrlens-topbar {
+  flex-wrap: wrap;
+  gap: 12px !important;
+  padding: 12px 20px !important;
+}
+@media (max-width: 900px) {
+  .okrlens-search { width: 100% !important; order: 10; }
+  .okrlens-period { display: none !important; }
+}
+
+body, .ds-body { font-size: 16px; }
+h1, .ds-h1 { font-size: clamp(22px, 3vw, 28px); }
+h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
+
+
+</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div id="__splash" style="position:fixed;inset:0;background:#F5F6F4;display:flex;align-items:center;justify-content:center;z-index:2147483647;transition:opacity .25s ease">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <rect x="500" y="320" width="200" height="160" rx="32" fill="transparent"/>
+    <circle cx="600" cy="400" r="36" fill="none" stroke="#fff" stroke-width="8" opacity="0.7"/>
+    <circle cx="600" cy="400" r="10" fill="#fff"/>
+    <text x="600" y="540" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#0F1A36" text-anchor="middle" letter-spacing="2">OKR LENS</text>
+    <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
+  </svg>
+</div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
+// Usage: <Icon name="dashboard" size={18} />
+const ICONS = {
+  dashboard: <><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></>,
+  clipboard: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+  sliders: <><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="12" cy="4" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="20" r="2"/></>,
+  library: <><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></>,
+  barchart: <><path d="M3 3v18h18"/><path d="M7 16V9m5 7V5m5 11v-4"/></>,
+  piechart: <path d="M21 12A9 9 0 1 1 12 3v9z"/>,
+  search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>,
+  sort: <path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>,
+  more: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></>,
+  chevronDown: <path d="m6 9 6 6 6-6"/>,
+  chevronRight: <path d="m9 6 6 6-6 6"/>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  check: <path d="M20 6 9 17l-5-5"/>,
+  x: <><path d="M18 6 6 18M6 6l12 12"/></>,
+  refresh: <><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.78.95 6.5 2.5L21 3"/><path d="M21 3v6h-6"/></>,
+  alert: <><path d="m21.7 16.6-8.9-15a1 1 0 0 0-1.8 0L2.1 16.6A1 1 0 0 0 3 18h18a1 1 0 0 0 .8-1.4z"/><path d="M12 9v4M12 17h.01"/></>,
+  sparkles: <><path d="M9.94 14.34A2.5 2.5 0 1 1 12 12.94"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6 7.7 7.7m8.6 8.6 2.1 2.1m0-13L16.3 7.7M5.6 18.4l2.1-2.1"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+};
+
+function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
+  const path = ICONS[name];
+  if (!path) return null;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+      {...rest}
+    >
+      {path}
+    </svg>
+  );
+}
+
+window.Icon = Icon;
+</script>
+<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
+  const base = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    lineHeight: 1,
+    letterSpacing: "-0.005em",
+    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
+    opacity: disabled ? 0.42 : 1,
+  };
+  const sizes = {
+    sm: { fontSize: 12.5, padding: "7px 12px" },
+    md: { fontSize: 13.5, padding: "10px 16px" },
+    lg: { fontSize: 15, padding: "12px 22px" },
+  };
+  const variants = {
+    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
+    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
+    ghost:     { background: "transparent", color: "#3A4565" },
+    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
+    success:   { background: "#2F9E5E", color: "#fff" },
+    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hoverStyles = {
+    primary:   { background: "#2C49B8" },
+    secondary: { background: "#F4F7FB" },
+    ghost:     { background: "#F4F7FB" },
+    danger:    { background: "#FFF0F0" },
+    success:   { background: "#268F52" },
+    ai:        { background: "#E5EBFB" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
+    >
+      {leftIcon}
+      {children}
+      {rightIcon}
+    </button>
+  );
+}
+window.Button = Button;
+</script>
+<script type="text/babel">function TopBar({ title, subtitle }) {
+  return (
+    <header style={{
+      height: 64, minHeight: 64,
+      display: "flex", alignItems: "center",
+      padding: "0 32px",
+      background: "#fff",
+      borderBottom: "1px solid #E1E5EF",
+      gap: 18,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: "#F4F7FB",
+        borderRadius: 10, padding: "8px 14px",
+        width: 300,
+        color: "#7C87A4",
+      }}>
+        <Icon name="search" size={15}/>
+        <input
+          placeholder="팀원 이름, KR ID 검색"
+          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
+        />
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px",
+        border: "1px solid #E1E5EF", borderRadius: 10,
+        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
+      }}>
+        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
+        2026 상반기
+        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
+      </div>
+
+      <button style={{
+        position: "relative",
+        width: 40, height: 40, borderRadius: 10,
+        border: "1px solid #E1E5EF", background: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#3A4565",
+      }}>
+        <Icon name="bell" size={17}/>
+        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
+      </button>
+    </header>
+  );
+}
+
+window.TopBar = TopBar;
+</script>
+<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
+// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
+// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
+function SidebarR3({ active = "operation" }) {
+  const steps = [
+    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
+    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
+    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
+    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
+    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
+    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+  ];
+  return (
+    <aside className="okrlens-sidebar" style={{
+      width: 244, minWidth: 244,
+      background: "#0A1F17", color: "#A4ADC4",
+      display: "flex", flexDirection: "column",
+      height: "100%", padding: "20px 14px", gap: 4,
+      overflowY: "auto",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+      </div>
+
+      {/* Role chip — orange */}
+      <div style={{
+        margin: "0 4px 14px",
+        background: "rgba(224,122,60,0.16)",
+        border: "1px solid rgba(224,122,60,0.32)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        display: "flex", alignItems: "center", gap: 9,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
+        <div>
+          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
+        </div>
+      </div>
+
+      {/* Section label */}
+      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        운영 흐름 · 6단계
+      </div>
+
+      {steps.map((it, idx) => {
+        const on = it.id === active;
+        const isLast = idx === steps.length - 1;
+        return (
+          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 11px", borderRadius: 10,
+              background: on ? "rgba(224,122,60,0.18)" : "transparent",
+              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 140ms ease-out",
+              position: "relative",
+            }}>
+              {/* Step number badge */}
+              <div style={{
+                width: 24, height: 24, borderRadius: 7,
+                background: on ? "#E07A3C" : "#243759",
+                color: on ? "#fff" : "#91A6F0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+                flexShrink: 0,
+              }}>{it.step}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: on ? 700 : 600,
+                  color: on ? "#fff" : "#C8CFDF",
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.label}</div>
+                <div style={{
+                  fontSize: 10.5,
+                  color: on ? "#F4C9A8" : "#7E89B0",
+                  marginTop: 1,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.desc}</div>
+              </div>
+              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
+            </div>
+            {/* Connector line between steps */}
+            {!isLast && (
+              <div style={{
+                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
+                background: on ? "#E07A3C" : "#243759",
+                opacity: 0.4,
+              }}/>
+            )}
+          </a>
+        );
+      })}
+
+      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+        <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9,
+            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
+          }}>
+            <Icon name="refresh" size={15}/>
+            <span>역할 전환</span>
+          </div>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
+            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+window.SidebarR3 = SidebarR3;
+</script>
+<script type="text/babel">// R3Operation.jsx — 평가제도 운영안 입력·편집 화면 (R3 Step 01)
+// criteria.운영안 payload를 입력: 비중 / 난이도가중 / 강제배분 / KR점수상한
+// / 상대평가단위 / 직급밴드 / 공통제외기준
+
+// ===== Atoms =====
+function SectionCard({ num, title, desc, children, accent = "#E07A3C" }) {
+  return (
+    <section style={{
+      background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
+      boxShadow: "0 1px 2px rgba(31,42,74,.04)",
+      marginBottom: 18, overflow: "hidden",
+    }}>
+      <header style={{
+        display: "flex", alignItems: "center", gap: 14,
+        padding: "20px 24px 18px",
+        borderBottom: "1px solid #ECEFF5",
+        background: "linear-gradient(135deg, #FAFBFE, #fff)",
+      }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: `${accent}15`, color: accent,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
+          flexShrink: 0,
+        }}>{num}</div>
+        <div>
+          <div style={{ fontSize: 15.5, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>{title}</div>
+          <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 2 }}>{desc}</div>
+        </div>
+      </header>
+      <div style={{ padding: "22px 24px" }}>{children}</div>
+    </section>
+  );
+}
+
+function NumberInput({ value, unit, width = 80, color = "#0F1A36", align = "right", mono = true }) {
+  return (
+    <div style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+      <input
+        type="text" defaultValue={value}
+        style={{
+          width, padding: "9px 12px",
+          background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 8,
+          fontFamily: mono ? "var(--font-mono)" : "var(--font-sans)",
+          fontSize: 16, fontWeight: 700,
+          color, outline: "none",
+          fontVariantNumeric: "tabular-nums", textAlign: align,
+        }}
+      />
+      {unit && <span style={{ fontSize: 12.5, color: "#7C87A4", fontWeight: 500 }}>{unit}</span>}
+    </div>
+  );
+}
+
+function FieldRow({ label, hint, children, required }) {
+  return (
+    <div style={{ display: "flex", gap: 20, padding: "14px 0", borderTop: "1px solid #F4F7FB" }}>
+      <div style={{ width: 200, flexShrink: 0, paddingTop: 4 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36", display: "flex", alignItems: "center", gap: 5 }}>
+          {label}
+          {required && <span style={{ color: "#D14343", fontSize: 11 }}>*</span>}
+        </div>
+        {hint && <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 4, lineHeight: 1.5 }}>{hint}</div>}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </div>
+  );
+}
+
+// ===== Sub-widgets =====
+function WeightTriple() {
+  // 비중 운영 40 / 전략혁신 40 / 사후평가 20 — visual proportion bar + inputs
+  const [ops, setOps] = React.useState(40);
+  const [str, setStr] = React.useState(40);
+  const post = 100 - ops - str;
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+        {[
+          { label: "운영", value: ops, color: "#3B5BDB", bg: "#E5EBFB", set: setOps },
+          { label: "전략혁신", value: str, color: "#7C4DD9", bg: "#F0E9FB", set: setStr },
+          { label: "사후평가", value: post, color: "#E07A3C", bg: "#FFEDE2", set: null },
+        ].map((w, i) => (
+          <div key={i} style={{ flex: 1, padding: "14px 16px", background: w.bg, borderRadius: 11, border: `1px solid ${w.color}33` }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: w.color, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>{w.label}</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <input
+                type="number" value={w.value}
+                onChange={(e) => w.set && w.set(Number(e.target.value) || 0)}
+                disabled={!w.set}
+                style={{
+                  width: 60, padding: "6px 8px",
+                  background: w.set ? "#fff" : "transparent",
+                  border: w.set ? "1px solid #E1E5EF" : "none",
+                  borderRadius: 7,
+                  fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700,
+                  color: w.color, outline: "none",
+                  fontVariantNumeric: "tabular-nums", textAlign: "right",
+                }}/>
+              <span style={{ fontSize: 13, color: w.color, fontWeight: 600 }}>%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Proportion bar */}
+      <div style={{ display: "flex", height: 36, borderRadius: 9, overflow: "hidden", border: "1px solid #E1E5EF" }}>
+        <div style={{ width: `${ops}%`, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 }}>운영 {ops}%</div>
+        <div style={{ width: `${str}%`, background: "#7C4DD9", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 }}>전략 {str}%</div>
+        <div style={{ width: `${post}%`, background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 }}>사후 {post}%</div>
+      </div>
+      <div style={{ fontSize: 11.5, color: post < 0 ? "#D14343" : "#7C87A4", marginTop: 8, fontFamily: "var(--font-mono)", textAlign: "right" }}>
+        합계 {ops + str + post}% {ops + str + post !== 100 && "· 100%가 되어야 합니다"}
+      </div>
+    </div>
+  );
+}
+
+function DifficultyWeights() {
+  const rows = [
+    { lvl: "상", w: 1.2, color: "#D14343", bg: "#FDECEC" },
+    { lvl: "중", w: 1.0, color: "#D98023", bg: "#FFF7EC" },
+    { lvl: "하", w: 0.8, color: "#2F9E5E", bg: "#ECFAF1" },
+  ];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+      {rows.map((r) => (
+        <div key={r.lvl} style={{
+          padding: "16px 18px", background: "#fff",
+          border: `1px solid ${r.color}33`, borderRadius: 11,
+          borderLeft: `4px solid ${r.color}`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <span style={{ padding: "3px 10px", borderRadius: 999, background: r.bg, color: r.color, fontSize: 12, fontWeight: 700 }}>난이도 {r.lvl}</span>
+          </div>
+          <NumberInput value={r.w} unit="배" width={70} color={r.color}/>
+          <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 8, lineHeight: 1.5 }}>
+            가중치 = 달성률 × {r.w}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ForcedDistribution() {
+  const grades = [
+    { g: "S", v: 5, color: "#7C4DD9", hint: "상위 5%" },
+    { g: "A", v: 10, color: "#3B5BDB", hint: "S 다음 10%" },
+    { g: "B", v: 75, color: "#2F9E5E", hint: "표준 분포" },
+    { g: "C", v: 10, color: "#D98023", hint: "C 최대치" },
+    { g: "D", v: null, color: "#D14343", hint: "규정 (수동)" },
+  ];
+  return (
+    <div>
+      {/* Visual bar */}
+      <div style={{ display: "flex", height: 44, borderRadius: 10, overflow: "hidden", border: "1px solid #E1E5EF", marginBottom: 16 }}>
+        {grades.filter(g => g.v).map((g) => (
+          <div key={g.g} style={{
+            width: `${g.v}%`, background: g.color, color: "#fff",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0,
+          }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700 }}>{g.g}</div>
+            <div style={{ fontSize: 10, opacity: 0.85, fontFamily: "var(--font-mono)" }}>{g.v}%</div>
+          </div>
+        ))}
+      </div>
+      {/* Inputs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+        {grades.map((g) => (
+          <div key={g.g} style={{ padding: "14px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: g.color, marginBottom: 8 }}>{g.g}</div>
+            {g.v !== null ? (
+              <NumberInput value={g.v} unit="%" width={64} color={g.color} align="center"/>
+            ) : (
+              <span style={{ fontSize: 12, color: "#7C87A4", fontStyle: "italic" }}>수동 배정</span>
+            )}
+            <div style={{ fontSize: 10.5, color: "#7C87A4", marginTop: 8 }}>{g.hint}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GradeBands() {
+  const bands = [
+    { name: "밴드 A", grades: ["3급"], color: "#7C4DD9" },
+    { name: "밴드 B", grades: ["4급갑", "4급을"], color: "#3B5BDB" },
+    { name: "밴드 C", grades: ["5급"], color: "#2F9E5E" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {bands.map((b, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "12px 16px", background: "#F9FAFC",
+          border: "1px solid #E1E5EF", borderRadius: 10,
+          borderLeft: `4px solid ${b.color}`,
+        }}>
+          <div style={{ width: 70, fontSize: 12.5, fontWeight: 700, color: b.color, fontFamily: "var(--font-mono)" }}>{b.name}</div>
+          <div style={{ flex: 1, display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {b.grades.map((g) => (
+              <span key={g} style={{
+                padding: "5px 11px", borderRadius: 999,
+                background: "#fff", border: `1px solid ${b.color}55`,
+                color: b.color, fontSize: 12, fontWeight: 600,
+                fontFamily: "var(--font-mono)",
+              }}>{g}</span>
+            ))}
+          </div>
+          <button style={iconBtn}><Icon name="x" size={13}/></button>
+        </div>
+      ))}
+      <button style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        padding: "11px 14px",
+        background: "transparent", border: "1px dashed #C8CFDF", borderRadius: 10,
+        color: "#5B6685", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+      }}>
+        <Icon name="plus" size={13}/> 밴드 추가
+      </button>
+    </div>
+  );
+}
+
+const iconBtn = {
+  width: 28, height: 28, borderRadius: 7,
+  background: "#fff", border: "1px solid #E1E5EF",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  cursor: "pointer", color: "#5B6685",
+};
+
+function RelativeUnit() {
+  const opts = [
+    { id: "hq-grade", label: "본부별 · 직급별", desc: "동일 본부 · 동일 직급 내에서 비교 (권장)", active: true },
+    { id: "hq", label: "본부별만", desc: "본부 내 전체 직급 통합 비교" },
+    { id: "company", label: "전사 통합", desc: "본부·직급 무관 전사 비교" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {opts.map((o) => (
+        <label key={o.id} style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "13px 16px",
+          background: o.active ? "#F1F4FD" : "#fff",
+          border: `1px solid ${o.active ? "#3B5BDB" : "#E1E5EF"}`,
+          borderRadius: 10, cursor: "pointer",
+        }}>
+          <input type="radio" name="rel-unit" defaultChecked={o.active} style={{ accentColor: "#3B5BDB", margin: 0 }}/>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36" }}>{o.label}</div>
+            <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 2 }}>{o.desc}</div>
+          </div>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+// ===== Main =====
+function R3Operation() {
+  return (
+    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
+      <TopBar title="평가제도 운영안" subtitle="criteria v2026.1 · 운영안 payload · 마지막 수정 3일 전"/>
+      <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px 56px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+
+          {/* Step indicator + header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.06em" }}>STEP 01 / 06</span>
+            <div style={{ flex: 1, height: 2, background: "#E1E5EF", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ width: "16.6%", height: "100%", background: "#E07A3C" }}/>
+            </div>
+            <a href="R3_인사담당자_02_평가기준.html" style={{ fontSize: 12, color: "#3B5BDB", textDecoration: "none", fontWeight: 600 }}>다음: 평가 기준 →</a>
+          </div>
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginBottom: 26 }}>
+            <div style={{ flex: 1 }}>
+              <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>
+                평가제도 운영안을 설계합니다
+              </h1>
+              <p style={{ margin: "10px 0 0", fontSize: 14, color: "#5B6685", lineHeight: 1.65, maxWidth: 720 }}>
+                비중 · 가중치 · 강제배분 · 점수 상한 등 평가 운영의 골격을 입력해주세요.
+                여기서 정한 값이 R1 작성 가이드 · R2 검토 결과 · R3 인사이트에 모두 반영됩니다.
+              </p>
+            </div>
+            <Button variant="secondary" leftIcon={<Icon name="library" size={15}/>}>버전 히스토리</Button>
+            <Button variant="primary" leftIcon={<Icon name="check" size={15}/>}>변경사항 저장 (2건)</Button>
+          </div>
+
+          {/* Active version card */}
+          <div style={{
+            background: "linear-gradient(135deg, #1B2A4E, #2C3E68)", color: "#fff",
+            borderRadius: 14, padding: "20px 24px", marginBottom: 22,
+            display: "flex", alignItems: "center", gap: 18,
+          }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(224,122,60,0.22)", color: "#F4C9A8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📜</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: "#91A6F0", letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>활성 버전</div>
+              <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-mono)" }}>운영안 v2026.1 · 운영중</div>
+            </div>
+            <div style={{ display: "flex", gap: 24, fontSize: 12, color: "#91A6F0" }}>
+              <div>적용 본부 <span style={{ color: "#fff", fontWeight: 700, fontFamily: "var(--font-mono)", marginLeft: 6 }}>14개</span></div>
+              <div>적용 대상 <span style={{ color: "#fff", fontWeight: 700, fontFamily: "var(--font-mono)", marginLeft: 6 }}>552명</span></div>
+              <div>발행일 <span style={{ color: "#fff", fontWeight: 700, fontFamily: "var(--font-mono)", marginLeft: 6 }}>2026-04-12</span></div>
+            </div>
+            <span style={{ padding: "5px 11px", background: "rgba(62,221,161,0.14)", color: "#A3E5BD", borderRadius: 7, fontSize: 11, fontWeight: 700 }}>● LIVE</span>
+          </div>
+
+          {/* SECTION 01 — 비중 */}
+          <SectionCard num="01" title="평가 영역 비중" desc="운영 · 전략혁신 · 사후평가의 점수 비중 (합계 100%)">
+            <WeightTriple/>
+          </SectionCard>
+
+          {/* SECTION 02 — 난이도 가중치 */}
+          <SectionCard num="02" title="난이도 가중치" desc="KR 난이도(상·중·하)별 점수 가중치. R1 점수 산출 시 적용됩니다.">
+            <DifficultyWeights/>
+          </SectionCard>
+
+          {/* SECTION 03 — 강제배분 */}
+          <SectionCard num="03" title="등급 강제배분" desc="상대평가 시 적용되는 S/A/B/C/D 비율. D는 규정(현저한 미달성) 수동 배정.">
+            <ForcedDistribution/>
+          </SectionCard>
+
+          {/* SECTION 04 — KR 점수 상한 + 상대평가 단위 */}
+          <SectionCard num="04" title="점수 상한 & 상대평가 단위" desc="달성률 초과분 인정 한도와 등급 산출 모집단.">
+            <FieldRow label="KR 점수 상한" hint="개별 KR 달성률 100% 초과 시 인정 최대치">
+              <NumberInput value="110" unit="%" width={90} color="#3B5BDB"/>
+              <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 6 }}>달성률 130%여도 점수에는 110%만 반영됩니다.</div>
+            </FieldRow>
+            <FieldRow label="상대평가 모집단" hint="등급 강제배분 단위 (작을수록 동질 비교, 클수록 다양성)" required>
+              <RelativeUnit/>
+            </FieldRow>
+          </SectionCard>
+
+          {/* SECTION 05 — 직급 밴드 */}
+          <SectionCard num="05" title="직급 밴드" desc="동일 밴드 내에서 강제배분이 적용됩니다. (예: 4급갑·4급을은 같은 밴드)">
+            <GradeBands/>
+          </SectionCard>
+
+          {/* SECTION 06 — 공통 제외 기준 */}
+          <SectionCard num="06" title="공통 제외 기준" desc="OKR 대상에서 제외되는 업무 유형. R1 작성 가이드에 표시됩니다.">
+            <FieldRow label="제외 기준 문구" hint="피평가자가 KR 작성 시 안내문으로 노출">
+              <textarea
+                defaultValue="반응형(장애대응형) 유지보수는 OKR 대상 제외, 능동적 개선만 인정"
+                style={{
+                  width: "100%", minHeight: 80, padding: "12px 14px",
+                  background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10,
+                  fontFamily: "var(--font-sans)", fontSize: 13, color: "#0F1A36",
+                  outline: "none", resize: "vertical", lineHeight: 1.6,
+                }}/>
+            </FieldRow>
+            <FieldRow label="추가 제외 유형 (선택)" hint="필요 시 항목별로 추가">
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {["반응형 유지보수", "정기 보고", "단순 사무지원"].map((t) => (
+                  <span key={t} style={{
+                    padding: "6px 12px", borderRadius: 999,
+                    background: "#fff", border: "1px solid #E1E5EF",
+                    fontSize: 12, color: "#1F2A4A", display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                    {t}
+                    <button style={{ background: "transparent", border: "none", color: "#A4ADC4", cursor: "pointer", fontSize: 14, padding: 0, display: "flex" }}>×</button>
+                  </span>
+                ))}
+                <button style={{
+                  padding: "6px 12px", borderRadius: 999,
+                  background: "transparent", border: "1px dashed #C8CFDF",
+                  fontSize: 12, color: "#5B6685", cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                }}>
+                  <Icon name="plus" size={12}/> 추가
+                </button>
+              </div>
+            </FieldRow>
+          </SectionCard>
+
+          {/* Impact panel */}
+          <div style={{
+            background: "#F1F4FD", border: "1px solid #C5D0F7", borderRadius: 14,
+            padding: "20px 24px", marginTop: 8, display: "flex", gap: 16, alignItems: "flex-start",
+          }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>💡</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#1B2A4E", marginBottom: 6 }}>저장 시 영향 범위</div>
+              <div style={{ fontSize: 12.5, color: "#3A4565", lineHeight: 1.65, marginBottom: 10 }}>
+                운영안 변경은 <b>다음 분기 평가</b>부터 적용됩니다. 현재 진행 중인 2026 상반기 평가에는 영향이 없어요.
+              </div>
+              <div style={{ display: "flex", gap: 18, fontSize: 12, color: "#5B6685" }}>
+                <span>· R1 작성 가이드 <b style={{ color: "#3B5BDB" }}>즉시 반영</b></span>
+                <span>· R2 점수 계산식 <b style={{ color: "#3B5BDB" }}>다음 분기</b></span>
+                <span>· R3 인사이트 기준 <b style={{ color: "#3B5BDB" }}>즉시 반영</b></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer nav */}
+          <div style={{ display: "flex", gap: 12, marginTop: 28, justifyContent: "flex-end" }}>
+            <Button variant="secondary">취소</Button>
+            <Button variant="secondary">임시 저장</Button>
+            <a href="R3_인사담당자_02_평가기준.html" style={{ textDecoration: "none" }}>
+              <Button variant="primary" rightIcon={<Icon name="chevronRight" size={14}/>}>저장 후 다음: 평가 기준</Button>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  );
+}
+
+window.R3Operation = R3Operation;
+</script>
+<script type="text/babel">
+  function App() { return (<><SidebarR3 active="operation"/><R3Operation/></>); }
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 48" fill="none">
+  <!-- Editorial / typographic - no icon, just typography with a colored dot -->
+  <text x="0" y="34" font-family="Pretendard, -apple-system, sans-serif"
+        font-size="30" font-weight="800" fill="#0A1F17" letter-spacing="-0.04em">OKR</text>
+  <!-- Green dot as visual anchor / period -->
+  <circle cx="74" cy="30" r="3.5" fill="#00A968"/>
+  <text x="86" y="34" font-family="Pretendard, -apple-system, sans-serif"
+        font-size="30" font-weight="300" fill="#0A1F17" letter-spacing="-0.02em">LENS</text>
+</svg>

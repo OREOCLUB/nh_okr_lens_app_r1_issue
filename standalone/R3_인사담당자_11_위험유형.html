@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 위험 유형 상세</title>
+<style>/* ============================================================
+   OKR LENS — Design System
+   colors_and_type.css
+   사내 OKR 평가·코칭 AI 서비스 — 친근한 SaaS 톤 · 넉넉한 여백
+   ============================================================ */
+
+/* ---------- 1. Fonts ---------- */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- 2. Color — Brand / Primary (Friendly Blue) ---------- */
+  /* 참고 이미지의 SSO 버튼/CTA 컬러에서 추출. 인디고가 아닌 더 밝은 'Friendly Blue'. */
+  --brand-900: #142250;   /* deepest — text accent on light bg */
+  --brand-800: #1B2A4E;   /* dark navy — sidebar, hero text accent (참고 이미지 좌측 다크 카드) */
+  --brand-700: #213A8C;
+  --brand-600: #2C49B8;
+  --brand-500: #3B5BDB;   /* PRIMARY — SSO 버튼 컬러 */
+  --brand-400: #5C7AE6;
+  --brand-300: #91A6F0;
+  --brand-200: #C5D0F7;
+  --brand-100: #E5EBFB;
+  --brand-50:  #F1F4FD;
+
+  /* ---------- 3. Role Accents (3역할 컬러 코딩) ---------- */
+  /* 참고 이미지: 피평가자=블루, 평가자=그린, 인사담당자=오렌지/코랄 */
+  --role-r1-bg:   #E8F0FF;
+  --role-r1-fg:   #3B5BDB;
+  --role-r1-mark: #3B5BDB;
+
+  --role-r2-bg:   #E3F4EA;
+  --role-r2-fg:   #2F9E5E;
+  --role-r2-mark: #2F9E5E;
+
+  --role-r3-bg:   #FFEDE2;
+  --role-r3-fg:   #E07A3C;
+  --role-r3-mark: #E07A3C;
+
+  /* ---------- 4. Color — Neutrals (Cool Slate, softer than v1) ---------- */
+  --ink-900: #0F1A36;     /* heading */
+  --ink-800: #1F2A4A;
+  --ink-700: #3A4565;     /* body strong */
+  --ink-600: #5B6685;     /* body */
+  --ink-500: #7C87A4;     /* secondary */
+  --ink-400: #A4ADC4;     /* tertiary, icon */
+  --ink-300: #C8CFDF;     /* disabled */
+  --ink-200: #E1E5EF;     /* divider */
+  --ink-150: #ECEFF5;
+  --ink-100: #F4F7FB;     /* PAGE BACKGROUND — 참고 이미지 베이스 */
+  --ink-50:  #F9FAFC;
+  --ink-0:   #FFFFFF;
+
+  /* ---------- 5. Color — Semantic (Status) ---------- */
+  /* 친근한 톤 — 채도 더 낮춤. "코칭" 시선 유지. */
+  --risk-high-fg:   #D14343;
+  --risk-high-bg:   #FFF0F0;
+  --risk-high-bd:   #FFD4D4;
+
+  --risk-mid-fg:    #D98023;
+  --risk-mid-bg:    #FFF7EC;
+  --risk-mid-bd:    #FFE0BA;
+
+  --risk-low-fg:    #2F9E5E;
+  --risk-low-bg:    #ECFAF1;
+  --risk-low-bd:    #BBE9CC;
+
+  --info-fg:        #2B5DD9;
+  --info-bg:        #EFF4FE;
+  --info-bd:        #C5D5F7;
+
+  /* ---------- 6. Status — 승인 enum (D5) ---------- */
+  --status-draft-fg:    #5B6685;
+  --status-draft-bg:    #F1F3F8;
+  --status-pending-fg:  #2B5DD9;
+  --status-pending-bg:  #EFF4FE;
+  --status-approved-fg: #2F9E5E;
+  --status-approved-bg: #ECFAF1;
+  --status-rejected-fg: #D14343;
+  --status-rejected-bg: #FFF0F0;
+  --status-adjust-fg:   #D98023;
+  --status-adjust-bg:   #FFF7EC;
+
+  /* ---------- 7. Difficulty / Grade ---------- */
+  --diff-high: #7C4DD9;
+  --diff-mid:  #3B5BDB;
+  --diff-low:  #7C87A4;
+
+  --grade-s: #6B47E0;
+  --grade-a: #3B5BDB;
+  --grade-b: #2F9E5E;
+  --grade-c: #D98023;
+  --grade-d: #7C87A4;
+
+  /* ---------- 8. Data viz / Heatmap ---------- */
+  --heat-0: #F1F4FD;
+  --heat-1: #DCE3F8;
+  --heat-2: #B7C4F0;
+  --heat-3: #8FA1E5;
+  --heat-4: #5C7AE6;
+  --heat-5: #3B5BDB;
+
+  /* ---------- 9. Typography — Stacks ---------- */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+               'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* ---------- 10. Type — Sizes & line-heights ---------- */
+  /* base 15px — 참고 이미지의 넉넉한 밀도에 맞춰 한 단계 키움 */
+  --fs-hero:     48px;   /* 랜딩 메인 헤드라인 */
+  --fs-display:  36px;
+  --fs-h1:       28px;
+  --fs-h2:       22px;
+  --fs-h3:       18px;
+  --fs-body-lg:  16px;
+  --fs-body:     15px;   /* body default */
+  --fs-sm:       13.5px;
+  --fs-xs:       12.5px;
+  --fs-micro:    11.5px;
+
+  --lh-tight:    1.25;
+  --lh-snug:     1.45;
+  --lh-normal:   1.7;
+  --lh-relaxed:  1.85;
+
+  --tracking-tight:  -0.025em;
+  --tracking-normal: -0.005em;
+  --tracking-wide:   0.04em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* ---------- 11. Spacing scale (4pt grid) ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+  --sp-12: 96px;
+
+  /* ---------- 12. Radius — 더 부드럽게 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;    /* 기본 카드 */
+  --radius-xl: 20px;    /* 큰 카드, 패널 */
+  --radius-2xl: 28px;   /* 히어로 일러스트 박스 */
+  --radius-pill: 999px;
+
+  /* ---------- 13. Shadow / Elevation — 부드럽고 옅음 ---------- */
+  --shadow-xs: 0 1px 2px rgba(31, 42, 74, 0.04);
+  --shadow-sm: 0 2px 6px rgba(31, 42, 74, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(31, 42, 74, 0.08);
+  --shadow-lg: 0 16px 40px -10px rgba(31, 42, 74, 0.10);
+  --shadow-xl: 0 30px 60px -16px rgba(31, 42, 74, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(59, 91, 219, 0.16);
+  --shadow-card-hover: 0 12px 28px -8px rgba(59, 91, 219, 0.18);
+
+  /* ---------- 14. Borders ---------- */
+  --bd-subtle: 1px solid var(--ink-150);
+  --bd-default: 1px solid var(--ink-200);
+  --bd-strong: 1px solid var(--ink-300);
+  --bd-focus: 1.5px solid var(--brand-500);
+
+  /* ---------- 15. Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+
+  /* ---------- 16. Layout ---------- */
+  --sidebar-w: 256px;
+  --topbar-h: 64px;
+  --content-max: 1440px;
+  --page-pad-x: 40px;
+  --page-pad-y: 32px;
+}
+
+/* ============================================================
+   Semantic typography classes
+   ============================================================ */
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-900);
+}
+.ds-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--ink-900);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+.ds-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--ink-500);
+}
+.ds-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-700);
+  font-feature-settings: "tnum" 1;
+}
+.ds-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ds-reset, .ds-reset * { box-sizing: border-box; }
+.ds-reset {
+  font-family: var(--font-sans);
+  color: var(--ink-600);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   OKR LENS Responsive — 2026 리브랜드
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: auto; }
+body { font-size: 16px; }
+
+.okrlens-sidebar,
+aside[class*="Sidebar"] {
+  transition: width 220ms cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 1024px) {
+  .okrlens-sidebar { width: 76px !important; min-width: 76px !important; padding-left: 10px !important; padding-right: 10px !important; }
+  .okrlens-sidebar > div:first-child > span:not(:first-child),
+  .okrlens-sidebar > div:first-child > span:last-child { display: none !important; }
+  .okrlens-sidebar > div:first-child { justify-content: center !important; padding: 4px 0 22px !important; }
+  .okrlens-sidebar a > div span:last-child,
+  .okrlens-sidebar > div > div:last-child > div:last-child { display: none !important; }
+  .okrlens-sidebar a > div,
+  .okrlens-sidebar > div > div {
+    justify-content: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+@media (max-width: 900px) {
+  .okrlens-sidebar { width: 72px !important; min-width: 72px !important; padding-left: 8px !important; padding-right: 8px !important; }
+}
+@media (max-width: 640px) {
+  .okrlens-sidebar { position: fixed; z-index: 100; height: 100vh; transform: translateX(-100%); }
+  .okrlens-sidebar.open { transform: translateX(0); }
+  #app > div > div:last-child,
+  main { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+main, [class*="page-content"] {
+  padding-left: clamp(16px, 3vw, 40px);
+  padding-right: clamp(16px, 3vw, 40px);
+}
+
+@media (max-width: 900px) {
+  [style*="gridTemplateColumns"][style*="1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  [style*="repeat(3, 1fr)"],
+  [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  [style*="gap: 56px"], [style*="gap:56px"] { gap: 24px !important; }
+  [style*="gap: 40px"], [style*="gap:40px"] { gap: 20px !important; }
+}
+
+.okrlens-topbar {
+  flex-wrap: wrap;
+  gap: 12px !important;
+  padding: 12px 20px !important;
+}
+@media (max-width: 900px) {
+  .okrlens-search { width: 100% !important; order: 10; }
+  .okrlens-period { display: none !important; }
+}
+
+body, .ds-body { font-size: 16px; }
+h1, .ds-h1 { font-size: clamp(22px, 3vw, 28px); }
+h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
+
+
+</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button, input, textarea { font-family: inherit; }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div id="__splash" style="position:fixed;inset:0;background:#F5F6F4;display:flex;align-items:center;justify-content:center;z-index:2147483647;transition:opacity .25s ease">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F5F6F4"/>
+    <rect x="500" y="320" width="200" height="160" rx="32" fill="transparent"/>
+    <circle cx="600" cy="400" r="36" fill="none" stroke="#fff" stroke-width="8" opacity="0.7"/>
+    <circle cx="600" cy="400" r="10" fill="#fff"/>
+    <text x="600" y="540" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#0F1A36" text-anchor="middle" letter-spacing="2">OKR LENS</text>
+    <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
+  </svg>
+</div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
+// Usage: <Icon name="dashboard" size={18} />
+const ICONS = {
+  dashboard: <><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></>,
+  clipboard: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+  sliders: <><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="12" cy="4" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="20" r="2"/></>,
+  library: <><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></>,
+  barchart: <><path d="M3 3v18h18"/><path d="M7 16V9m5 7V5m5 11v-4"/></>,
+  piechart: <path d="M21 12A9 9 0 1 1 12 3v9z"/>,
+  search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>,
+  sort: <path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>,
+  more: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></>,
+  chevronDown: <path d="m6 9 6 6 6-6"/>,
+  chevronRight: <path d="m9 6 6 6-6 6"/>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  check: <path d="M20 6 9 17l-5-5"/>,
+  x: <><path d="M18 6 6 18M6 6l12 12"/></>,
+  refresh: <><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.78.95 6.5 2.5L21 3"/><path d="M21 3v6h-6"/></>,
+  alert: <><path d="m21.7 16.6-8.9-15a1 1 0 0 0-1.8 0L2.1 16.6A1 1 0 0 0 3 18h18a1 1 0 0 0 .8-1.4z"/><path d="M12 9v4M12 17h.01"/></>,
+  sparkles: <><path d="M9.94 14.34A2.5 2.5 0 1 1 12 12.94"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6 7.7 7.7m8.6 8.6 2.1 2.1m0-13L16.3 7.7M5.6 18.4l2.1-2.1"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+};
+
+function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
+  const path = ICONS[name];
+  if (!path) return null;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+      {...rest}
+    >
+      {path}
+    </svg>
+  );
+}
+
+window.Icon = Icon;
+</script>
+<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
+  const base = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    lineHeight: 1,
+    letterSpacing: "-0.005em",
+    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
+    opacity: disabled ? 0.42 : 1,
+  };
+  const sizes = {
+    sm: { fontSize: 12.5, padding: "7px 12px" },
+    md: { fontSize: 13.5, padding: "10px 16px" },
+    lg: { fontSize: 15, padding: "12px 22px" },
+  };
+  const variants = {
+    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
+    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
+    ghost:     { background: "transparent", color: "#3A4565" },
+    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
+    success:   { background: "#2F9E5E", color: "#fff" },
+    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hoverStyles = {
+    primary:   { background: "#2C49B8" },
+    secondary: { background: "#F4F7FB" },
+    ghost:     { background: "#F4F7FB" },
+    danger:    { background: "#FFF0F0" },
+    success:   { background: "#268F52" },
+    ai:        { background: "#E5EBFB" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
+    >
+      {leftIcon}
+      {children}
+      {rightIcon}
+    </button>
+  );
+}
+window.Button = Button;
+</script>
+<script type="text/babel">function TopBar({ title, subtitle }) {
+  return (
+    <header style={{
+      height: 64, minHeight: 64,
+      display: "flex", alignItems: "center",
+      padding: "0 32px",
+      background: "#fff",
+      borderBottom: "1px solid #E1E5EF",
+      gap: 18,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: "#F4F7FB",
+        borderRadius: 10, padding: "8px 14px",
+        width: 300,
+        color: "#7C87A4",
+      }}>
+        <Icon name="search" size={15}/>
+        <input
+          placeholder="팀원 이름, KR ID 검색"
+          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
+        />
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px",
+        border: "1px solid #E1E5EF", borderRadius: 10,
+        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
+      }}>
+        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
+        2026 상반기
+        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
+      </div>
+
+      <button style={{
+        position: "relative",
+        width: 40, height: 40, borderRadius: 10,
+        border: "1px solid #E1E5EF", background: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#3A4565",
+      }}>
+        <Icon name="bell" size={17}/>
+        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
+      </button>
+    </header>
+  );
+}
+
+window.TopBar = TopBar;
+</script>
+<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
+// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
+// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
+function SidebarR3({ active = "operation" }) {
+  const steps = [
+    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
+    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
+    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
+    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
+    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
+    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+  ];
+  return (
+    <aside className="okrlens-sidebar" style={{
+      width: 244, minWidth: 244,
+      background: "#0A1F17", color: "#A4ADC4",
+      display: "flex", flexDirection: "column",
+      height: "100%", padding: "20px 14px", gap: 4,
+      overflowY: "auto",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+      </div>
+
+      {/* Role chip — orange */}
+      <div style={{
+        margin: "0 4px 14px",
+        background: "rgba(224,122,60,0.16)",
+        border: "1px solid rgba(224,122,60,0.32)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        display: "flex", alignItems: "center", gap: 9,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
+        <div>
+          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
+        </div>
+      </div>
+
+      {/* Section label */}
+      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        운영 흐름 · 6단계
+      </div>
+
+      {steps.map((it, idx) => {
+        const on = it.id === active;
+        const isLast = idx === steps.length - 1;
+        return (
+          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 11px", borderRadius: 10,
+              background: on ? "rgba(224,122,60,0.18)" : "transparent",
+              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 140ms ease-out",
+              position: "relative",
+            }}>
+              {/* Step number badge */}
+              <div style={{
+                width: 24, height: 24, borderRadius: 7,
+                background: on ? "#E07A3C" : "#243759",
+                color: on ? "#fff" : "#91A6F0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+                flexShrink: 0,
+              }}>{it.step}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: on ? 700 : 600,
+                  color: on ? "#fff" : "#C8CFDF",
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.label}</div>
+                <div style={{
+                  fontSize: 10.5,
+                  color: on ? "#F4C9A8" : "#7E89B0",
+                  marginTop: 1,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{it.desc}</div>
+              </div>
+              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
+            </div>
+            {/* Connector line between steps */}
+            {!isLast && (
+              <div style={{
+                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
+                background: on ? "#E07A3C" : "#243759",
+                opacity: 0.4,
+              }}/>
+            )}
+          </a>
+        );
+      })}
+
+      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+        <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9,
+            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
+          }}>
+            <Icon name="refresh" size={15}/>
+            <span>역할 전환</span>
+          </div>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
+            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+window.SidebarR3 = SidebarR3;
+</script>
+<script type="text/babel">// R3RiskTypes.jsx — 위험 유형 11종 상세 분석 (Console 드릴다운)
+function R3RiskTypes() {
+  const types = [
+    { no: 1, code: "C01", name: "측정모호",   desc: "수치로 측정 불가능하거나 측정 방법이 모호", count: 38, pct: 13.3, trend: "+3", samples: 12, hq: "운영 11 · 사업 9 · DX 7" },
+    { no: 2, code: "C10", name: "자기보고형", desc: "외부 증빙 없이 본인 보고에만 의존",       count: 32, pct: 11.2, trend: "+5", samples: 10, hq: "사업 12 · 운영 8 · DX 6" },
+    { no: 3, code: "C08", name: "건수형지표", desc: "건수만으로 평가 (질적 지표 결여)",        count: 27, pct: 9.4,  trend: "-2", samples: 9,  hq: "개발 9 · 운영 8 · 인프라 5" },
+    { no: 4, code: "C02", name: "통제불가",   desc: "외부 의존도가 커 본인이 통제 불가",       count: 24, pct: 8.4,  trend: "0",  samples: 8,  hq: "사업 11 · DX 6 · 운영 4" },
+    { no: 5, code: "C06", name: "공모형",     desc: "타 팀 KR과 겹치거나 협업 명확성 부족",    count: 19, pct: 6.6,  trend: "-4", samples: 7,  hq: "운영 8 · 개발 6 · DX 3" },
+    { no: 6, code: "C03", name: "도전성저하", desc: "전년 유지형이거나 도전성 부족",           count: 15, pct: 5.2,  trend: "-1", samples: 5,  hq: "운영 6 · 개발 5 · 인프라 4" },
+    { no: 7, code: "C04", name: "표현모호",   desc: "용어가 애매하거나 해석 여지가 큼",        count: 14, pct: 4.9,  trend: "+1", samples: 5,  hq: "사업 6 · DX 4 · 운영 3" },
+    { no: 8, code: "C04b", name: "현실성낮음", desc: "기간·자원 대비 비현실적",                count: 11, pct: 3.8,  trend: "0",  samples: 4,  hq: "DX 5 · 사업 3 · 운영 2" },
+    { no: 9, code: "C09", name: "확인불가",   desc: "평가자가 결과를 확인할 증거 없음",        count: 9,  pct: 3.1,  trend: "-1", samples: 3,  hq: "사업 4 · 운영 3 · 개발 2" },
+    { no: 10, code: "C07", name: "신기술의존", desc: "검증되지 않은 신기술에 과도 의존",       count: 6,  pct: 2.1,  trend: "-2", samples: 2,  hq: "DX 4 · 개발 2" },
+    { no: 11, code: "C11", name: "고위험실행", desc: "실패 시 영향이 크나 통제 방안 부재",     count: 4,  pct: 1.4,  trend: "+1", samples: 2,  hq: "운영 2 · 개발 1 · 사업 1" },
+  ];
+  const maxCount = Math.max(...types.map(t => t.count));
+
+  return (
+    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
+      <TopBar title="위험 유형 상세" subtitle="11항목별 코칭 후보 발생 분포"/>
+      <div style={{ flex: 1, overflowY: "auto", padding: "28px 40px 56px" }}>
+
+        {/* Breadcrumb */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#7C87A4", marginBottom: 14 }}>
+          <a href="R3_인사담당자_01_인사이트.html" style={{ color: "#3B5BDB", textDecoration: "none" }}>캘리브레이션</a>
+          <Icon name="chevronRight" size={11}/>
+          <span>위험 유형 상세</span>
+        </div>
+
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>
+          위험 유형 11종 · 발생 분포
+        </h1>
+        <p style={{ margin: "8px 0 22px", fontSize: 13, color: "#5B6685", lineHeight: 1.6 }}>
+          286건 KR 중 검출된 위험 태그를 유형별로 집계했어요. 확정 위반이 아닌 코칭 후보입니다.
+        </p>
+
+        {/* Summary stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 26 }}>
+          {[
+            { label: "총 검출 태그", value: "199", unit: "개", sub: "1KR당 0.69개", color: "#3B5BDB" },
+            { label: "고위험 유형 (TOP3)", value: "97", unit: "개", sub: "측정모호 · 자기보고형 · 건수형", color: "#D14343" },
+            { label: "전 분기 대비", value: "-8.2", unit: "%", sub: "전체 감소 추세", color: "#2F9E5E" },
+            { label: "AI 자동판정 정확도", value: "94.1", unit: "%", sub: "평가자 수정률 5.9%", color: "#7C4DD9" },
+          ].map((s, i) => (
+            <div key={i} style={{ padding: "18px 20px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12 }}>
+              <div style={{ fontSize: 12, color: "#5B6685", marginBottom: 8 }}>{s.label}</div>
+              <div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 700, color: s.color, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>{s.value}</span>
+                <span style={{ fontSize: 13, color: "#7C87A4", marginLeft: 4 }}>{s.unit}</span>
+              </div>
+              <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 6 }}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "36px 60px 100px 1.5fr 90px 50px 55px 1fr 70px",
+            gap: 0, alignItems: "center",
+            padding: "14px 22px",
+            background: "#F9FAFC",
+            borderBottom: "1px solid #E1E5EF",
+            fontSize: 10.5, fontWeight: 700, color: "#7C87A4",
+            letterSpacing: "0.04em", textTransform: "uppercase",
+          }}>
+            <div>#</div>
+            <div>CODE</div>
+            <div>위험 유형</div>
+            <div>설명</div>
+            <div>발생 분포</div>
+            <div style={{ textAlign: "right" }}>건수</div>
+            <div style={{ textAlign: "right" }}>비율</div>
+            <div style={{ paddingLeft: 12 }}>본부별</div>
+            <div style={{ textAlign: "right" }}>추세</div>
+          </div>
+
+          {types.map((t, i) => (
+            <div key={t.code} style={{
+              display: "grid",
+              gridTemplateColumns: "36px 60px 100px 1.5fr 90px 50px 55px 1fr 70px",
+              gap: 0, alignItems: "center",
+              padding: "14px 22px",
+              borderBottom: i === types.length - 1 ? "none" : "1px solid #ECEFF5",
+              cursor: "pointer", transition: "background 140ms",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#F9FAFC"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#A4ADC4", fontWeight: 700 }}>{String(t.no).padStart(2, "0")}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#D14343", fontWeight: 700 }}>{t.code}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36" }}>{t.name}</span>
+              <span style={{ fontSize: 12, color: "#5B6685", lineHeight: 1.5 }}>{t.desc}</span>
+              <div style={{ height: 6, background: "#F4F7FB", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(t.count / maxCount) * 100}%`, background: t.count >= 25 ? "#D14343" : t.count >= 15 ? "#D98023" : "#7C4DD9", borderRadius: 3 }}/>
+              </div>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: "#0F1A36", textAlign: "right" }}>{t.count}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "#7C87A4", textAlign: "right" }}>{t.pct.toFixed(1)}%</span>
+              <span style={{ fontSize: 10.5, color: "#5B6685", paddingLeft: 12 }}>{t.hq}</span>
+              <span style={{
+                textAlign: "right",
+                fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700,
+                color: t.trend.startsWith("-") ? "#2F9E5E" : t.trend === "0" ? "#A4ADC4" : "#D14343",
+              }}>{t.trend}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Action callout */}
+        <div style={{
+          marginTop: 20, padding: "16px 20px",
+          background: "#F1F4FD", border: "1px solid #C5D0F7", borderRadius: 12,
+          display: "flex", alignItems: "center", gap: 14, fontSize: 12.5, color: "#1B2A4E",
+        }}>
+          <span style={{ fontSize: 18 }}>💡</span>
+          <div style={{ flex: 1, lineHeight: 1.6 }}>
+            <b>측정모호 · 자기보고형</b> 두 유형이 전체의 24.5%를 차지해요. 평가 기준 편집에서 이 두 항목의 가이드 문구를 강화하면 효과가 클 거예요.
+          </div>
+          <a href="R3_인사담당자_02_평가기준.html" style={{ textDecoration: "none" }}>
+            <Button variant="primary" size="sm" rightIcon={<Icon name="chevronRight" size={13}/>}>기준 편집</Button>
+          </a>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+window.R3RiskTypes = R3RiskTypes;
+</script>
+<script type="text/babel">
+  function App() { return (<><SidebarR3 active="insights"/><R3RiskTypes/></>); }
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
