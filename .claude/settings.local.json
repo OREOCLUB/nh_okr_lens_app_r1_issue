@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git rm *)",
+      "Bash(node -e ' *)",
+      "Bash(mkdir -p C:/Users/user/AppData/Local/Temp/claude/C--Users-user-workspace-nh-OKR-LENS/b5c2ac19-8281-45b0-95ad-15d9b7caa079/scratchpad/build)",
+      "Bash(node build.js)",
+      "Bash(node validate.js)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
