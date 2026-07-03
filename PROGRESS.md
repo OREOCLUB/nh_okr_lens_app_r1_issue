@@ -12,6 +12,11 @@
 > 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
 
 ### 완료
+- **R2 4단계 — 코칭 캘린더 (`src/app/r2/calendar/page.tsx`)**
+  - `eval_phases` 조회 연동(D8) — 하드코딩 EVENTS/MONTH_LIST 제거, 단계 시작/마감/당일 이벤트로 변환
+  - 월 이동 ◀▶ + 오늘 버튼 (2026-07 고정 제거, 연도 경계 정상), 빈 달 코칭 톤 안내
+  - 이번 달 일정 리스트 = eval_phases 기반, 1on1 미등록 팀원 카드 현행 유지
+  - 로딩/데모 폴백 상태, 세션 사용자 부제. Playwright 구동 검증 6스텝 통과
 - **R2 3단계 — 평가자 대시보드 재구축 (`src/app/r2/page.tsx`)**
   - 현황 카드 6종(D4: 전체/승인/작성중/결재요청/반려/조정) — 건수>0 강조, 클릭 필터·재클릭 해제
   - 팀원 테이블 컬럼 8개(직급·이름·직군·제출일·상태·AI위험도·코칭등록·액션), 기본 정렬 결재요청>반려>조정>작성중>완료, 헤더 클릭 정렬, 페이징(5행)
@@ -29,6 +34,11 @@
   - `supabase/migration_r2_write.sql` 신규 — 기존 프로젝트용 (컬럼 추가·쓰기 RLS·시드)
   - `supabase/schema.sql` 동기화 — okr_submissions(evaluator_msg·decided_at·risk_analysis), okrs(difficulty·measure·plan), okr_history(작년 OKR·타임라인 컬럼), anon update 정책 2건, 팀원 OKR·작년 OKR·반려 이벤트 시드
   - `src/lib/dataAccess.ts` — getMemberOkrs/getMemberHistory/getMemberEvents 조회 + saveReviewDecision(D9 통합형)/saveReviewDraft 쓰기. Supabase 미설정 시 `{ok:false, error:"NO_DB"}` 반환 → 화면 데모 모드 폴백
+
+### 다음 할 일 (R2 관련)
+1. `.env.local` 복구 후 `supabase/migration_r2_write.sql` 실행 → 승인/반려 실 DB 왕복 + R1 홈 연쇄(D3) 검증
+2. Gemini API 연동 (D2) — `src/lib/aiValidation.ts`의 `runValidation()` 본문만 교체
+3. R3 인사이트 화면이 okr_submissions 실데이터를 읽도록 전환되면 연쇄 최종 확인 (R3 담당 영역)
 
 ### 이슈/결정사항 (이번 세션)
 - **`.env.local`이 현재 체크아웃에 없음** (gitignore 대상) → REST 왕복 검증 보류. 복구 후 `supabase/migration_r2_write.sql`을 SQL Editor에서 1회 실행해야 쓰기 동작
