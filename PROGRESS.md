@@ -7,6 +7,58 @@
 
 ---
 
+## 2026-07-03 (R2 요건 구현 세션)
+
+> 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
+
+### 완료
+- **Gemini 공용 모듈 분리 + 팀 공유 가이드 (`69abda0`)**
+  - `src/lib/server/gemini.ts` — 전 역할 공용 코어 (수정 금지, import 전용). R2 라우트는 프롬프트만 보유하도록 리팩토링
+  - `docs/GEMINI_GUIDE.md` — R1·R3 담당자가 자기 AI 도구에 그대로 전달하는 연동 가이드 (충돌 방지 규칙 + 완성 예제)
+  - 전달 시 별도 공유 필요: ① GEMINI_API_KEY (보안 채널) ② guide_docs/2026_OKR_GUIDE.pdf (gitignore)
+- **Supabase 실연결 확인** — 키 등록 확인, 스키마 변경분 적용 확인, 쓰기 왕복(UPDATE→복원) 검증 통과. 스키마 변경분은 `supabase/schema_R2.sql`로 정리
+- **Gemini API 실연동 (D2 이행)** — AI Validation·AI 초안이 실제 LLM 판정으로 동작
+  - `src/app/api/validate/route.ts` 신규 — 서버 전용 라우트. `GEMINI_API_KEY`(.env.local)는 브라우저에 노출 안 됨
+  - 가이드 PDF(`guide_docs/2026_OKR_GUIDE.pdf`, 80p)를 Files API로 1회 업로드·47h 캐시 후 매 요청 동봉 → 판정 사유에 가이드 페이지 근거 인용됨
+  - 구조화 출력(responseSchema)으로 항목별 pass/warn/fail + 사유 + 종합 코멘트 JSON 강제, 코칭 톤 시스템 지시
+  - `aiValidation.ts` — runValidation이 API 우선, 실패 시 목업 폴백(+안내 문구). ✨AI 초안도 draftMessageAI로 실생성(가이드 근거 포함)
+  - 검증: API 직접 호출 14s / UI 판정 23~29s / 초안 12s 모두 gemini 소스 확인, API 차단 프로브 → 목업 폴백 정상
+  - `guide_docs/`는 사내 문서라 gitignore 처리 (모델: `GEMINI_MODEL` env로 변경 가능, 기본 gemini-2.5-flash)
+- **R2 4단계 — 코칭 캘린더 (`src/app/r2/calendar/page.tsx`)**
+  - `eval_phases` 조회 연동(D8) — 하드코딩 EVENTS/MONTH_LIST 제거, 단계 시작/마감/당일 이벤트로 변환
+  - 월 이동 ◀▶ + 오늘 버튼 (2026-07 고정 제거, 연도 경계 정상), 빈 달 코칭 톤 안내
+  - 이번 달 일정 리스트 = eval_phases 기반, 1on1 미등록 팀원 카드 현행 유지
+  - 로딩/데모 폴백 상태, 세션 사용자 부제. Playwright 구동 검증 6스텝 통과
+- **R2 3단계 — 평가자 대시보드 재구축 (`src/app/r2/page.tsx`)**
+  - 현황 카드 6종(D4: 전체/승인/작성중/결재요청/반려/조정) — 건수>0 강조, 클릭 필터·재클릭 해제
+  - 팀원 테이블 컬럼 8개(직급·이름·직군·제출일·상태·AI위험도·코칭등록·액션), 기본 정렬 결재요청>반려>조정>작성중>완료, 헤더 클릭 정렬, 페이징(5행)
+  - 행·액션·후보 카드 클릭 → `/r2/review?member={id}` (D1), "검토 화면으로 이동" 실라우팅 (alert 제거)
+  - 헤더·부제 세션 사용자 기준 (박정훈 하드코딩 제거), 로딩/데모 폴백 상태 표시
+  - Playwright 구동 검증 7스텝 통과
+- **R2 2단계 — OKR 검토 화면 재구축 (`src/app/r2/review/page.tsx`)**
+  - 좌측: 상태/직급/직군 필터 + 결재요청 우선 정렬, 팀원 클릭 → 중앙 실데이터 바인딩 (강동우 하드코딩 제거)
+  - 중앙: Objective별 OKR 그룹(측정방법·난이도·실행계획), criteria 테이블 기반 AI Validation(항목 수 가변), 작년 OKR 팝업(연도 탭 + 💡 자동 코멘트), 반려 이력 타임라인
+  - 우측: 처리 3택 + 메시지 필수 validation + ✨AI 초안, 승인 즉시/반려·조정 Confirm(D7), 처리 시 risk_analysis+status 동시 저장(D9) 후 다음 대상 자동 이동, 임시 저장·복원
+  - `src/lib/aiValidation.ts` 신규 — 목업 판정 단일 지점 (P2에 Gemini API로 본문만 교체)
+  - `src/lib/mockReview.ts` 신규 — 시드와 동일한 더미 폴백. `Button`에 disabled 추가
+  - Playwright 구동 검증 11스텝 통과 (딥링크 D1·Confirm D7·validation·자동이동·데모 폴백)
+- **R2 1단계 — 쓰기 기반 마련**
+  - `supabase/migration_r2_write.sql` 신규 — 기존 프로젝트용 (컬럼 추가·쓰기 RLS·시드)
+  - `supabase/schema.sql` 동기화 — okr_submissions(evaluator_msg·decided_at·risk_analysis), okrs(difficulty·measure·plan), okr_history(작년 OKR·타임라인 컬럼), anon update 정책 2건, 팀원 OKR·작년 OKR·반려 이벤트 시드
+  - `src/lib/dataAccess.ts` — getMemberOkrs/getMemberHistory/getMemberEvents 조회 + saveReviewDecision(D9 통합형)/saveReviewDraft 쓰기. Supabase 미설정 시 `{ok:false, error:"NO_DB"}` 반환 → 화면 데모 모드 폴백
+
+### 다음 할 일 (R2 관련)
+1. Supabase 키를 `.env.local`에 추가 + `supabase/migration_r2_write.sql` 실행 → 승인/반려 실 DB 왕복 + R1 홈 연쇄(D3) 검증
+2. ~~Gemini API 연동 (D2)~~ → **완료** (아래 참조). 남은 것: 판정 지연(20~30s) UX 개선 검토(스트리밍/부분 표시), 쿼터·비용 모니터링
+3. R3 인사이트 화면이 okr_submissions 실데이터를 읽도록 전환되면 연쇄 최종 확인 (R3 담당 영역)
+
+### 이슈/결정사항 (이번 세션)
+- **`.env.local`이 현재 체크아웃에 없음** (gitignore 대상) → REST 왕복 검증 보류. 복구 후 `supabase/migration_r2_write.sql`을 SQL Editor에서 1회 실행해야 쓰기 동작
+- 문서의 `okrs.approval_status`·`risk_analysis`는 실제 스키마에 없어 `okr_submissions.status`(처리 상태) + `okr_submissions.risk_analysis`(신규 jsonb)로 구현. R1 연쇄는 okrs.status(approved/rejected 매핑) + evaluator_msg로 성립
+- 반려 이력 타임라인·작년 OKR은 D6대로 `okr_history` 확장(event 컬럼)으로 단일 소스화
+
+---
+
 ## 2026-07-03
 
 ### 완료

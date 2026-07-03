@@ -3,7 +3,7 @@
 // 각 화면은 기존 더미 데이터를 초기값으로 유지한 채 그대로 동작한다.
 import { supabase } from "./supabase";
 import type { User } from "./auth";
-import type { Member, OKR } from "./mockData";
+import type { Member, OKR, RiskAnalysis } from "./mockData";
 import type { EvalSystem, TaxonomyGroup, CheckItem } from "./criteria";
 
 const PERIOD = "2026H2";
@@ -77,6 +77,48 @@ export interface CriteriaData {
   checklist: CheckItem[];
 }
 
+// ── r2/review 검토 상세 ─────────────────────────────────────
+export interface ReviewOkr {
+  id: number;
+  status: "approved" | "submitted" | "draft" | "rejected";
+  obj: string;
+  kr: string;
+  format: string;
+  baseline: string;
+  goal: string;
+  weight: number;
+  difficulty: string | null;
+  measure: string | null;
+  plan: string | null;
+}
+
+// 작년 OKR 팝업 (okr_history — event null 행)
+export interface HistoryOkr {
+  year: number;
+  obj: string;
+  kr: string;
+  grade: string;
+  difficulty: string | null;
+  achievement: number | null;
+  result: string | null;
+}
+
+// 반려 이력 타임라인 (okr_history — event 행)
+export interface HistoryEvent {
+  event: "submit" | "reject" | "resubmit";
+  at: string;
+  note: string;
+}
+
+export type { RiskAnalysis };
+
+export type ReviewDecision = "approved" | "rejected" | "adjustment";
+export interface WriteResult {
+  ok: boolean;
+  /** "NO_DB" = Supabase 미설정 (화면은 데모 모드로 로컬 반영) */
+  error?: string;
+}
+
 /** select 결과가 비어있지 않을 때만 rows 반환, 그 외 null (→ 화면은 더미 유지) */
 async function rows<T>(table: string, query: string, order?: string): Promise<T[] | null> {
   if (!supabase) return null;
@@ -110,13 +152,13 @@ export async function getUsers(): Promise<User[] | null> {
 export async function getMembers(): Promise<Member[] | null> {
   interface Row {
     employee_id: string; submit_date: string | null; status: Member["status"]; risk: Member["risk"];
-    focus: boolean; coaching: boolean; obj: string;
+    focus: boolean; coaching: boolean; obj: string; risk_analysis: RiskAnalysis | null;
     employees: { grade: string; name: string; job_series: string; work_group: string | null } | null;
   }
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("okr_submissions")
-    .select("employee_id, submit_date, status, risk, focus, coaching, obj, employees(grade, name, job_series, work_group)")
+    .select("employee_id, submit_date, status, risk, focus, coaching, obj, risk_analysis, employees(grade, name, job_series, work_group)")
     .eq("period", PERIOD)
     .order("sort_order", { ascending: true });
   if (error || !data || data.length === 0) return null;
@@ -132,6 +174,7 @@ export async function getMembers(): Promise<Member[] | null> {
     focus: r.focus,
     coaching: r.coaching,
     obj: r.obj,
+    analysis: r.risk_analysis,
   }));
 }
 
@@ -161,6 +204,107 @@ export async function getR1Okrs(loginId = "jung.ty"): Promise<OKR[] | null> {
     progress: r.progress,
     evaluator: r.evaluator_from && r.evaluator_msg ? { from: r.evaluator_from, msg: r.evaluator_msg } : undefined,
   }));
+}
+
+// ── r2/review 팀원 OKR 상세 ─────────────────────────────────
+export async function getMemberOkrs(employeeId: string): Promise<ReviewOkr[] | null> {
+  interface Row {
+    id: number; status: ReviewOkr["status"]; obj: string; kr: string; format: string; baseline: string;
+    goal: string; weight: number; difficulty: string | null; measure: string | null; plan: string | null;
+  }
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("okrs")
+    .select("id, status, obj, kr, format, baseline, goal, weight, difficulty, measure, plan")
+    .eq("employee_id", employeeId)
+    .eq("period", PERIOD)
+    .order("sort_order", { ascending: true });
+  if (error || !data || data.length === 0) return null;
+  return data as Row[];
+}
+
+// ── r2/review 작년 OKR (okr_history — 연도 적재 행) ──────────
+export async function getMemberHistory(employeeId: string): Promise<HistoryOkr[] | null> {
+  interface Row { year: number; obj: string; kr: string; grade: string; difficulty: string | null; achievement: number | null; result: string | null }
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("okr_history")
+    .select("year, obj, kr, grade, difficulty, achievement, result")
+    .eq("emp_no", employeeId)
+    .is("event", null)
+    .order("year", { ascending: false });
+  if (error || !data || data.length === 0) return null;
+  return data as Row[];
+}
+
+// ── r2/review 반려 이력 타임라인 (okr_history — event 행) ────
+export async function getMemberEvents(employeeId: string): Promise<HistoryEvent[] | null> {
+  interface Row { event: HistoryEvent["event"]; event_at: string; note: string | null }
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("okr_history")
+    .select("event, event_at, note")
+    .eq("emp_no", employeeId)
+    .eq("period", PERIOD)
+    .not("event", "is", null)
+    .order("id", { ascending: true });
+  if (error || !data || data.length === 0) return null;
+  return (data as Row[]).map((r) => ({ event: r.event, at: r.event_at, note: r.note ?? "" }));
+}
+
+function nowStamp(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// ── r2/review 처리 저장 (D9 통합형: risk_analysis + 처리 결정 동시 저장) ──
+// okr_submissions 상태 갱신 + 해당 팀원 okrs 상태·평가자 메시지 갱신 (R1 홈 연쇄, D3)
+export async function saveReviewDecision(args: {
+  employeeId: string;
+  decision: ReviewDecision;
+  message: string;
+  evaluatorName: string;
+  analysis: RiskAnalysis;
+}): Promise<WriteResult> {
+  if (!supabase) return { ok: false, error: "NO_DB" };
+  const { employeeId, decision, message, evaluatorName, analysis } = args;
+  const { error: subErr } = await supabase
+    .from("okr_submissions")
+    .update({
+      status: decision,
+      risk: analysis.risk,
+      evaluator_msg: message || null,
+      decided_at: nowStamp(),
+      risk_analysis: analysis,
+    })
+    .eq("employee_id", employeeId)
+    .eq("period", PERIOD);
+  if (subErr) return { ok: false, error: subErr.message };
+  // R1 화면 연쇄: okrs.status는 approved/rejected 2값으로 매핑 (조정요청 → rejected="함께 정제")
+  const { error: okrErr } = await supabase
+    .from("okrs")
+    .update({
+      status: decision === "approved" ? "approved" : "rejected",
+      evaluator_from: evaluatorName,
+      evaluator_msg: message || null,
+    })
+    .eq("employee_id", employeeId)
+    .eq("period", PERIOD);
+  if (okrErr) return { ok: false, error: okrErr.message };
+  return { ok: true };
+}
+
+// ── r2/review 임시 저장 (D9: risk_analysis만 저장 — 이탈 대비) ──
+export async function saveReviewDraft(employeeId: string, analysis: RiskAnalysis): Promise<WriteResult> {
+  if (!supabase) return { ok: false, error: "NO_DB" };
+  const { error } = await supabase
+    .from("okr_submissions")
+    .update({ risk: analysis.risk, risk_analysis: analysis })
+    .eq("employee_id", employeeId)
+    .eq("period", PERIOD);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 // ── r3/master 사원 마스터 ───────────────────────────────────

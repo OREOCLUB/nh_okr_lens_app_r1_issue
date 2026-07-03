@@ -26,6 +26,7 @@ export function Button({
   onClick,
   style,
   fullWidth,
+  disabled,
 }: {
   children?: ReactNode;
   variant?: Variant;
@@ -34,15 +35,18 @@ export function Button({
   onClick?: () => void;
   style?: CSSProperties;
   fullWidth?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
-        borderRadius: 10, fontWeight: 700, cursor: "pointer",
+        borderRadius: 10, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer",
         fontFamily: "var(--font-sans)", whiteSpace: "nowrap",
         transition: "filter 140ms",
+        opacity: disabled ? 0.55 : undefined,
         width: fullWidth ? "100%" : undefined,
         ...VARIANTS[variant],
         ...SIZES[size],
