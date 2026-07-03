@@ -43,6 +43,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# 사내 가이드 문서 (Gemini 판정 근거 — 저장소 외부 관리)
-guide_docs/
