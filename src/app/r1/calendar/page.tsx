@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { scheduleTypes } from "@/lib/mockData";
+import { getCurrentUser, type Session } from "@/lib/auth";
 
 interface Ev { type: keyof typeof scheduleTypes; title: string; time: string; linked?: boolean; pending?: boolean }
 const EVENTS: Record<number, Ev[]> = {
@@ -89,10 +91,38 @@ function Calendar() {
   );
 }
 
+interface UpcomingEv { date: string; type: string; title: string; time: string; host: string; dday: number; linked?: boolean; pending?: boolean }
+
 export default function R1CalendarPage() {
   const router = useRouter();
+  const [user, setUser] = useState<Session | null>(null);
+  const [upcoming, setUpcoming] = useState<UpcomingEv[]>(UPCOMING);
+
+  useEffect(() => {
+    const u = getCurrentUser();
+    if (u) setUser(u);
+  }, []);
+
+  function requestCoaching() {
+    const topic = window.prompt("어떤 주제로 코칭을 요청할까요? (평가자 승인 후 일정이 확정돼요)");
+    if (!topic?.trim()) return;
+    const d = new Date(Date.now() + 3 * 86_400_000);
+    setUpcoming((list) => [
+      ...list,
+      {
+        date: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`,
+        type: "oneonone",
+        title: topic.trim(),
+        time: "미정",
+        host: "내가 요청",
+        dday: 3,
+        pending: true,
+      },
+    ]);
+  }
+
   return (
-    <RoleShell role="R1" title="평가 캘린더" subtitle="정태영 · 2026 하반기 · KR 확정 단계">
+    <RoleShell role="R1" title="평가 캘린더" subtitle={user ? `${user.name} · 2026 하반기 · KR 확정 단계` : ""}>
       <div style={{ marginBottom: 18 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase" }}>2026 하반기</div>
         <h1 style={{ margin: "6px 0 0", fontSize: 26, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>나의 평가 여정을 한눈에</h1>
@@ -120,10 +150,10 @@ export default function R1CalendarPage() {
           <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36" }}>📅 다가오는 일정</div>
-              <span className="mono" style={{ marginLeft: "auto", fontSize: 11, color: "#7C87A4", fontWeight: 600 }}>{UPCOMING.length}건</span>
+              <span className="mono" style={{ marginLeft: "auto", fontSize: 11, color: "#7C87A4", fontWeight: 600 }}>{upcoming.length}건</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {UPCOMING.map((e, i) => {
+              {upcoming.map((e, i) => {
                 const t = scheduleTypes[e.type as keyof typeof scheduleTypes];
                 const urgent = e.dday <= 20;
                 return (
@@ -141,7 +171,7 @@ export default function R1CalendarPage() {
                 );
               })}
             </div>
-            <button onClick={() => alert("코칭 요청은 준비 중이에요 🙂 (평가자 승인 대기 흐름)")} style={{ width: "100%", marginTop: 10, padding: "10px 12px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>💬 새 코칭 요청하기</button>
+            <button onClick={requestCoaching} style={{ width: "100%", marginTop: 10, padding: "10px 12px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>💬 새 코칭 요청하기 (승인 대기로 등록)</button>
           </div>
           {/* Past history */}
           <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "16px 18px" }}>

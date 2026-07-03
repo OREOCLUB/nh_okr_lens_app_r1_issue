@@ -46,7 +46,7 @@ export function Button({
         borderRadius: 10, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer",
         fontFamily: "var(--font-sans)", whiteSpace: "nowrap",
         transition: "filter 140ms",
-        opacity: disabled ? 0.55 : undefined,
+        opacity: disabled ? 0.55 : 1,
         width: fullWidth ? "100%" : undefined,
         ...VARIANTS[variant],
         ...SIZES[size],

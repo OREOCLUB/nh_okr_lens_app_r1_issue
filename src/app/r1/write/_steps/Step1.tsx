@@ -1,11 +1,17 @@
 "use client";
 
 import { card } from "./shared";
+import type { WizardState } from "@/lib/wizard";
+import type { CriteriaData } from "@/lib/dataAccess";
 
-export function Step1({ type, setType }: { type: string; setType: (t: string) => void }) {
+export function Step1({ state, set, criteria }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; criteria: CriteriaData }) {
+  const type = state.okrType;
+  const setType = (t: WizardState["okrType"]) => set((s) => ({ ...s, okrType: t }));
+  const w = criteria.system.weights;
+
   const cards = [
-    { value: "ops", icon: "⚙️", title: "운영 OKR", desc: "기존 업무의 안정·개선", accent: "#3B5BDB", features: ["응답속도·장애율 개선", "기존 시스템 안정화", "정량 측정이 쉬운 편"] },
-    { value: "strategy", icon: "🚀", title: "전략 혁신 OKR", desc: "새로운 가치 창출", accent: "#7C4DD9", features: ["신규 기능 · 시스템 도입", "조직 차원 도전 과제", "도전성과 가중치가 높음"] },
+    { value: "ops" as const, icon: "⚙️", title: "운영 OKR", desc: "기존 업무의 안정·개선", accent: "#3B5BDB", features: ["응답속도·장애율 개선", "기존 시스템 안정화", "정량 측정이 쉬운 편"] },
+    { value: "strategy" as const, icon: "🚀", title: "전략 혁신 OKR", desc: "새로운 가치 창출", accent: "#7C4DD9", features: ["신규 기능 · 시스템 도입", "조직 차원 도전 과제", "도전성과 가중치가 높음"] },
   ];
   return (
     <div style={card}>
@@ -35,7 +41,7 @@ export function Step1({ type, setType }: { type: string; setType: (t: string) =>
       </div>
       <div style={{ marginTop: 20, padding: "14px 18px", background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 10, display: "flex", gap: 10, fontSize: 12.5, color: "#7A4A14", lineHeight: 1.55 }}>
         <span style={{ fontSize: 16 }}>💡</span>
-        <div><b>운영안 비중 안내</b> · 운영 40% · 전략혁신 40% · 사후평가 20%. 한 분기 OKR 중 운영과 전략을 혼합해서 작성할 수 있어요.</div>
+        <div><b>운영안 비중 안내</b> · 운영 {w.operation}% · 전략혁신 {w.strategy}% · 사후평가 {w.post}%. 한 분기 OKR 중 운영과 전략을 혼합해서 작성할 수 있어요. <span style={{ opacity: 0.75 }}>({criteria.system.version})</span></div>
       </div>
     </div>
   );

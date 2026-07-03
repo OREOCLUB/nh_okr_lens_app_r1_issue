@@ -188,6 +188,7 @@ export async function getMembers(evaluatorLoginId?: string): Promise<Member[] | 
 // ── R1 본인 OKR ─────────────────────────────────────────────
 export async function getR1Okrs(loginId = "jung.ty"): Promise<OKR[] | null> {
   interface Row {
+    id: number;
     status: OKR["status"]; obj: string; kr: string; format: string; baseline: string; goal: string;
     weight: number; progress: number; evaluator_from: string | null; evaluator_msg: string | null;
     employees: { login_id: string | null } | null;
@@ -195,12 +196,13 @@ export async function getR1Okrs(loginId = "jung.ty"): Promise<OKR[] | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("okrs")
-    .select("status, obj, kr, format, baseline, goal, weight, progress, evaluator_from, evaluator_msg, employees!inner(login_id)")
+    .select("id, status, obj, kr, format, baseline, goal, weight, progress, evaluator_from, evaluator_msg, employees!inner(login_id)")
     .eq("period", PERIOD)
     .eq("employees.login_id", loginId)
     .order("sort_order", { ascending: true });
   if (error || !data || data.length === 0) return null;
   return (data as unknown as Row[]).map((r) => ({
+    dbId: r.id,
     status: r.status,
     obj: r.obj,
     kr: r.kr,
@@ -310,6 +312,77 @@ export async function saveReviewDraft(employeeId: string, analysis: RiskAnalysis
     .update({ risk: analysis.risk, risk_analysis: analysis })
     .eq("employee_id", employeeId)
     .eq("period", PERIOD);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// ════════════════════════════════════════════════════════════
+// 쓰기 — R1 OKR 제출·진행률 (supabase/rls_write.sql 정책 필요)
+// DB 미연결·실패 시 "local"로 반환 — 화면은 로컬 보존 후 코칭 톤 안내.
+// ════════════════════════════════════════════════════════════
+
+export interface SubmitOkrRow {
+  obj: string;
+  kr: string;
+  format: string;
+  baseline: string;
+  goal: string;
+  weight: number;
+}
+
+async function employeeIdByLogin(loginId: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from("employees").select("id").eq("login_id", loginId).limit(1);
+  if (error || !data || data.length === 0) return null;
+  return (data[0] as { id: string }).id;
+}
+
+/** 위저드 제출 — 기존 반기 OKR을 교체하고 제출 현황을 갱신한다 */
+export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise<WriteResult> {
+  if (!supabase) return { ok: false, error: "NO_DB" };
+  const employeeId = await employeeIdByLogin(loginId);
+  if (!employeeId) return { ok: false, error: "사원 정보를 찾지 못했어요" };
+
+  const del = await supabase.from("okrs").delete().eq("employee_id", employeeId).eq("period", PERIOD);
+  if (del.error) return { ok: false, error: del.error.message };
+
+  const ins = await supabase.from("okrs").insert(
+    rows.map((r, i) => ({
+      employee_id: employeeId,
+      period: PERIOD,
+      status: "submitted",
+      obj: r.obj,
+      kr: r.kr,
+      format: r.format,
+      baseline: r.baseline,
+      goal: r.goal,
+      weight: r.weight,
+      progress: 0,
+      sort_order: i + 1,
+    }))
+  );
+  if (ins.error) return { ok: false, error: ins.error.message };
+
+  const now = new Date();
+  const mmdd = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+  const up = await supabase.from("okr_submissions").upsert(
+    {
+      employee_id: employeeId,
+      period: PERIOD,
+      submit_date: mmdd,
+      status: "pending", // R2 화면 기준: 제출·미검토
+      obj: rows[0]?.obj ?? "",
+    },
+    { onConflict: "employee_id,period" }
+  );
+  if (up.error) return { ok: false, error: up.error.message };
+  return { ok: true };
+}
+
+/** 나의 OKR 진행률 업데이트 */
+export async function updateOkrProgress(dbId: number, progress: number): Promise<WriteResult> {
+  if (!supabase) return { ok: false, error: "NO_DB" };
+  const { error } = await supabase.from("okrs").update({ progress }).eq("id", dbId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

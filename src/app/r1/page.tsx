@@ -6,6 +6,11 @@ import { RoleShell } from "@/components/RoleShell";
 import { StatCard } from "@/components/StatCard";
 import { r1Okrs, type OKR } from "@/lib/mockData";
 import { getR1Okrs } from "@/lib/dataAccess";
+import { getCurrentUser, type Session } from "@/lib/auth";
+import { loadWizard, type WizardState } from "@/lib/wizard";
+
+// OKR 등록 마감일 (eval_phases 'lock' 시드 기준 — P2에서 일정 테이블 연동)
+const DEADLINE = new Date("2026-07-15");
 
 const STATUS: Record<OKR["status"], { bg: string; bd: string; fg: string; label: string }> = {
   submitted: { bg: "#EFF4FE", bd: "#C5D5F7", fg: "#2B5DD9", label: "제출 · 검토 대기" },
@@ -49,7 +54,7 @@ function OKRItem({ okr }: { okr: OKR }) {
   );
 }
 
-function AICoachingCard() {
+function AICoachingCard({ onOpen }: { onOpen: () => void }) {
   const tips = [
     { tag: "측정 명확화", msg: "Baseline과 Goal에 동일 단위(ms)를 사용하면 진행률이 더 또렷해져요." },
     { tag: "도전성", msg: "전월 대비 8% 개선은 좋은 출발입니다. 마일스톤을 한 단계 더 잡아볼까요?" },
@@ -74,7 +79,7 @@ function AICoachingCard() {
           </div>
         </div>
       ))}
-      <button onClick={() => alert("AI 코칭 화면은 준비 중이에요 🙂")} style={{ background: "#fff", color: "#0A1F17", border: "none", borderRadius: 10, width: "100%", padding: 12, fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+      <button onClick={onOpen} style={{ background: "#fff", color: "#0A1F17", border: "none", borderRadius: 10, width: "100%", padding: 12, fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         ✨ 더 자세한 코칭 받기
       </button>
     </div>
@@ -83,19 +88,40 @@ function AICoachingCard() {
 
 export default function R1HomePage() {
   const router = useRouter();
+  const [user, setUser] = useState<Session | null>(null);
   const [okrs, setOkrs] = useState<OKR[]>(r1Okrs);
+  const [loading, setLoading] = useState(true);
+  const [wizard, setWizard] = useState<WizardState | null>(null);
 
   useEffect(() => {
-    getR1Okrs().then((o) => o && setOkrs(o));
+    const u = getCurrentUser();
+    if (!u) return; // RoleShell이 리다이렉트
+    setUser(u);
+    setWizard(loadWizard(u.id));
+    getR1Okrs(u.id)
+      .then((o) => o && setOkrs(o))
+      .finally(() => setLoading(false));
   }, []);
 
+  const dday = Math.max(0, Math.ceil((DEADLINE.getTime() - Date.now()) / 86_400_000));
+  const totalWeight = okrs.reduce((a, o) => a + o.weight, 0);
+  const avgProgress = okrs.length ? Math.round(okrs.reduce((a, o) => a + o.progress, 0) / okrs.length) : 0;
+  const activeCount = okrs.filter((o) => o.status === "approved" || o.status === "submitted").length;
+  const draftCount = okrs.filter((o) => o.status === "draft").length;
+
+  const wizardStep = wizard?.step ?? 0;
+  const wizardSubmitted = wizard?.submitted ?? false;
+  const name = user?.name ?? "";
+
   return (
-    <RoleShell role="R1" title="피평가자 홈" subtitle="정태영 · 운영본부 · 결제플랫폼팀">
+    <RoleShell role="R1" title="피평가자 홈" subtitle={user ? `${user.name} · ${user.dept} · ${user.team}` : ""}>
       {/* Greeting */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase" }}>2026 하반기 · OKR 등록 진행 중</div>
-        <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>안녕하세요, 정태영 님 👋</h1>
-        <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#5B6685" }}>마감까지 29일 남았어요. KR 3개 중 1개는 아직 작성 중이네요.</p>
+        <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>안녕하세요, {name} 님 👋</h1>
+        <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#5B6685" }}>
+          마감까지 {dday}일 남았어요. {draftCount > 0 ? `KR ${okrs.length}개 중 ${draftCount}개는 아직 작성 중이네요.` : `KR ${okrs.length}개가 진행 중이에요.`}
+        </p>
       </div>
 
       {/* CTA banner */}
@@ -107,21 +133,25 @@ export default function R1HomePage() {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, opacity: 0.85, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ padding: "3px 9px", background: "rgba(255,255,255,0.2)", borderRadius: 999 }}>지금 할 일</span>
-            <span>D-29 · OKR 등록 마감까지</span>
+            <span>D-{dday} · OKR 등록 마감까지</span>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.3, marginBottom: 4 }}>이번 반기 OKR을 작성해볼까요?</div>
-          <div style={{ fontSize: 13, opacity: 0.9 }}>8단계 위저드로 KR을 정제하고 AI 코칭과 함께 완성해요 · <b>3/8 단계 진행 중</b></div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.3, marginBottom: 4 }}>
+            {wizardSubmitted ? "제출 완료! 검토 결과를 기다리는 중이에요" : "이번 반기 OKR을 작성해볼까요?"}
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.9 }}>
+            8단계 위저드로 KR을 정제하고 AI 코칭과 함께 완성해요 · <b>{wizardSubmitted ? "제출됨" : `${wizardStep}/8 단계 진행 중`}</b>
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", color: "#2C49B8", padding: "14px 22px", borderRadius: 12, fontSize: 14.5, fontWeight: 800, flexShrink: 0 }}>
-          OKR 이어서 작성 <span style={{ fontSize: 16 }}>→</span>
+          {wizardSubmitted ? "제출 내용 보기" : wizardStep > 0 ? "OKR 이어서 작성" : "OKR 작성 시작"} <span style={{ fontSize: 16 }}>→</span>
         </div>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-        <StatCard icon="🎯" iconBg="#E5EBFB" iconFg="#3B5BDB" label="OKR 달성률" value="72" unit="%" sub="↑ 8% 전월 대비" subTone="ok" />
-        <StatCard icon="✓" iconBg="#ECFAF1" iconFg="#2F9E5E" label="나의 핵심결과" value="8" unit="/ 11" sub="진행 중" />
-        <StatCard icon="💬" iconBg="#FFEDE2" iconFg="#E07A3C" label="받은 피드백" value="14" unit="건" sub="이번 분기" />
+        <StatCard icon="🎯" iconBg="#E5EBFB" iconFg="#3B5BDB" label="OKR 평균 달성률" value={String(avgProgress)} unit="%" sub={loading ? "불러오는 중…" : "진행 중"} subTone={avgProgress >= 50 ? "ok" : undefined} />
+        <StatCard icon="✓" iconBg="#ECFAF1" iconFg="#2F9E5E" label="나의 핵심결과" value={String(activeCount)} unit={`/ ${okrs.length}`} sub="승인·제출됨" />
+        <StatCard icon="⚖️" iconBg="#FFEDE2" iconFg="#E07A3C" label="가중치 합산" value={String(totalWeight)} unit="/ 110" sub="상한 기준" />
         <StatCard icon="✨" iconBg="#F0E9FB" iconFg="#7C4DD9" label="AI 코칭 제안" value="3" unit="건" sub="새로운 제안" subTone="ok" />
       </div>
 
@@ -130,11 +160,13 @@ export default function R1HomePage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>나의 OKR</div>
-            <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 3 }}>2026 하반기 · 총 3개 · 가중치 75 / 110</div>
+            <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 3 }}>
+              2026 하반기 · 총 {okrs.length}개 · 가중치 {totalWeight} / 110{loading && " · 불러오는 중…"}
+            </div>
           </div>
-          {okrs.map((o, i) => <OKRItem key={i} okr={o} />)}
+          {okrs.map((o, i) => <OKRItem key={o.dbId ?? i} okr={o} />)}
         </div>
-        <div><AICoachingCard /></div>
+        <div><AICoachingCard onOpen={() => router.push("/r1/coaching")} /></div>
       </div>
 
       <div style={{ marginTop: 28, padding: "14px 18px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: "#5B6685", lineHeight: 1.55 }}>

@@ -94,6 +94,31 @@
 
 ---
 
+## 2026-07-03 (세션 2) — R1 피평가자 전면 실기능 전환
+
+### 완료
+- **위저드 기반 레이어 신설**
+  - `src/lib/wizard.ts` — 위저드 상태 단일 소스(WizardState) + localStorage 사용자별 임시저장/복원 + 스텝 진행 검증(stepBlocker)
+  - `src/lib/diagnosticEngine.ts` — criteria 주입 룰 기반 진단 코어(deriveChecks/deriveRisk, 빌드스펙 D-3·D-4 — 항목 수·임계값 하드코딩 없음)
+  - `src/lib/aiCoach.ts` + `src/app/api/coach/route.ts` — AI 코치 단일 엔드포인트. ANTHROPIC_API_KEY 있으면 Claude(claude-sonnet-4-6) 호출, 없으면 결정적 목 폴백 (`source: claude|mock`)
+  - `dataAccess.ts` — 쓰기 함수 추가: `submitOkrs()`(okrs 교체 + okr_submissions upsert), `updateOkrProgress()`. DB 미연결 시 `saved:"local"` 반환
+  - `supabase/rls_write.sql` — okrs·okr_submissions anon 쓰기 정책 (Supabase SQL Editor에서 1회 실행 필요)
+- **위저드 STEP 0~7 목업 → 실기능**
+  - `write/page.tsx` 오케스트레이터: 세션 사용자 반영, 상태 소유·자동 임시저장, 스텝 검증(필수 약관·업무분장·형태·A등급), maxStep 기반 점프 제한, 제출 확인→Supabase 쓰기→홈 이동 (실패 시 로컬 보존 + 코칭 톤 안내)
+  - Step0 프로필 / Step1 유형(criteria 비중 표기) / Step2 기초정보(실 AI 채팅+키워드 자동 추출) / Step3 정제(실 AI 채팅 + criteria 11항목 실시간 진단) / Step4 형태(결정적 추천+일괄 적용) / Step5 상세(측정방법·가중치·등급 입력 + AI 자동생성 + 사이드챗) / Step6 비교검토(채택→상태 저장, 멀티 AI는 목데이터 유지 = P2) / Step7 최종(인라인 편집→상태 저장, 가중치 상한·미채택 실검증)
+- **R1 화면 MASTER_RULE 준수 정리** ("준비 중" alert 전부 제거)
+  - 홈: 세션 사용자·D-day 계산·위저드 진행 반영 CTA·통계 실계산·로딩 표시
+  - 나의 OKR: DB 데이터 + 진행률 업데이트 모달(DB 쓰기+폴백), KR수정/AI코칭 라우팅
+  - 코칭: 주제별 실 AI 채팅 + 새 코칭 시작 / 피드백: 답글 실동작·읽음 처리 / 이력: 회고 펼침 / 마이페이지: 위저드 프로필과 저장소 공유·실저장 / 캘린더: 코칭 요청 등록
+- `npx tsc --noEmit` · `npm run build` 통과, dev 서버에서 /r1/write·/api/coach 스모크 테스트 완료
+
+### 다음 할 일
+- `.env.local` 실 키 설정 (이 PC에는 Supabase·Claude 키 없음 → 현재 더미 폴백/목 AI 모드로 동작. 키 넣으면 즉시 실연동)
+- Supabase에 `supabase/rls_write.sql` 실행 → R1 제출·진행률 쓰기 활성화
+- R2 승인·반려 쓰기, R3 기준/일정 저장 (기존 계획 유지)
+- STEP 3 정제 대화 → KR 문장 자동 반영(정제안 적용 버튼), STEP 6 실 Claude 검토 연동
+>>>>>>> 9560fd8 (feat(r1): 피평가자 전면 실기능 전환 — 위저드 상태·AI 코치·제출·진단 엔진)
+
 ## 2026-07-03
 
 ### 완료

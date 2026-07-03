@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { getCurrentUser, type Session } from "@/lib/auth";
 
 const GRADE_COLOR: Record<string, { fg: string; bg: string }> = {
   S: { fg: "#6B47E0", bg: "#F0E9FB" }, A: { fg: "#3B5BDB", bg: "#E8F0FF" }, B: { fg: "#2F9E5E", bg: "#ECFAF1" }, C: { fg: "#D98023", bg: "#FFF7EC" }, D: { fg: "#7C87A4", bg: "#F1F3F8" },
@@ -41,9 +43,27 @@ const HISTORY: Past[] = [
   },
 ];
 
+// 반기 데이터 기반 회고 요약 (결정적 생성)
+function retroText(h: Past): string {
+  const top = h.krs.reduce((a, k) => (k.achievement > a.achievement ? k : a), h.krs[0]);
+  const low = h.krs.reduce((a, k) => (k.achievement < a.achievement ? k : a), h.krs[0]);
+  return [
+    `이 반기는 KR ${h.okrCount}개 중 핵심 ${h.krs.length}개 기준 평균 달성률 ${h.achievement}%로 마무리했어요.`,
+    `가장 잘된 KR은 "${top.text}" (${top.achievement}%)였고,`,
+    `"${low.text}"는 ${low.achievement}%로 다음 반기에 측정 방법·마일스톤을 더 구체화하면 좋겠어요.`,
+    `다음 OKR 작성 시 이 반기의 측정 도구와 등급 기준을 재사용하면 작성 시간이 줄어요.`,
+  ].join(" ");
+}
+
 export default function R1HistoryPage() {
+  const [user, setUser] = useState<Session | null>(null);
+  const [openRetro, setOpenRetro] = useState<string | null>(null);
+  useEffect(() => {
+    const u = getCurrentUser();
+    if (u) setUser(u);
+  }, []);
   return (
-    <RoleShell role="R1" title="이전 평가" subtitle="정태영 · 최근 3개 반기 이력">
+    <RoleShell role="R1" title="이전 평가" subtitle={user ? `${user.name} · 최근 3개 반기 이력` : ""}>
       <div style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase" }}>평가 이력</div>
         <h1 style={{ margin: "8px 0 0", fontSize: 28, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>지난 반기들을 돌아봐요 📚</h1>
@@ -79,8 +99,14 @@ export default function R1HistoryPage() {
                   <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36" }}>{h.period}</div>
                   <div className="mono" style={{ fontSize: 12, color: "#7C87A4", marginTop: 2 }}>KR {h.okrCount}개 · 달성률 {h.achievement}% · {h.confirmed} 확정</div>
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => alert(`${h.period} 회고 화면은 준비 중이에요 🙂`)}>회고 보기</Button>
+                <Button variant="secondary" size="sm" onClick={() => setOpenRetro((cur) => (cur === h.period ? null : h.period))}>{openRetro === h.period ? "회고 접기" : "회고 보기"}</Button>
               </div>
+              {openRetro === h.period && (
+                <div style={{ marginBottom: 14, padding: "14px 16px", background: "#F1F4FD", border: "1px solid #C5D0F7", borderRadius: 10, fontSize: 12.5, color: "#1F2A4A", lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#3B5BDB", marginBottom: 6 }}>📝 {h.period} 회고 요약</div>
+                  {retroText(h)}
+                </div>
+              )}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                 {h.krs.map((k, i) => {
                   const kc = GRADE_COLOR[k.grade];

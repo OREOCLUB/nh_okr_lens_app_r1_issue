@@ -44,6 +44,7 @@ export const members: Member[] = [
 
 // R1 피평가자 본인 OKR
 export interface OKR {
+  dbId?: number; // Supabase okrs.id — 더미일 땐 없음
   status: "approved" | "submitted" | "draft" | "rejected";
   obj: string;
   kr: string;
