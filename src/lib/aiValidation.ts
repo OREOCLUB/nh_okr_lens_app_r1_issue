@@ -1,7 +1,7 @@
 // aiValidation.ts — R2 AI Validation 판정 생성 단일 지점 (D2).
-// 지금은 목업 판정(휴리스틱 + 결정적 해시)이며, 전체 개발 완료 후
-// 이 파일의 runValidation() 내부만 Gemini API 호출로 교체한다.
-// 호출부(r2/review)는 이 시그니처만 의존하므로 교체 시 화면 수정이 없다.
+// 1순위: /api/validate (Gemini + 2026 OKR 가이드 PDF 동봉, 서버 전용 키).
+// API 미설정·실패 시: 목업 판정(휴리스틱 + 결정적 해시)으로 자동 폴백.
+// 호출부(r2/review)는 이 시그니처만 의존한다.
 import type { CheckItem } from "./criteria";
 import type { ReviewOkr } from "./dataAccess";
 
@@ -19,6 +19,7 @@ export interface ValidationItem {
 export interface ValidationResult {
   items: ValidationItem[];
   comment: string; // 종합 코멘트 (코칭 톤)
+  source: "gemini" | "mock"; // gemini = 가이드 PDF 기반 실판정
 }
 
 // 위험도 기준값 — criteria 체계와 정합 유지 (코칭 후보 ≥4 상 / ≥2 중 / 그 외 하)
@@ -74,14 +75,8 @@ function judge(tag: string, text: string, okrs: ReviewOkr[], seed: number): { ve
   }
 }
 
-/**
- * 목업 AI 검토 실행 (D2).
- * TODO(P2): 이 함수 본문을 Gemini API 호출로 교체 — 입력(checklist·okrs)과
- * 출력(ValidationResult) 계약은 유지한다.
- */
-export async function runValidation(checklist: CheckItem[], okrs: ReviewOkr[], memberId: string): Promise<ValidationResult> {
-  // 실제 API 지연을 흉내내 로딩 상태를 확인할 수 있게 한다
-  await new Promise((r) => setTimeout(r, 600));
+/** 목업 판정 — API 미설정·실패 시 폴백 */
+function runMockValidation(checklist: CheckItem[], okrs: ReviewOkr[], memberId: string): ValidationResult {
   const items: ValidationItem[] = checklist.map((c) => {
     const seed = hash(`${memberId}:${c.tag}`);
     const { verdict, reason } = judge(c.tag, c.text, okrs, seed);
@@ -95,10 +90,56 @@ export async function runValidation(checklist: CheckItem[], okrs: ReviewOkr[], m
       : fails.length === 0
         ? `전반적으로 잘 정리됐어요. 주의 ${warns.length}건은 1on1에서 가볍게 다뤄보세요.`
         : `코칭 후보 ${fails.length}건이 보여요. ${fails.map((f) => f.tag).join("·")} 항목을 팀원과 함께 정제해보면 좋겠어요.`;
-  return { items, comment };
+  return { items, comment, source: "mock" };
 }
 
-// ✨ AI 초안 — 조정요청·반려 메시지 목업 문구 (코칭 톤)
+const API_TIMEOUT_MS = 90_000; // 가이드 PDF 첫 업로드 포함 여유
+
+/**
+ * AI 검토 실행 (D2 이행 완료).
+ * /api/validate(Gemini + 가이드 PDF)를 호출하고, 실패하면 목업 판정으로 폴백한다.
+ */
+export async function runValidation(checklist: CheckItem[], okrs: ReviewOkr[], memberId: string, memberName = ""): Promise<ValidationResult> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+    const res = await fetch("/api/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "validate", memberName: memberName || memberId, okrs, checklist }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`api ${res.status}`);
+    const data = (await res.json()) as { items: ValidationItem[]; comment: string };
+    return { items: data.items, comment: data.comment, source: "gemini" };
+  } catch {
+    const mock = runMockValidation(checklist, okrs, memberId);
+    return { ...mock, comment: `AI 연결이 원활하지 않아 기본 검토로 보여드려요. ${mock.comment}` };
+  }
+}
+
+/** ✨ AI 초안 — Gemini(가이드 기반) 호출, 실패 시 목업 문구 폴백 */
+export async function draftMessageAI(kind: "adjustment" | "rejected", memberName: string, items: ValidationItem[], okrs: ReviewOkr[]): Promise<{ message: string; source: "gemini" | "mock" }> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+    const res = await fetch("/api/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "draft", kind, memberName, okrs, findings: items.map((i) => ({ text: i.text, verdict: i.verdict, reason: i.reason })) }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`api ${res.status}`);
+    const data = (await res.json()) as { message: string };
+    return { message: data.message, source: "gemini" };
+  } catch {
+    return { message: draftMessage(kind, memberName, items), source: "mock" };
+  }
+}
+
+// 목업 초안 (폴백)
 export function draftMessage(kind: "adjustment" | "rejected", memberName: string, items: ValidationItem[]): string {
   const focus = items.filter((i) => i.verdict !== "pass").slice(0, 2);
   const points = focus.length > 0

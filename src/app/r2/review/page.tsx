@@ -12,7 +12,7 @@ import {
   type ReviewOkr, type HistoryOkr, type HistoryEvent, type ReviewDecision,
 } from "@/lib/dataAccess";
 import { mockMemberOkrs, mockMemberHistory, mockMemberEvents } from "@/lib/mockReview";
-import { runValidation, riskOf, draftMessage, type ValidationItem } from "@/lib/aiValidation";
+import { runValidation, riskOf, draftMessageAI, type ValidationItem } from "@/lib/aiValidation";
 import { getCurrentUser } from "@/lib/auth";
 
 const STATUS_CFG: Record<Member["status"], { label: string; bg: string; fg: string }> = {
@@ -223,7 +223,9 @@ function ReviewContent() {
   // ── 검토 상태 (선택 변경 시 리셋) ──────────────────────────
   const [items, setItems] = useState<ValidationItem[] | null>(null); // null = AI 검토 전
   const [aiComment, setAiComment] = useState<string | null>(null);
+  const [aiSource, setAiSource] = useState<"gemini" | "mock" | null>(null);
   const [aiRunning, setAiRunning] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [decision, setDecision] = useState<ReviewDecision | null>(null);
   const [message, setMessage] = useState("");
   const [msgError, setMsgError] = useState(false);
@@ -242,6 +244,7 @@ function ReviewContent() {
     const saved = membersRef.current.find((m) => m.id === selectedId)?.analysis;
     setItems(saved?.items ?? null);
     setAiComment(saved ? "임시 저장된 검토 내용을 불러왔어요. 이어서 진행해주세요 🙂" : null);
+    setAiSource(null);
     // notice는 여기서 지우지 않는다 — 처리 성공 후 자동 이동 시 성공 알림이 유지되어야 함
     setDecision(null); setMessage(""); setMsgError(false); setHistoryOpen(false);
     Promise.all([getMemberOkrs(selectedId), getMemberHistory(selectedId), getMemberEvents(selectedId)]).then(([o, h, e]) => {
@@ -258,10 +261,20 @@ function ReviewContent() {
   async function runAi() {
     if (!selected) return;
     setAiRunning(true);
-    const res = await runValidation(checklist, okrs, selected.id);
+    const res = await runValidation(checklist, okrs, selected.id, selected.name);
     setItems(res.items);
     setAiComment(res.comment);
+    setAiSource(res.source);
     setAiRunning(false);
+  }
+
+  async function fillDraft() {
+    if (!selected || !decision || decision === "approved") return;
+    setDrafting(true);
+    const res = await draftMessageAI(decision, selected.name, items ?? [], okrs);
+    setMessage(res.message);
+    setMsgError(false);
+    setDrafting(false);
   }
 
   function updateItem(no: number, v: ValidationItem["verdict"]) {
@@ -462,7 +475,10 @@ function ReviewContent() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: items ? 14 : 0 }}>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: "#00A968", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>✨</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0F1A36" }}>AI Validation · {checklist.length}항목 자동 검토</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0F1A36", display: "flex", alignItems: "center", gap: 7 }}>
+                      AI Validation · {checklist.length}항목 자동 검토
+                      {items && aiSource === "gemini" && <span style={{ padding: "2px 8px", borderRadius: 999, background: "#ECFAF1", border: "1px solid #BBE9CC", color: "#2F9E5E", fontSize: 10, fontWeight: 700 }}>📖 2026 가이드 기반</span>}
+                    </div>
                     <div style={{ fontSize: 11.5, color: "#5B6685", marginTop: 2 }}>
                       {items && riskCfg ? (
                         <>위험도 <b style={{ color: riskCfg.fg }}>{riskCfg.ico} {riskCfg.label}</b> · 코칭 후보 <b style={{ color: "#D14343" }}>{fails}건</b> · 주의 <b style={{ color: "#D98023" }}>{warns}건</b></>
@@ -518,9 +534,10 @@ function ReviewContent() {
                 <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: "#3A4565" }}>{decision === "rejected" ? "반려 사유" : "조정 요청 메시지"} <span style={{ color: "#D14343" }}>*</span></span>
                   <button
-                    onClick={() => selected && setMessage(draftMessage(decision, selected.name, items ?? []))}
-                    style={{ marginLeft: "auto", padding: "3px 9px", borderRadius: 7, border: "1px solid #B9F1D8", background: "#F1FBF6", color: "#1F6E4A", fontSize: 10.5, fontWeight: 700, cursor: "pointer" }}
-                  >✨ AI 초안</button>
+                    onClick={fillDraft}
+                    disabled={drafting}
+                    style={{ marginLeft: "auto", padding: "3px 9px", borderRadius: 7, border: "1px solid #B9F1D8", background: "#F1FBF6", color: "#1F6E4A", fontSize: 10.5, fontWeight: 700, cursor: drafting ? "wait" : "pointer", opacity: drafting ? 0.6 : 1 }}
+                  >{drafting ? "✨ 생성 중…" : "✨ AI 초안"}</button>
                 </div>
                 <textarea
                   value={message}

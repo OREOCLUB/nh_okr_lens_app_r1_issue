@@ -12,6 +12,13 @@
 > 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
 
 ### 완료
+- **Gemini API 실연동 (D2 이행)** — AI Validation·AI 초안이 실제 LLM 판정으로 동작
+  - `src/app/api/validate/route.ts` 신규 — 서버 전용 라우트. `GEMINI_API_KEY`(.env.local)는 브라우저에 노출 안 됨
+  - 가이드 PDF(`guide_docs/2026_OKR_GUIDE.pdf`, 80p)를 Files API로 1회 업로드·47h 캐시 후 매 요청 동봉 → 판정 사유에 가이드 페이지 근거 인용됨
+  - 구조화 출력(responseSchema)으로 항목별 pass/warn/fail + 사유 + 종합 코멘트 JSON 강제, 코칭 톤 시스템 지시
+  - `aiValidation.ts` — runValidation이 API 우선, 실패 시 목업 폴백(+안내 문구). ✨AI 초안도 draftMessageAI로 실생성(가이드 근거 포함)
+  - 검증: API 직접 호출 14s / UI 판정 23~29s / 초안 12s 모두 gemini 소스 확인, API 차단 프로브 → 목업 폴백 정상
+  - `guide_docs/`는 사내 문서라 gitignore 처리 (모델: `GEMINI_MODEL` env로 변경 가능, 기본 gemini-2.5-flash)
 - **R2 4단계 — 코칭 캘린더 (`src/app/r2/calendar/page.tsx`)**
   - `eval_phases` 조회 연동(D8) — 하드코딩 EVENTS/MONTH_LIST 제거, 단계 시작/마감/당일 이벤트로 변환
   - 월 이동 ◀▶ + 오늘 버튼 (2026-07 고정 제거, 연도 경계 정상), 빈 달 코칭 톤 안내
@@ -36,8 +43,8 @@
   - `src/lib/dataAccess.ts` — getMemberOkrs/getMemberHistory/getMemberEvents 조회 + saveReviewDecision(D9 통합형)/saveReviewDraft 쓰기. Supabase 미설정 시 `{ok:false, error:"NO_DB"}` 반환 → 화면 데모 모드 폴백
 
 ### 다음 할 일 (R2 관련)
-1. `.env.local` 복구 후 `supabase/migration_r2_write.sql` 실행 → 승인/반려 실 DB 왕복 + R1 홈 연쇄(D3) 검증
-2. Gemini API 연동 (D2) — `src/lib/aiValidation.ts`의 `runValidation()` 본문만 교체
+1. Supabase 키를 `.env.local`에 추가 + `supabase/migration_r2_write.sql` 실행 → 승인/반려 실 DB 왕복 + R1 홈 연쇄(D3) 검증
+2. ~~Gemini API 연동 (D2)~~ → **완료** (아래 참조). 남은 것: 판정 지연(20~30s) UX 개선 검토(스트리밍/부분 표시), 쿼터·비용 모니터링
 3. R3 인사이트 화면이 okr_submissions 실데이터를 읽도록 전환되면 연쇄 최종 확인 (R3 담당 영역)
 
 ### 이슈/결정사항 (이번 세션)
