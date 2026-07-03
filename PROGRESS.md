@@ -12,6 +12,11 @@
 > 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
 
 ### 완료
+- **Gemini 공용 모듈 분리 + 팀 공유 가이드 (`69abda0`)**
+  - `src/lib/server/gemini.ts` — 전 역할 공용 코어 (수정 금지, import 전용). R2 라우트는 프롬프트만 보유하도록 리팩토링
+  - `docs/GEMINI_GUIDE.md` — R1·R3 담당자가 자기 AI 도구에 그대로 전달하는 연동 가이드 (충돌 방지 규칙 + 완성 예제)
+  - 전달 시 별도 공유 필요: ① GEMINI_API_KEY (보안 채널) ② guide_docs/2026_OKR_GUIDE.pdf (gitignore)
+- **Supabase 실연결 확인** — 키 등록 확인, 스키마 변경분 적용 확인, 쓰기 왕복(UPDATE→복원) 검증 통과. 스키마 변경분은 `supabase/schema_R2.sql`로 정리
 - **Gemini API 실연동 (D2 이행)** — AI Validation·AI 초안이 실제 LLM 판정으로 동작
   - `src/app/api/validate/route.ts` 신규 — 서버 전용 라우트. `GEMINI_API_KEY`(.env.local)는 브라우저에 노출 안 됨
   - 가이드 PDF(`guide_docs/2026_OKR_GUIDE.pdf`, 80p)를 Files API로 1회 업로드·47h 캐시 후 매 요청 동봉 → 판정 사유에 가이드 페이지 근거 인용됨
