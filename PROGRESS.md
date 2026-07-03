@@ -7,6 +7,23 @@
 
 ---
 
+## 2026-07-03 (R2 요건 구현 세션)
+
+> 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
+
+### 완료
+- **R2 1단계 — 쓰기 기반 마련**
+  - `supabase/migration_r2_write.sql` 신규 — 기존 프로젝트용 (컬럼 추가·쓰기 RLS·시드)
+  - `supabase/schema.sql` 동기화 — okr_submissions(evaluator_msg·decided_at·risk_analysis), okrs(difficulty·measure·plan), okr_history(작년 OKR·타임라인 컬럼), anon update 정책 2건, 팀원 OKR·작년 OKR·반려 이벤트 시드
+  - `src/lib/dataAccess.ts` — getMemberOkrs/getMemberHistory/getMemberEvents 조회 + saveReviewDecision(D9 통합형)/saveReviewDraft 쓰기. Supabase 미설정 시 `{ok:false, error:"NO_DB"}` 반환 → 화면 데모 모드 폴백
+
+### 이슈/결정사항 (이번 세션)
+- **`.env.local`이 현재 체크아웃에 없음** (gitignore 대상) → REST 왕복 검증 보류. 복구 후 `supabase/migration_r2_write.sql`을 SQL Editor에서 1회 실행해야 쓰기 동작
+- 문서의 `okrs.approval_status`·`risk_analysis`는 실제 스키마에 없어 `okr_submissions.status`(처리 상태) + `okr_submissions.risk_analysis`(신규 jsonb)로 구현. R1 연쇄는 okrs.status(approved/rejected 매핑) + evaluator_msg로 성립
+- 반려 이력 타임라인·작년 OKR은 D6대로 `okr_history` 확장(event 컬럼)으로 단일 소스화
+
+---
+
 ## 2026-07-03
 
 ### 완료
