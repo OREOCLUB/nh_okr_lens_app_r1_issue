@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><title>OKR LENS — 산출물 내보내기</title>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>OKR LENS — 인사담당자</title>
 <style>/* ============================================================
    OKR LENS — Design System
    colors_and_type.css
@@ -376,7 +379,16 @@ h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
 
 
 </style>
-<style>html,body{margin:0;padding:0;height:100%;background:#F4F7FB;font-family:var(--font-sans);color:#3A4565;-webkit-font-smoothing:antialiased}*,*::before,*::after{box-sizing:border-box}button{font-family:inherit}#root{height:100vh;display:flex}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#DCE3F8;border-radius:6px}</style>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  #root { height: 100vh; display: flex; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; border: 2px solid #F4F7FB; }
+</style>
+
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -390,7 +402,10 @@ h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
     <text x="600" y="580" font-family="system-ui,sans-serif" font-size="16" fill="#7C87A4" text-anchor="middle">불러오는 중...</text>
   </svg>
 </div><script>(function(){var s=document.getElementById("__splash");if(!s)return;function hide(){s.style.opacity="0";setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},300);}if(document.readyState==="complete")hide();else window.addEventListener("load",hide);})();</script>
-</head><body><div id="root"></div>
+</head>
+<body>
+<div id="root"></div>
+
 <script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
 // Usage: <Icon name="dashboard" size={18} />
 const ICONS = {
@@ -442,481 +457,249 @@ function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
 
 window.Icon = Icon;
 </script>
-<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
-  const base = {
-    fontFamily: "var(--font-sans)",
-    fontWeight: 600,
-    borderRadius: 10,
-    border: "1px solid transparent",
-    cursor: disabled ? "not-allowed" : "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 7,
-    lineHeight: 1,
-    letterSpacing: "-0.005em",
-    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
-    opacity: disabled ? 0.42 : 1,
+
+<style>:root{ --page-bg:#f5f6f4; } #root{ background:var(--page-bg); }</style>
+<script type="text/babel">
+// Button — 현재 구현 src/components/Button.tsx 이식
+function Button({ children, variant = "primary", size = "md", leftIcon, onClick, style, fullWidth }) {
+  const VARIANTS = {
+    primary:   { background: "#00A968", color: "#fff", border: "none" },
+    success:   { background: "#2F9E5E", color: "#fff", border: "none" },
+    ai:        { background: "linear-gradient(135deg, #00A968, #14342B)", color: "#fff", border: "none" },
+    secondary: { background: "#fff", color: "#3A4565", border: "1px solid #E1E5EF" },
+    ghost:     { background: "transparent", color: "#5B6685", border: "none" },
   };
-  const sizes = {
-    sm: { fontSize: 12.5, padding: "7px 12px" },
-    md: { fontSize: 13.5, padding: "10px 16px" },
-    lg: { fontSize: 15, padding: "12px 22px" },
-  };
-  const variants = {
-    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
-    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
-    ghost:     { background: "transparent", color: "#3A4565" },
-    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
-    success:   { background: "#2F9E5E", color: "#fff" },
-    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
-  };
-  const [hover, setHover] = React.useState(false);
-  const hoverStyles = {
-    primary:   { background: "#2C49B8" },
-    secondary: { background: "#F4F7FB" },
-    ghost:     { background: "#F4F7FB" },
-    danger:    { background: "#FFF0F0" },
-    success:   { background: "#268F52" },
-    ai:        { background: "#E5EBFB" },
-  };
+  const SIZES = { sm: { padding: "8px 14px", fontSize: 13 }, md: { padding: "11px 18px", fontSize: 14 } };
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => !disabled && setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
-    >
-      {leftIcon}
-      {children}
-      {rightIcon}
-    </button>
+    <button onClick={onClick} style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
+      borderRadius: 10, fontWeight: 700, cursor: "pointer",
+      fontFamily: "var(--font-sans)", whiteSpace: "nowrap", transition: "filter 140ms",
+      width: fullWidth ? "100%" : undefined,
+      ...VARIANTS[variant], ...SIZES[size], ...(style || {}),
+    }}>{leftIcon}{children}</button>
   );
 }
 window.Button = Button;
 </script>
-<script type="text/babel">function TopBar({ title, subtitle }) {
-  return (
-    <header style={{
-      height: 64, minHeight: 64,
-      display: "flex", alignItems: "center",
-      padding: "0 32px",
-      background: "#fff",
-      borderBottom: "1px solid #E1E5EF",
-      gap: 18,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
-      </div>
-
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        background: "#F4F7FB",
-        borderRadius: 10, padding: "8px 14px",
-        width: 300,
-        color: "#7C87A4",
-      }}>
-        <Icon name="search" size={15}/>
-        <input
-          placeholder="팀원 이름, KR ID 검색"
-          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
-        />
-      </div>
-
-      <div style={{
-        display: "flex", alignItems: "center", gap: 7,
-        padding: "8px 14px",
-        border: "1px solid #E1E5EF", borderRadius: 10,
-        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
-      }}>
-        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
-        2026 상반기
-        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
-      </div>
-
-      <button style={{
-        position: "relative",
-        width: 40, height: 40, borderRadius: 10,
-        border: "1px solid #E1E5EF", background: "#fff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", color: "#3A4565",
-      }}>
-        <Icon name="bell" size={17}/>
-        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
-      </button>
-    </header>
-  );
-}
-
-window.TopBar = TopBar;
-</script>
-<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
-// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
-// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
-function SidebarR3({ active = "operation" }) {
-  const steps = [
-    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
-    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
-    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
-    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
-    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
-    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+<script type="text/babel">
+// SidebarR3 — 현재 구현 src/components/Sidebar.tsx (grouped nav) 이식
+function SidebarR3({ active }) {
+  const NAV = [
+    { header: "기준 정보", items: [
+      { id: "criteria", label: "평가 기준",       icon: "⚖️", href: "R3_인사담당자_02_평가기준.html" },
+      { id: "master",   label: "마스터 데이터",   icon: "🗃️", href: "R3_인사담당자_03_마스터데이터.html" },
+      { id: "schedule", label: "평가 일정 관리",  icon: "📅", href: "R3_인사담당자_05_평가일정.html" },
+    ]},
+    { header: "평가 인사이트", items: [
+      { id: "insight",  label: "캘리브레이션",    icon: "📊", href: "R3_인사담당자_01_인사이트.html" },
+      { id: "metrics",  label: "표준 지표",       icon: "🧭", href: "R3_인사담당자_04_표준지표.html" },
+    ]},
+    { header: "운영", items: [
+      { id: "export",   label: "산출물",          icon: "📤", href: "R3_인사담당자_08_산출물내보내기.html" },
+      { id: "env",      label: "환경 설정",       icon: "⚙️", href: "R3_인사담당자_06_환경설정.html" },
+    ]},
   ];
   return (
-    <aside className="okrlens-sidebar" style={{
-      width: 244, minWidth: 244,
-      background: "#0A1F17", color: "#A4ADC4",
-      display: "flex", flexDirection: "column",
-      height: "100%", padding: "20px 14px", gap: 4,
-      overflowY: "auto",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+    <aside style={{ width: 244, minWidth: 244, flexShrink: 0, background: "#0a1f17", color: "#C7D6CE", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0 }}>
+      {/* Brand */}
+      <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center" }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 6px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FFEDE2", color: "#E07A3C", letterSpacing: "0.02em" }}>R3 · 인사담당자</span>
         </div>
       </div>
-
-      {/* Role chip — orange */}
-      <div style={{
-        margin: "0 4px 14px",
-        background: "rgba(224,122,60,0.16)",
-        border: "1px solid rgba(224,122,60,0.32)",
-        borderRadius: 10,
-        padding: "10px 12px",
-        display: "flex", alignItems: "center", gap: 9,
-      }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
-        <div>
-          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
-        </div>
-      </div>
-
-      {/* Section label */}
-      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-        운영 흐름 · 6단계
-      </div>
-
-      {steps.map((it, idx) => {
-        const on = it.id === active;
-        const isLast = idx === steps.length - 1;
-        return (
-          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 11px", borderRadius: 10,
-              background: on ? "rgba(224,122,60,0.18)" : "transparent",
-              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
-              cursor: "pointer", transition: "all 140ms ease-out",
-              position: "relative",
-            }}>
-              {/* Step number badge */}
-              <div style={{
-                width: 24, height: 24, borderRadius: 7,
-                background: on ? "#E07A3C" : "#243759",
-                color: on ? "#fff" : "#91A6F0",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
-                flexShrink: 0,
-              }}>{it.step}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 13, fontWeight: on ? 700 : 600,
-                  color: on ? "#fff" : "#C8CFDF",
-                  letterSpacing: "-0.01em",
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{it.label}</div>
-                <div style={{
-                  fontSize: 10.5,
-                  color: on ? "#F4C9A8" : "#7E89B0",
-                  marginTop: 1,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{it.desc}</div>
-              </div>
-              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
-            </div>
-            {/* Connector line between steps */}
-            {!isLast && (
-              <div style={{
-                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
-                background: on ? "#E07A3C" : "#243759",
-                opacity: 0.4,
-              }}/>
-            )}
-          </a>
-        );
-      })}
-
-      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+      {/* Nav */}
+      <nav style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+        {NAV.map((group) => (
+          <div key={group.header} style={{ marginBottom: 18 }}>
+            <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", color: "#5F7C6E", fontSize: 10.5, fontWeight: 700, padding: "6px 14px 8px" }}>{group.header}</div>
+            {group.items.map((item) => {
+              const on = item.id === active;
+              return (
+                <a key={item.id} href={item.href} style={{ textDecoration: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 14, fontWeight: on ? 700 : 500, color: on ? "#FFFFFF" : "#9DB3A9", background: on ? "rgba(0,169,104,0.16)" : "transparent", boxShadow: on ? "inset 3px 0 0 #3EDDA1" : "none", cursor: "pointer", transition: "background 140ms" }}>
+                    <span style={{ fontSize: 15, width: 18, textAlign: "center" }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      {/* Footer */}
+      <div style={{ padding: "12px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: 4 }}>
         <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 12px", borderRadius: 9,
-            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
-          }}>
-            <Icon name="refresh" size={15}/>
-            <span>역할 전환</span>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}><span>🔄</span> 역할 전환</div>
         </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
-            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
-          </div>
-        </div>
+        <a href="01_로그인.html" style={{ textDecoration: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}><span>↩</span> 로그아웃</div>
+        </a>
       </div>
     </aside>
   );
 }
 window.SidebarR3 = SidebarR3;
 </script>
-<script type="text/babel">// R3Export.jsx — 산출물 내보내기 (Excel) v3.4 신규
-
-function SheetItem({ no, name, desc, rows, included, lite }) {
+<script type="text/babel">
+// Page — 현재 구현 src/components/RoleShell.tsx 의 탑바+메인 이식 (인증 게이트는 목업이라 생략)
+function Page({ title, subtitle, actions, children }) {
+  const user = { name: "한지영", dept: "경영지원본부", team: "인사노무팀", avatarColor: "#E07A3C" };
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 14,
-      padding: "16px 18px",
-      background: "#fff",
-      border: `1px solid ${included ? "#BBE9CC" : "#E1E5EF"}`,
-      borderRadius: 12,
-      marginBottom: 10,
-    }}>
-      {/* Checkbox */}
-      <div style={{
-        width: 22, height: 22, borderRadius: 6,
-        background: included ? "#2F9E5E" : "#fff",
-        border: included ? "none" : "1px solid #C8CFDF",
-        color: "#fff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 13, fontWeight: 700,
-        flexShrink: 0,
-        cursor: "pointer",
-      }}>{included && "✓"}</div>
+    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <header style={{ height: 68, display: "flex", alignItems: "center", gap: 16, padding: "0 40px", background: "#fff", borderBottom: "1px solid #E1E5EF", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ minWidth: 0, overflow: "hidden" }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+        </div>
+        <div style={{ flex: 1, minWidth: 12 }} />
+        {actions && <div style={{ flexShrink: 0 }}>{actions}</div>}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, padding: "6px 14px 6px 6px", background: "var(--page-bg)", borderRadius: 999 }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: user.avatarColor, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12.5 }}>{user.name.charAt(0)}</div>
+          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0F1A36" }}>{user.name} 님</div>
+            <div style={{ fontSize: 10.5, color: "#7C87A4" }}>{user.dept} · {user.team}</div>
+          </div>
+        </div>
+      </header>
+      <main style={{ flex: 1, overflowY: "auto", padding: "32px 40px 48px" }}>{children}</main>
+    </div>
+  );
+}
+window.Page = Page;
+</script>
 
-      {/* Sheet number */}
-      <div style={{
-        width: 40, height: 40, borderRadius: 9,
-        background: included ? "#ECFAF1" : "#F4F7FB",
-        color: included ? "#2F9E5E" : "#7C87A4",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700,
-        flexShrink: 0,
-      }}>{no}</div>
+<script type="text/babel">
+// R3 산출물 내보내기 — src/app/r3/export/page.tsx 이식
+const MVP = [
+  { no: "0", name: "안내 · 표지", desc: "평가 기간 · 운영안 비중 · 검토 대상 · 산출 일자", rows: 1, included: true },
+  { no: "1", name: "현황 · 본부 형평성", desc: "본부별 KR 건수 · 승인율 · 코칭 후보 비율", rows: 14, included: true },
+  { no: "2", name: "검토 기준", desc: "11항목 체크리스트 + 위험 태그 + criteria 버전", rows: 11, included: true },
+  { no: "3", name: "난이도 분포", desc: "본부 × 직급 매트릭스 + 의존 플래그 KR 목록", rows: 42, included: true },
+];
+const PHASE2 = [
+  { no: "4", name: "등급 분포 사전 시뮬레이션", desc: "강제배분 미리보기 (S5/A10/B75/C≤10)", rows: 0, included: false, lite: true },
+  { no: "5", name: "루브릭 · 기준 카드", desc: "등급별 판단 기준 산출물 카드", rows: 0, included: false, lite: true },
+  { no: "D", name: "참고 · 쟁점 태그", desc: "코칭 후보 KR 사례 카드", rows: 0, included: false, lite: true },
+];
 
-      {/* Info */}
+function SheetItem({ s }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: "#fff", border: `1px solid ${s.included ? "#BBE9CC" : "#E1E5EF"}`, borderRadius: 12, marginBottom: 10 }}>
+      <div style={{ width: 22, height: 22, borderRadius: 6, background: s.included ? "#2F9E5E" : "#fff", border: s.included ? "none" : "1px solid #C8CFDF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{s.included && "✓"}</div>
+      <div className="mono" style={{ width: 40, height: 40, borderRadius: 9, background: s.included ? "#ECFAF1" : "var(--page-bg)", color: s.included ? "#2F9E5E" : "#7C87A4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{s.no}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: included ? "#0F1A36" : "#7C87A4" }}>{name}</span>
-          {lite && <span style={{ padding: "1px 7px", borderRadius: 5, background: "#FFF7EC", color: "#D98023", fontSize: 10, fontWeight: 700 }}>lite</span>}
-          {!lite && <span style={{ padding: "1px 7px", borderRadius: 5, background: "#F1F4FD", color: "#213A8C", fontSize: 10, fontWeight: 700 }}>MVP</span>}
+          <span style={{ fontSize: 14, fontWeight: 700, color: s.included ? "#0F1A36" : "#7C87A4" }}>{s.name}</span>
+          <span style={{ padding: "1px 7px", borderRadius: 5, background: s.lite ? "#FFF7EC" : "#F1F4FD", color: s.lite ? "#D98023" : "#213A8C", fontSize: 10, fontWeight: 700 }}>{s.lite ? "lite" : "MVP"}</span>
         </div>
-        <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 3, lineHeight: 1.55 }}>{desc}</div>
+        <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 3, lineHeight: 1.55 }}>{s.desc}</div>
       </div>
-
-      {/* Rows count */}
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "#5B6685", fontWeight: 600 }}>{rows} rows</div>
+      <div className="mono" style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600 }}>{s.rows} rows</div>
     </div>
   );
 }
 
 function R3Export() {
   return (
-    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
-      <TopBar title="산출물 내보내기" subtitle="INSIGHT · 05 · 캘리브레이션 진행파일을 Excel로"/>
-      <div style={{ flex: 1, overflowY: "auto", padding: "36px 48px 48px" }}>
+    <Page title="산출물 내보내기" subtitle="INSIGHT · 캘리브레이션 진행파일을 Excel로">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, fontSize: 13, color: "#5B6685" }}>
+        <a href="R3_인사담당자_01_인사이트.html" style={{ color: "#5B6685", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}><span>←</span> 캘리브레이션 인사이트</a>
+        <span style={{ color: "#C8CFDF" }}>/</span>
+        <span style={{ color: "#0F1A36", fontWeight: 600 }}>산출물 내보내기</span>
+      </div>
 
-        {/* Breadcrumb */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, fontSize: 13, color: "#5B6685" }}>
-          <a href="R3_인사담당자_01_인사이트.html" style={{ color: "#5B6685", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-            <span>←</span> 캘리브레이션 인사이트
-          </a>
-          <span style={{ color: "#C8CFDF" }}>/</span>
-          <span style={{ color: "#0F1A36", fontWeight: 600 }}>산출물 내보내기</span>
+      <div style={{ marginBottom: 30, maxWidth: 820 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 10 }}>INSIGHT · Excel</div>
+        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.25 }}>캘리브레이션 진행파일을 다운로드해요</h1>
+        <p style={{ margin: "14px 0 0", fontSize: 14.5, color: "#5B6685", lineHeight: 1.7 }}>평가자 회의에서 그대로 사용할 수 있도록 Excel로 정리해드려요. 핵심 4시트는 지금 사용 가능하고, 풀 시트는 Phase 2에서 추가됩니다.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 24 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18 }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0F1A36" }}>포함할 시트</h2>
+            <span style={{ padding: "3px 9px", borderRadius: 999, background: "#ECFAF1", color: "#2F9E5E", fontSize: 11.5, fontWeight: 700 }}>4개 선택됨</span>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>● 간이 4시트 (MVP)</div>
+          {MVP.map((s) => <SheetItem key={s.no} s={s} />)}
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#A4ADC4", letterSpacing: "0.06em", textTransform: "uppercase", margin: "14px 0 10px" }}>○ 추가 시트 (Phase 2)</div>
+          {PHASE2.map((s) => <SheetItem key={s.no} s={s} />)}
+
+          <div style={{ padding: "18px 20px", background: "linear-gradient(135deg, #0A1F17, #14342B)", color: "#fff", borderRadius: 14, marginTop: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(0,169,104,0.25)", color: "#7CE9BE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>발행 전 검증 게이트</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {["사람 확인 게이트 통과 (3건 / 3건)", "합산 정합성 검증 통과", "표준 포맷팅 적용"].map((c) => (
+                <div key={c} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#D9F4E7" }}>
+                  <span style={{ width: 18, height: 18, borderRadius: 5, background: "#00A968", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>✓</span>{c}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Hero */}
-        <div style={{ marginBottom: 36, maxWidth: 820 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 10 }}>INSIGHT 05 · Excel</div>
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.25 }}>
-            캘리브레이션 진행파일을 다운로드해요
-          </h1>
-          <p style={{ margin: "14px 0 0", fontSize: 14.5, color: "#5B6685", lineHeight: 1.7 }}>
-            평가자 회의에서 그대로 사용할 수 있도록 Excel로 정리해드려요. 핵심 4시트 (간이)는 지금 사용 가능하고, 풀 11시트는 Phase 2에서 추가됩니다.
-          </p>
-        </div>
-
-        {/* Layout */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 24 }}>
-
-          {/* Left — sheet selection */}
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0F1A36" }}>포함할 시트</h2>
-              <span style={{ padding: "3px 9px", borderRadius: 999, background: "#ECFAF1", color: "#2F9E5E", fontSize: 11.5, fontWeight: 700 }}>4개 선택됨</span>
-            </div>
-
-            {/* MVP sheets */}
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>● 간이 4시트 (MVP)</div>
-              <SheetItem no="0" name="안내 · 표지" desc="평가 기간 · 운영안 비중 · 검토 대상 · 산출 일자" rows={1} included/>
-              <SheetItem no="1" name="현황 · 부간 형평성" desc="본부별 KR 건수 · 승인율 · 코칭 후보 비율" rows={14} included/>
-              <SheetItem no="2" name="검토 기준" desc="11항목 체크리스트 + 위험 태그 + criteria 버전" rows={11} included/>
-              <SheetItem no="3" name="난이도 분포" desc="본부 × 직급 매트릭스 + ④⑥의존 플래그 KR 목록" rows={42} included/>
-            </div>
-
-            {/* Phase 2 sheets */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#A4ADC4", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>○ 추가 7시트 (Phase 2)</div>
-              <SheetItem no="4" name="등급 분포 사전 시뮬레이션" desc="강제배분 미리보기 (S5/A10/B75/C≤10)" rows={0} included={false} lite/>
-              <SheetItem no="5" name="루브릭 · 기준 카드" desc="등급별 판단 기준 산출물 카드" rows={0} included={false} lite/>
-              <SheetItem no="D" name="참고 · 쟁점 태그" desc="C01·C05·C06·C11·④⑥의존 KR 사례" rows={0} included={false} lite/>
-            </div>
-
-            {/* Validation gate */}
-            <div style={{
-              padding: "18px 20px",
-              background: "linear-gradient(135deg, #1B2A4E, #2C3E68)",
-              color: "#fff", borderRadius: 14,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(145,166,240,0.22)", color: "#C5D0F7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>발행 전 검증 게이트</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>📄 다운로드 미리보기</div>
+            <div style={{ padding: "16px 18px", background: "linear-gradient(135deg, #ECFAF1, #fff 80%)", border: "1px solid #BBE9CC", borderRadius: 11 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                <div className="mono" style={{ width: 42, height: 50, borderRadius: 7, background: "#2F9E5E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>XLSX</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1F5538", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>2026_하반기_캘리브레이션.xlsx</div>
+                  <div className="mono" style={{ fontSize: 11, color: "#2F6B48", marginTop: 3 }}>~ 286 KB · 4시트 · UTF-8</div>
+                </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[
-                  { ok: true, label: "사람 확인 게이트 통과 (3건 / 3건)" },
-                  { ok: true, label: "합산 정합성 검증 통과" },
-                  { ok: true, label: "맑은고딕 · 네이비 #1F3864 포맷팅 적용" },
-                ].map((c, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#E5EBFB" }}>
-                    <span style={{ width: 18, height: 18, borderRadius: 5, background: "#2F9E5E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>✓</span>
-                    {c.label}
-                  </div>
-                ))}
-              </div>
+              <div style={{ fontSize: 11.5, color: "#2F6B48", lineHeight: 1.6 }}>68행 / 평가 기간 2026.07.01 ~ 07.30 / 본부 14개</div>
             </div>
           </div>
 
-          {/* Right — settings + download */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* File preview */}
-            <div style={{
-              background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
-              padding: "20px 22px",
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>📄 다운로드 미리보기</div>
-
-              {/* Mock file card */}
-              <div style={{
-                padding: "16px 18px",
-                background: "linear-gradient(135deg, #ECFAF1, #fff 80%)",
-                border: "1px solid #BBE9CC", borderRadius: 11,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                  <div style={{ width: 42, height: 50, borderRadius: 7, background: "#2F9E5E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)", flexShrink: 0 }}>XLSX</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1F5538", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>2026_상반기_캘리브레이션.xlsx</div>
-                    <div style={{ fontSize: 11, color: "#2F6B48", marginTop: 3, fontFamily: "var(--font-mono)" }}>~ 286 KB · 4시트 · UTF-8</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 11.5, color: "#2F6B48", lineHeight: 1.6 }}>
-                  68행 / 평가 기간 2026.06.01 ~ 06.19 / 본부 14개 / 운영본부 결제플랫폼팀 외 13개팀
-                </div>
-              </div>
+          <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>⚙️ 옵션</div>
+            <div style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600, marginBottom: 7 }}>대상 기간</div>
+            <div style={{ display: "flex", gap: 5, marginBottom: 14 }}>
+              {["2026 H2", "2026 H1", "2025 H2"].map((p, i) => (
+                <button key={p} style={{ flex: 1, padding: "8px 0", background: i === 0 ? "#E07A3C" : "var(--page-bg)", color: i === 0 ? "#fff" : "#5B6685", border: i === 0 ? "none" : "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: i === 0 ? 600 : 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{p}</button>
+              ))}
             </div>
-
-            {/* Settings */}
-            <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>⚙️ 옵션</div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div>
-                  <div style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600, marginBottom: 7 }}>대상 기간</div>
-                  <div style={{ display: "flex", gap: 5 }}>
-                    <button style={{ flex: 1, padding: "8px 0", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>2026 H1</button>
-                    <button style={{ flex: 1, padding: "8px 0", background: "#F4F7FB", color: "#5B6685", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}>2025 H2</button>
-                    <button style={{ flex: 1, padding: "8px 0", background: "#F4F7FB", color: "#5B6685", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}>2025 H1</button>
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600, marginBottom: 7 }}>본부 범위</div>
-                  <div style={{ padding: "8px 12px", background: "#F4F7FB", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12.5, color: "#1F2A4A", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>전 본부 (14개)</span>
-                    <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600, marginBottom: 7 }}>포맷 옵션</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {[
-                      { l: "맑은고딕 · 네이비 #1F3864", on: true },
-                      { l: "사번/이름 비식별 처리", on: false },
-                      { l: "변경 이력 별도 시트 포함", on: false },
-                    ].map((c, i) => (
-                      <label key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#3A4565", cursor: "pointer" }}>
-                        <div style={{
-                          width: 18, height: 18, borderRadius: 5,
-                          background: c.on ? "#3B5BDB" : "#fff",
-                          border: c.on ? "none" : "1px solid #C8CFDF",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontSize: 11, fontWeight: 700,
-                        }}>{c.on && "✓"}</div>
-                        {c.l}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div style={{ fontSize: 11.5, color: "#5B6685", fontWeight: 600, marginBottom: 7 }}>포맷 옵션</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[["표준 포맷팅 적용", true], ["사번/이름 비식별 처리", false], ["변경 이력 별도 시트 포함", false]].map(([l, on]) => (
+                <label key={l} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#3A4565", cursor: "pointer" }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 5, background: on ? "#E07A3C" : "#fff", border: on ? "none" : "1px solid #C8CFDF", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700 }}>{on && "✓"}</div>{l}
+                </label>
+              ))}
             </div>
+          </div>
 
-            {/* Download CTA */}
-            <button style={{
-              width: "100%",
-              background: "#2F9E5E", color: "#fff", border: "none",
-              borderRadius: 12, padding: "16px 20px",
-              fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              boxShadow: "0 6px 16px -4px rgba(47,158,94,.35)",
-            }}>
-              📥 Excel 다운로드 (4시트 · 286KB)
-            </button>
+          <button onClick={() => alert("Excel 다운로드는 준비 중이에요 🙂 (실 데이터 연동 후 활성화)")} style={{ width: "100%", background: "#2F9E5E", color: "#fff", border: "none", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 6px 16px -4px rgba(47,158,94,.35)" }}>📥 Excel 다운로드 (4시트 · 286KB)</button>
 
-            {/* Past exports */}
-            <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>📚 최근 발행 이력</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[
-                  { date: "07/12", note: "2026 H1 중간 점검", size: "284KB" },
-                  { date: "06/28", note: "2026 H1 초기 분석", size: "212KB" },
-                  { date: "01/15", note: "2025 H2 최종", size: "318KB" },
-                ].map((h, i) => (
-                  <div key={i} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "10px 12px", background: "#F9FAFC", borderRadius: 9,
-                  }}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#5B6685", fontWeight: 600 }}>{h.date}</span>
-                    <span style={{ fontSize: 12, color: "#1F2A4A", fontWeight: 500, flex: 1 }}>{h.note}</span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "#A4ADC4" }}>{h.size}</span>
-                    <button style={{ width: 22, height: 22, borderRadius: 6, background: "#fff", border: "1px solid #E1E5EF", color: "#5B6685", fontSize: 11, cursor: "pointer", fontFamily: "var(--font-mono)" }}>↓</button>
-                  </div>
-                ))}
-              </div>
+          <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>📚 최근 발행 이력</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[["07/12", "2026 H2 중간 점검", "284KB"], ["06/28", "2026 H1 최종", "212KB"], ["01/15", "2025 H2 최종", "318KB"]].map(([d, n, s]) => (
+                <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#F9FAFC", borderRadius: 9 }}>
+                  <span className="mono" style={{ fontSize: 11, color: "#5B6685", fontWeight: 600 }}>{d}</span>
+                  <span style={{ fontSize: 12, color: "#1F2A4A", fontWeight: 500, flex: 1 }}>{n}</span>
+                  <span className="mono" style={{ fontSize: 10.5, color: "#A4ADC4" }}>{s}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </Page>
   );
 }
 
-window.R3Export = R3Export;
+function App() { return (<React.Fragment><SidebarR3 active="export" /><R3Export /></React.Fragment>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
-<script type="text/babel">
-  function App(){return(<><SidebarR3 active="insights"/><R3Export/></>);}
-  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script></body></html>
+
+</body>
+</html>

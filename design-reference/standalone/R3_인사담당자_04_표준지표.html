@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>OKR LENS — 표준 지표 라이브러리</title>
+<title>OKR LENS — 인사담당자</title>
 <style>/* ============================================================
    OKR LENS — Design System
    colors_and_type.css
@@ -383,12 +383,12 @@ h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
   html, body { margin: 0; padding: 0; height: 100%; background: #F4F7FB; font-family: var(--font-sans); color: #3A4565; -webkit-font-smoothing: antialiased; }
   *, *::before, *::after { box-sizing: border-box; }
   button { font-family: inherit; }
-  input { font-family: inherit; }
   #root { height: 100vh; display: flex; }
-  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar { width: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DCE3F8; border-radius: 6px; border: 2px solid #F4F7FB; }
 </style>
+
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -405,6 +405,7 @@ h2, .ds-h2 { font-size: clamp(19px, 2.4vw, 22px); }
 </head>
 <body>
 <div id="root"></div>
+
 <script type="text/babel">// Icon.jsx — Lucide-style inline SVG icons (stroke 1.75)
 // Usage: <Icon name="dashboard" size={18} />
 const ICONS = {
@@ -456,510 +457,248 @@ function Icon({ name, size = 18, strokeWidth = 1.75, style = {}, ...rest }) {
 
 window.Icon = Icon;
 </script>
-<script type="text/babel">function Button({ variant = "primary", size = "md", children, leftIcon, rightIcon, onClick, disabled }) {
-  const base = {
-    fontFamily: "var(--font-sans)",
-    fontWeight: 600,
-    borderRadius: 10,
-    border: "1px solid transparent",
-    cursor: disabled ? "not-allowed" : "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 7,
-    lineHeight: 1,
-    letterSpacing: "-0.005em",
-    transition: "background 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out",
-    opacity: disabled ? 0.42 : 1,
+
+<style>:root{ --page-bg:#f5f6f4; } #root{ background:var(--page-bg); }</style>
+<script type="text/babel">
+// Button — 현재 구현 src/components/Button.tsx 이식
+function Button({ children, variant = "primary", size = "md", leftIcon, onClick, style, fullWidth }) {
+  const VARIANTS = {
+    primary:   { background: "#00A968", color: "#fff", border: "none" },
+    success:   { background: "#2F9E5E", color: "#fff", border: "none" },
+    ai:        { background: "linear-gradient(135deg, #00A968, #14342B)", color: "#fff", border: "none" },
+    secondary: { background: "#fff", color: "#3A4565", border: "1px solid #E1E5EF" },
+    ghost:     { background: "transparent", color: "#5B6685", border: "none" },
   };
-  const sizes = {
-    sm: { fontSize: 12.5, padding: "7px 12px" },
-    md: { fontSize: 13.5, padding: "10px 16px" },
-    lg: { fontSize: 15, padding: "12px 22px" },
-  };
-  const variants = {
-    primary:   { background: "#3B5BDB", color: "#fff", boxShadow: "0 1px 2px rgba(31,42,74,.08)" },
-    secondary: { background: "#fff", color: "#1F2A4A", borderColor: "#C8CFDF" },
-    ghost:     { background: "transparent", color: "#3A4565" },
-    danger:    { background: "#fff", color: "#D14343", borderColor: "#FFD4D4" },
-    success:   { background: "#2F9E5E", color: "#fff" },
-    ai:        { background: "#F1F4FD", color: "#213A8C", borderColor: "#C5D0F7" },
-  };
-  const [hover, setHover] = React.useState(false);
-  const hoverStyles = {
-    primary:   { background: "#2C49B8" },
-    secondary: { background: "#F4F7FB" },
-    ghost:     { background: "#F4F7FB" },
-    danger:    { background: "#FFF0F0" },
-    success:   { background: "#268F52" },
-    ai:        { background: "#E5EBFB" },
-  };
+  const SIZES = { sm: { padding: "8px 14px", fontSize: 13 }, md: { padding: "11px 18px", fontSize: 14 } };
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => !disabled && setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ ...base, ...sizes[size], ...variants[variant], ...(hover ? hoverStyles[variant] : {}) }}
-    >
-      {leftIcon}
-      {children}
-      {rightIcon}
-    </button>
+    <button onClick={onClick} style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
+      borderRadius: 10, fontWeight: 700, cursor: "pointer",
+      fontFamily: "var(--font-sans)", whiteSpace: "nowrap", transition: "filter 140ms",
+      width: fullWidth ? "100%" : undefined,
+      ...VARIANTS[variant], ...SIZES[size], ...(style || {}),
+    }}>{leftIcon}{children}</button>
   );
 }
 window.Button = Button;
 </script>
-<script type="text/babel">function TopBar({ title, subtitle }) {
-  return (
-    <header style={{
-      height: 64, minHeight: 64,
-      display: "flex", alignItems: "center",
-      padding: "0 32px",
-      background: "#fff",
-      borderBottom: "1px solid #E1E5EF",
-      gap: 18,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
-      </div>
-
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        background: "#F4F7FB",
-        borderRadius: 10, padding: "8px 14px",
-        width: 300,
-        color: "#7C87A4",
-      }}>
-        <Icon name="search" size={15}/>
-        <input
-          placeholder="팀원 이름, KR ID 검색"
-          style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: "#1F2A4A", flex: 1, fontFamily: "var(--font-sans)" }}
-        />
-      </div>
-
-      <div style={{
-        display: "flex", alignItems: "center", gap: 7,
-        padding: "8px 14px",
-        border: "1px solid #E1E5EF", borderRadius: 10,
-        fontSize: 13, color: "#1F2A4A", fontWeight: 500,
-      }}>
-        <Icon name="calendar" size={15} style={{ color: "#7C87A4" }}/>
-        2026 상반기
-        <Icon name="chevronDown" size={12} style={{ color: "#A4ADC4" }}/>
-      </div>
-
-      <button style={{
-        position: "relative",
-        width: 40, height: 40, borderRadius: 10,
-        border: "1px solid #E1E5EF", background: "#fff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", color: "#3A4565",
-      }}>
-        <Icon name="bell" size={17}/>
-        <span style={{ position: "absolute", top: 8, right: 9, width: 9, height: 9, borderRadius: "50%", background: "#D14343", border: "1.5px solid #fff" }}/>
-      </button>
-    </header>
-  );
-}
-
-window.TopBar = TopBar;
-</script>
-<script type="text/babel">// SidebarR3.jsx — R3 인사담당자 사이드바 (운영 흐름 순서)
-// ① 평가제도 운영안 → ② 평가 기준 → ③ 마스터 데이터 → ④ 표준 지표
-// → ⑤ 캘리브레이션 인사이트 → ⑥ 산출물 내보내기
-function SidebarR3({ active = "operation" }) {
-  const steps = [
-    { id: "operation", label: "평가제도 운영안", icon: "settings",  href: "R3_인사담당자_06_운영안.html",  step: "01", desc: "비중·강제배분·점수" },
-    { id: "criteria",  label: "평가 기준",       icon: "sliders",   href: "R3_인사담당자_02_평가기준.html",   step: "02", desc: "11항목·임계값·가이드" },
-    { id: "master",    label: "마스터 데이터",   icon: "users",     href: "R3_인사담당자_03_마스터데이터.html",     step: "03", desc: "조직·사원·결재" },
-    { id: "metrics",   label: "표준 매트릭스",   icon: "library",   href: "R3_인사담당자_05_평가매트릭스.html",     step: "04", desc: "표준 Metric ↔ KR 예시" },
-    { id: "insights",  label: "캘리브레이션",    icon: "barchart",  href: "R3_인사담당자_01_인사이트.html",         step: "05", desc: "전사 진단·드릴다운" },
-    { id: "export",    label: "산출물",          icon: "clipboard", href: "R3_인사담당자_08_산출물내보내기.html",     step: "06", desc: "Excel 11시트" },
+<script type="text/babel">
+// SidebarR3 — 현재 구현 src/components/Sidebar.tsx (grouped nav) 이식
+function SidebarR3({ active }) {
+  const NAV = [
+    { header: "기준 정보", items: [
+      { id: "criteria", label: "평가 기준",       icon: "⚖️", href: "R3_인사담당자_02_평가기준.html" },
+      { id: "master",   label: "마스터 데이터",   icon: "🗃️", href: "R3_인사담당자_03_마스터데이터.html" },
+      { id: "schedule", label: "평가 일정 관리",  icon: "📅", href: "R3_인사담당자_05_평가일정.html" },
+    ]},
+    { header: "평가 인사이트", items: [
+      { id: "insight",  label: "캘리브레이션",    icon: "📊", href: "R3_인사담당자_01_인사이트.html" },
+      { id: "metrics",  label: "표준 지표",       icon: "🧭", href: "R3_인사담당자_04_표준지표.html" },
+    ]},
+    { header: "운영", items: [
+      { id: "export",   label: "산출물",          icon: "📤", href: "R3_인사담당자_08_산출물내보내기.html" },
+      { id: "env",      label: "환경 설정",       icon: "⚙️", href: "R3_인사담당자_06_환경설정.html" },
+    ]},
   ];
   return (
-    <aside className="okrlens-sidebar" style={{
-      width: 244, minWidth: 244,
-      background: "#0A1F17", color: "#A4ADC4",
-      display: "flex", flexDirection: "column",
-      height: "100%", padding: "20px 14px", gap: 4,
-      overflowY: "auto",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 18px", borderBottom: "1px solid #14342B", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 0 }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 5px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+    <aside style={{ width: 244, minWidth: 244, flexShrink: 0, background: "#0a1f17", color: "#C7D6CE", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0 }}>
+      {/* Brand */}
+      <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+          <span style={{ display: "inline-flex", alignItems: "center" }}><span style={{ fontWeight: 800 }}>OKR</span><span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: "#3EDDA1", margin: "0 7px 0 6px" }}></span><span style={{ fontWeight: 300 }}>LENS</span></span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FFEDE2", color: "#E07A3C", letterSpacing: "0.02em" }}>R3 · 인사담당자</span>
         </div>
       </div>
-
-      {/* Role chip — orange */}
-      <div style={{
-        margin: "0 4px 14px",
-        background: "rgba(224,122,60,0.16)",
-        border: "1px solid rgba(224,122,60,0.32)",
-        borderRadius: 10,
-        padding: "10px 12px",
-        display: "flex", alignItems: "center", gap: 9,
-      }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🛡️</div>
-        <div>
-          <div style={{ fontSize: 10.5, color: "#F4C9A8", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>현재 역할</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>인사담당자</div>
-        </div>
-      </div>
-
-      {/* Section label */}
-      <div style={{ padding: "0 10px 6px", fontSize: 10, fontWeight: 700, color: "#7E89B0", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-        운영 흐름 · 6단계
-      </div>
-
-      {steps.map((it, idx) => {
-        const on = it.id === active;
-        const isLast = idx === steps.length - 1;
-        return (
-          <a key={it.id} href={it.href} style={{ textDecoration: "none", position: "relative" }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 11px", borderRadius: 10,
-              background: on ? "rgba(224,122,60,0.18)" : "transparent",
-              border: on ? "1px solid rgba(224,122,60,0.28)" : "1px solid transparent",
-              cursor: "pointer", transition: "all 140ms ease-out",
-              position: "relative",
-            }}>
-              {/* Step number badge */}
-              <div style={{
-                width: 24, height: 24, borderRadius: 7,
-                background: on ? "#E07A3C" : "#243759",
-                color: on ? "#fff" : "#91A6F0",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
-                flexShrink: 0,
-              }}>{it.step}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 13, fontWeight: on ? 700 : 600,
-                  color: on ? "#fff" : "#C8CFDF",
-                  letterSpacing: "-0.01em",
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{it.label}</div>
-                <div style={{
-                  fontSize: 10.5,
-                  color: on ? "#F4C9A8" : "#7E89B0",
-                  marginTop: 1,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{it.desc}</div>
-              </div>
-              <Icon name="chevronRight" size={12} style={{ color: on ? "#F4C9A8" : "#5E6A8E", opacity: 0.7 }}/>
-            </div>
-            {/* Connector line between steps */}
-            {!isLast && (
-              <div style={{
-                position: "absolute", left: 23, top: 44, bottom: -4, width: 2,
-                background: on ? "#E07A3C" : "#243759",
-                opacity: 0.4,
-              }}/>
-            )}
-          </a>
-        );
-      })}
-
-      <div style={{ marginTop: "auto", borderTop: "1px solid #14342B", paddingTop: 14 }}>
+      {/* Nav */}
+      <nav style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+        {NAV.map((group) => (
+          <div key={group.header} style={{ marginBottom: 18 }}>
+            <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", color: "#5F7C6E", fontSize: 10.5, fontWeight: 700, padding: "6px 14px 8px" }}>{group.header}</div>
+            {group.items.map((item) => {
+              const on = item.id === active;
+              return (
+                <a key={item.id} href={item.href} style={{ textDecoration: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 14, fontWeight: on ? 700 : 500, color: on ? "#FFFFFF" : "#9DB3A9", background: on ? "rgba(0,169,104,0.16)" : "transparent", boxShadow: on ? "inset 3px 0 0 #3EDDA1" : "none", cursor: "pointer", transition: "background 140ms" }}>
+                    <span style={{ fontSize: 15, width: 18, textAlign: "center" }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      {/* Footer */}
+      <div style={{ padding: "12px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: 4 }}>
         <a href="02_역할선택.html" style={{ textDecoration: "none" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 12px", borderRadius: 9,
-            fontSize: 12.5, color: "#A4ADC4", cursor: "pointer",
-          }}>
-            <Icon name="refresh" size={15}/>
-            <span>역할 전환</span>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}><span>🔄</span> 역할 전환</div>
         </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginTop: 4 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>이</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>이수경</div>
-            <div style={{ fontSize: 11, color: "#A4ADC4" }}>인사노무팀</div>
-          </div>
-        </div>
+        <a href="01_로그인.html" style={{ textDecoration: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}><span>↩</span> 로그아웃</div>
+        </a>
       </div>
     </aside>
   );
 }
 window.SidebarR3 = SidebarR3;
 </script>
-<script type="text/babel">// R3Metrics.jsx — 표준 지표 라이브러리
-
-function MetricStatusPill({ status }) {
-  const map = {
-    "수집":     { bg: "#F1F3F8", bd: "#E1E5EF", fg: "#5B6685" },
-    "검토중":   { bg: "#FFF7EC", bd: "#FFE0BA", fg: "#D98023" },
-    "표준승인": { bg: "#ECFAF1", bd: "#BBE9CC", fg: "#2F9E5E" },
-    "비권장":   { bg: "#FFF0F0", bd: "#FFD4D4", fg: "#D14343" },
-  };
-  const s = map[status];
+<script type="text/babel">
+// Page — 현재 구현 src/components/RoleShell.tsx 의 탑바+메인 이식 (인증 게이트는 목업이라 생략)
+function Page({ title, subtitle, actions, children }) {
+  const user = { name: "한지영", dept: "경영지원본부", team: "인사노무팀", avatarColor: "#E07A3C" };
   return (
-    <span style={{
-      padding: "3px 9px", borderRadius: 999,
-      background: s.bg, border: `1px solid ${s.bd}`, color: s.fg,
-      fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
-    }}>{status}</span>
-  );
-}
-
-function MetricCard({ id, name, category, group, status, definition, formula, unit, usage, orgs, exampleKR, warnings }) {
-  return (
-    <div style={{
-      background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14,
-      padding: "20px 22px", boxShadow: "0 1px 2px rgba(31,42,74,.04)",
-      display: "flex", flexDirection: "column", gap: 12,
-    }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#7C87A4" }}>{id}</span>
-            <MetricStatusPill status={status}/>
-            {warnings && warnings.map((w, i) => (
-              <span key={i} style={{ padding: "2px 7px", borderRadius: 5, background: "#FFF0F0", color: "#D14343", fontSize: 10, fontWeight: 700 }}>{w}</span>
-            ))}
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.01em", lineHeight: 1.4 }}>{name}</div>
-          <div style={{ display: "flex", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
-            <span style={{ padding: "1px 7px", borderRadius: 5, background: "#F1F4FD", color: "#213A8C", fontSize: 10, fontWeight: 600 }}>{category}</span>
-            <span style={{ padding: "1px 7px", borderRadius: 5, background: "#FFEDE2", color: "#E07A3C", fontSize: 10, fontWeight: 600 }}>{group}</span>
+    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <header style={{ height: 68, display: "flex", alignItems: "center", gap: 16, padding: "0 40px", background: "#fff", borderBottom: "1px solid #E1E5EF", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ minWidth: 0, overflow: "hidden" }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>}
+        </div>
+        <div style={{ flex: 1, minWidth: 12 }} />
+        {actions && <div style={{ flexShrink: 0 }}>{actions}</div>}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, padding: "6px 14px 6px 6px", background: "var(--page-bg)", borderRadius: 999 }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: user.avatarColor, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12.5 }}>{user.name.charAt(0)}</div>
+          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0F1A36" }}>{user.name} 님</div>
+            <div style={{ fontSize: 10.5, color: "#7C87A4" }}>{user.dept} · {user.team}</div>
           </div>
         </div>
-        <button style={iconBtnMetrics}><Icon name="more" size={14}/></button>
-      </div>
+      </header>
+      <main style={{ flex: 1, overflowY: "auto", padding: "32px 40px 48px" }}>{children}</main>
+    </div>
+  );
+}
+window.Page = Page;
+</script>
 
-      {/* Definition */}
-      <div style={{ fontSize: 12.5, color: "#5B6685", lineHeight: 1.55, paddingTop: 8, borderTop: "1px solid #ECEFF5" }}>
-        {definition}
-      </div>
+<script type="text/babel">
+// R3 표준 지표 — src/app/r3/metrics/page.tsx 이식
+const STATUS = {
+  "수집": { bg: "#F1F3F8", bd: "#E1E5EF", fg: "#5B6685" },
+  "검토중": { bg: "#FFF7EC", bd: "#FFE0BA", fg: "#D98023" },
+  "표준승인": { bg: "#ECFAF1", bd: "#BBE9CC", fg: "#2F9E5E" },
+  "비권장": { bg: "#FFF0F0", bd: "#FFD4D4", fg: "#D14343" },
+};
+const METRICS = [
+  { id: "M_PERF_001", name: "APM p95 응답속도 (ms)", status: "표준승인", category: "프로세스", group: "성능/튜닝", definition: "외부 사용자가 체감하는 응답 지연의 상위 5% 값. 단순 평균보다 사용자 경험을 더 정확히 반영합니다.", formula: "P95(response_time) · 월평균", unit: "ms", usage: 87, orgs: 6, exampleKR: "결제 게이트웨이 APM p95 응답속도 850ms → 500ms" },
+  { id: "M_QUAL_004", name: "단위테스트 커버리지 (%)", status: "표준승인", category: "품질", group: "개발/요건", definition: "실행된 코드 라인이 전체 코드 라인에서 차지하는 비율. 회귀 리스크의 대표 선행 지표입니다.", formula: "covered_lines / total_lines × 100", unit: "%", usage: 64, orgs: 4, exampleKR: "결제 인증 모듈 단위테스트 커버리지 65% → 85%" },
+  { id: "M_OPS_007", name: "MTTR · 평균 복구 시간", status: "표준승인", category: "리스크", group: "장애/운영안정", definition: "장애 발생 시점부터 정상 복구 시점까지 평균 시간. 운영 안정성의 핵심 지표.", formula: "SUM(recovery_time) / 장애 건수", unit: "분", usage: 58, orgs: 5, exampleKR: "P1 장애 MTTR 평균 35분 → 15분 단축" },
+  { id: "M_OPS_012", name: "배포 자동화 비율 (%)", status: "검토중", category: "생산성", group: "자동화", definition: "전체 배포 중 자동 파이프라인으로 진행된 비율. 운영 효율과 휴먼 에러 감소의 대표 지표.", formula: "auto_deploys / total_deploys × 100", unit: "%", usage: 42, orgs: 3, exampleKR: "결제 시스템 배포 자동화 비율 60% → 90%" },
+  { id: "M_SEC_003", name: "권한 점검 완료율 (%)", status: "검토중", category: "리스크", group: "보안/권한", definition: "분기 권한 점검 대상 중 점검이 완료된 비율. 보안 거버넌스 지표.", formula: "completed / scheduled × 100", unit: "%", usage: 28, orgs: 2, exampleKR: "분기 권한 점검 자동화 도입 · 완료율 70% → 95%" },
+  { id: "M_PROD_009", name: "회의 횟수 (분기)", status: "비권장", category: "생산성", group: "고객/사업기여", definition: "분기 동안 진행한 회의 횟수. 활동량 지표로, 결과 지표가 함께 있어야 권장됩니다.", formula: "COUNT(meetings) WHERE quarter", unit: "회", usage: 14, orgs: 2, warnings: ["건수형"], exampleKR: "고객 미팅 횟수 분기 30회 이상 유지" },
+];
+const KPIS = [
+  { ico: "📊", bg: "#E5EBFB", fg: "#3B5BDB", label: "전체 지표", val: "284", sub: "수집 완료" },
+  { ico: "✓", bg: "#ECFAF1", fg: "#2F9E5E", label: "표준 승인", val: "47", sub: "배포 가능" },
+  { ico: "⏱", bg: "#FFF7EC", fg: "#D98023", label: "검토 중", val: "32", sub: "큐레이션 대기" },
+  { ico: "!", bg: "#FFF0F0", fg: "#D14343", label: "비권장", val: "18", sub: "건수형·자기보고" },
+  { ico: "🔄", bg: "#F0E9FB", fg: "#7C4DD9", label: "중복 추정", val: "12", sub: "통합 검토 권장" },
+];
 
-      {/* Formula */}
-      <div style={{
-        padding: "10px 12px", background: "#F9FAFC", borderRadius: 8,
-        fontFamily: "var(--font-mono)", fontSize: 12, color: "#1F2A4A",
-        display: "flex", alignItems: "center", gap: 8,
-      }}>
+function MetricCard({ m }) {
+  const s = STATUS[m.status];
+  return (
+    <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px", boxShadow: "var(--shadow-xs)", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+          <span className="mono" style={{ fontSize: 11, color: "#7C87A4" }}>{m.id}</span>
+          <span style={{ padding: "3px 9px", borderRadius: 999, background: s.bg, border: `1px solid ${s.bd}`, color: s.fg, fontSize: 11, fontWeight: 600 }}>{m.status}</span>
+          {m.warnings && m.warnings.map((w) => <span key={w} style={{ padding: "2px 7px", borderRadius: 5, background: "#FFF0F0", color: "#D14343", fontSize: 10, fontWeight: 700 }}>{w}</span>)}
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.01em", lineHeight: 1.4 }}>{m.name}</div>
+        <div style={{ display: "flex", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
+          <span style={{ padding: "1px 7px", borderRadius: 5, background: "#F1F4FD", color: "#213A8C", fontSize: 10, fontWeight: 600 }}>{m.category}</span>
+          <span style={{ padding: "1px 7px", borderRadius: 5, background: "#FFEDE2", color: "#E07A3C", fontSize: 10, fontWeight: 600 }}>{m.group}</span>
+        </div>
+      </div>
+      <div style={{ fontSize: 12.5, color: "#5B6685", lineHeight: 1.55, paddingTop: 8, borderTop: "1px solid #ECEFF5" }}>{m.definition}</div>
+      <div className="mono" style={{ padding: "10px 12px", background: "#F9FAFC", borderRadius: 8, fontSize: 12, color: "#1F2A4A", display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ color: "#7C87A4", fontSize: 11 }}>📐</span>
-        <span>{formula}</span>
-        <span style={{ marginLeft: "auto", color: "#7C87A4", fontSize: 11 }}>· 단위 {unit}</span>
+        <span>{m.formula}</span>
+        <span style={{ marginLeft: "auto", color: "#7C87A4", fontSize: 11 }}>· 단위 {m.unit}</span>
       </div>
-
-      {/* Usage stats */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 11.5 }}>
         <div>
           <div style={{ color: "#7C87A4", marginBottom: 3 }}>사용 빈도</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ flex: 1, height: 5, background: "#F4F7FB", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(usage, 100)}%`, background: "#3B5BDB", borderRadius: 3 }}/>
-            </div>
-            <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#0F1A36" }}>{usage}</span>
+            <div style={{ flex: 1, height: 5, background: "var(--page-bg)", borderRadius: 3, overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.min(m.usage, 100)}%`, background: "#3B5BDB", borderRadius: 3 }} /></div>
+            <span className="mono" style={{ fontWeight: 700, color: "#0F1A36" }}>{m.usage}</span>
           </div>
         </div>
         <div>
           <div style={{ color: "#7C87A4", marginBottom: 3 }}>사용 조직</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#0F1A36" }}>{orgs}개 본부</div>
+          <div className="mono" style={{ fontWeight: 700, color: "#0F1A36" }}>{m.orgs}개 본부</div>
         </div>
       </div>
-
-      {/* Example KR */}
-      <div style={{
-        padding: "10px 12px", background: "#F1F4FD", border: "1px solid #C5D0F7", borderRadius: 8,
-        fontSize: 11.5, color: "#3A4565", lineHeight: 1.5,
-      }}>
-        <div style={{ fontSize: 9.5, fontWeight: 700, color: "#213A8C", letterSpacing: "0.04em", marginBottom: 3 }}>📌 대표 KR 예시</div>
-        {exampleKR}
+      <div style={{ padding: "10px 12px", background: "#F1FBF6", border: "1px solid #B9F1D8", borderRadius: 8, fontSize: 11.5, color: "#3A4565", lineHeight: 1.5 }}>
+        <div style={{ fontSize: 9.5, fontWeight: 700, color: "#0A6B44", letterSpacing: "0.04em", marginBottom: 3 }}>📌 대표 KR 예시</div>
+        {m.exampleKR}
       </div>
     </div>
   );
 }
 
-const iconBtnMetrics = {
-  width: 28, height: 28, borderRadius: 7,
-  background: "#F9FAFC", border: "1px solid #E1E5EF",
-  display: "inline-flex", alignItems: "center", justifyContent: "center",
-  cursor: "pointer", color: "#5B6685", flexShrink: 0,
-};
-
 function R3Metrics() {
   return (
-    <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "#F4F7FB", overflow: "hidden" }}>
-      <TopBar title="표준 지표 라이브러리" subtitle="284개 지표 · 47개 표준 승인"/>
-      <div style={{ flex: 1, overflowY: "auto", padding: "28px 40px 40px" }}>
+    <Page title="표준 지표 라이브러리" subtitle="284개 지표 · 47개 표준 승인"
+      actions={<Button variant="ai" size="sm" leftIcon={<span>✨</span>} onClick={() => alert("AI 정규화 실행은 준비 중이에요 🙂")}>AI 정규화 실행</Button>}>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase" }}>플라이휠 · 수집 → 정규화 → 큐레이션 → 배포</div>
+        <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>평가 지표의 표준을 함께 쌓아갑니다</h1>
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: "#5B6685" }}>KR 안의 측정지표만 추출·정규화해요. KR 자체를 재작성하지는 않습니다.</p>
+      </div>
 
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginBottom: 22 }}>
-          <div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase" }}>플라이휠 · 수집 → 정규화 → 큐레이션 → 배포</div>
-            <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>
-              평가 지표의 표준을 함께 쌓아갑니다
-            </h1>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#5B6685" }}>
-              KR 안의 측정지표만 추출·정규화해요. KR 자체를 재작성하지는 않습니다.
-            </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, marginBottom: 22 }}>
+        {KPIS.map((s) => (
+          <div key={s.label} style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "16px 18px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 9, background: s.bg, color: s.fg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>{s.ico}</div>
+              <div style={{ fontSize: 12, color: "#5B6685", fontWeight: 500 }}>{s.label}</div>
+            </div>
+            <div className="ds-num" style={{ fontSize: 26, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{s.val}</div>
+            <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 4 }}>{s.sub}</div>
           </div>
-          <div style={{ flex: 1 }}/>
-          <Button variant="secondary" leftIcon={<Icon name="library" size={15}/>}>분석 리포트</Button>
-          <Button variant="ai" leftIcon={<span>✨</span>}>AI 정규화 실행</Button>
-          <Button variant="primary" leftIcon={<span>+</span>}>지표 추가</Button>
-        </div>
+        ))}
+      </div>
 
-        {/* KPI strip */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, marginBottom: 22 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        {METRICS.map((m) => <MetricCard key={m.id} m={m} />)}
+      </div>
+
+      <div style={{ marginTop: 22, padding: "22px 24px", background: "linear-gradient(135deg, #0A1F17, #14342B)", color: "#fff", borderRadius: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: "rgba(0,169,104,0.25)", color: "#7CE9BE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🔄</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>지표 표준화 플라이휠</div>
+            <div style={{ fontSize: 11.5, color: "#7CE9BE", marginTop: 2 }}>4단계 라이프사이클로 표준을 키워갑니다</div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
           {[
-            { ico: "📊", bg: "#E5EBFB", fg: "#3B5BDB", label: "전체 지표",     val: "284", sub: "수집 완료" },
-            { ico: "✓",  bg: "#ECFAF1", fg: "#2F9E5E", label: "표준 승인",     val: "47",  sub: "배포 가능" },
-            { ico: "⏱", bg: "#FFF7EC", fg: "#D98023", label: "검토 중",       val: "32",  sub: "큐레이션 대기" },
-            { ico: "!",  bg: "#FFF0F0", fg: "#D14343", label: "비권장",        val: "18",  sub: "건수형·자기보고" },
-            { ico: "🔄", bg: "#F0E9FB", fg: "#7C4DD9", label: "중복 추정",     val: "12",  sub: "통합 검토 권장" },
-          ].map((s, i) => (
-            <div key={i} style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "16px 18px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 9, background: s.bg, color: s.fg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>{s.ico}</div>
-                <div style={{ fontSize: 12, color: "#5B6685", fontWeight: 500 }}>{s.label}</div>
+            { num: "1", label: "수집", desc: "KR에서 측정지표만 추출", count: "284건" },
+            { num: "2", label: "정규화", desc: "5체크: 의미·계산식·출처·실제·통합", count: "237건" },
+            { num: "3", label: "큐레이션", desc: "표준 명칭 · 건수형/자기보고 비권장", count: "65건" },
+            { num: "4", label: "배포", desc: "R1 추천 지표로 라이브러리 연계", count: "47건" },
+          ].map((p) => (
+            <div key={p.num} style={{ padding: 14, background: "rgba(255,255,255,0.06)", borderRadius: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div className="mono" style={{ width: 24, height: 24, borderRadius: 7, background: "#00A968", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>{p.num}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{p.label}</div>
               </div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#0F1A36", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{s.val}</div>
-              <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 4 }}>{s.sub}</div>
+              <div style={{ fontSize: 11.5, color: "#B9F1D8", lineHeight: 1.5, marginBottom: 8 }}>{p.desc}</div>
+              <div className="mono" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{p.count}</div>
             </div>
           ))}
         </div>
-
-        {/* Filter bar */}
-        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "12px 16px", marginBottom: 18, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: 1, maxWidth: 380 }}>
-            <Icon name="search" size={14} style={{ position: "absolute", left: 12, top: 10, color: "#A4ADC4" }}/>
-            <input placeholder="지표명 · 정의 · 동의어 검색" style={{
-              width: "100%", padding: "9px 12px 9px 34px",
-              background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 8,
-              fontSize: 12.5, color: "#0F1A36", outline: "none",
-            }}/>
-          </div>
-          <div style={{ display: "inline-flex", background: "#F4F7FB", borderRadius: 9, padding: 3, gap: 2 }}>
-            {[
-              { label: "전체", count: 284, on: true },
-              { label: "표준승인", count: 47 },
-              { label: "검토중", count: 32 },
-              { label: "비권장", count: 18 },
-            ].map((t, i) => (
-              <button key={i} style={t.on ? {
-                background: "#fff", color: "#0F1A36", fontWeight: 700,
-                border: "none", borderRadius: 7, padding: "7px 12px",
-                fontSize: 12, cursor: "pointer", fontFamily: "var(--font-sans)",
-                boxShadow: "0 1px 2px rgba(31,42,74,.06)",
-                display: "flex", alignItems: "center", gap: 5,
-              } : {
-                background: "transparent", color: "#5B6685", fontWeight: 500,
-                border: "none", borderRadius: 7, padding: "7px 12px",
-                fontSize: 12, cursor: "pointer", fontFamily: "var(--font-sans)",
-                display: "flex", alignItems: "center", gap: 5,
-              }}>
-                {t.label}
-                <span style={{ fontFamily: "var(--font-mono)", color: t.on ? "#7C87A4" : "#A4ADC4", fontSize: 10.5, fontWeight: 600 }}>{t.count}</span>
-              </button>
-            ))}
-          </div>
-          <div style={{ flex: 1 }}/>
-          <Button variant="secondary" size="sm" leftIcon={<Icon name="filter" size={13}/>}>category</Button>
-          <Button variant="secondary" size="sm" leftIcon={<Icon name="filter" size={13}/>}>업무군</Button>
-          <Button variant="ghost" size="sm" leftIcon={<Icon name="sort" size={13}/>}>사용 빈도 ↓</Button>
-        </div>
-
-        {/* Metric grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-          <MetricCard
-            id="M_PERF_001" name="APM p95 응답속도 (ms)" status="표준승인"
-            category="프로세스" group="성능/튜닝"
-            definition="외부 사용자가 체감하는 응답 지연의 상위 5% 값. 단순 평균보다 사용자 경험을 더 정확히 반영합니다."
-            formula="P95(response_time) · 월평균" unit="ms"
-            usage={87} orgs={6}
-            exampleKR="결제 게이트웨이 APM p95 응답속도 850ms → 500ms"
-          />
-          <MetricCard
-            id="M_QUAL_004" name="단위테스트 커버리지 (%)" status="표준승인"
-            category="품질" group="개발/요건"
-            definition="실행된 코드 라인이 전체 코드 라인에서 차지하는 비율. 회귀 리스크의 대표 선행 지표입니다."
-            formula="covered_lines / total_lines × 100" unit="%"
-            usage={64} orgs={4}
-            exampleKR="결제 인증 모듈 단위테스트 커버리지 65% → 85%"
-          />
-          <MetricCard
-            id="M_OPS_007" name="MTTR · 평균 복구 시간" status="표준승인"
-            category="리스크" group="장애/운영안정"
-            definition="장애 발생 시점부터 정상 복구 시점까지 평균 시간. 운영 안정성의 핵심 지표."
-            formula="SUM(recovery_time) / 장애 건수" unit="분"
-            usage={58} orgs={5}
-            exampleKR="P1 장애 MTTR 평균 35분 → 15분 단축"
-          />
-          <MetricCard
-            id="M_OPS_012" name="배포 자동화 비율 (%)" status="검토중"
-            category="생산성" group="자동화"
-            definition="전체 배포 중 자동 파이프라인으로 진행된 비율. 운영 효율과 휴먼 에러 감소의 대표 지표."
-            formula="auto_deploys / total_deploys × 100" unit="%"
-            usage={42} orgs={3}
-            exampleKR="결제 시스템 배포 자동화 비율 60% → 90%"
-          />
-          <MetricCard
-            id="M_SEC_003" name="권한 점검 완료율 (%)" status="검토중"
-            category="리스크" group="보안/권한/개인정보"
-            definition="분기 권한 점검 대상 중 점검이 완료된 비율. 보안 거버넌스 지표."
-            formula="completed / scheduled × 100" unit="%"
-            usage={28} orgs={2}
-            exampleKR="분기 권한 점검 자동화 도입 · 완료율 70% → 95%"
-          />
-          <MetricCard
-            id="M_PROD_009" name="회의 횟수 (분기)" status="비권장"
-            category="생산성" group="고객/사업기여"
-            definition="분기 동안 진행한 회의 횟수. 활동량 지표로, 결과 지표가 함께 있어야 권장됩니다."
-            formula="COUNT(meetings) WHERE quarter" unit="회"
-            usage={14} orgs={2}
-            warnings={["건수형"]}
-            exampleKR="고객 미팅 횟수 분기 30회 이상 유지"
-          />
-        </div>
-
-        {/* Flywheel banner */}
-        <div style={{
-          marginTop: 22, padding: "22px 24px",
-          background: "linear-gradient(135deg, #1B2A4E, #2C3E68)", color: "#fff",
-          borderRadius: 14,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: "rgba(224,122,60,0.22)", color: "#F4C9A8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🔄</div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>지표 표준화 플라이휠</div>
-              <div style={{ fontSize: 11.5, color: "#91A6F0", marginTop: 2 }}>4단계 라이프사이클로 표준을 키워갑니다</div>
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            {[
-              { num: "1", label: "수집",   desc: "KR에서 측정지표만 추출", count: "284건" },
-              { num: "2", label: "정규화", desc: "5체크: 의미·계산식·출처·실제·통합", count: "237건" },
-              { num: "3", label: "큐레이션", desc: "표준 명칭 · 건수형/자기보고 비권장", count: "65건" },
-              { num: "4", label: "배포",   desc: "R1 추천 지표로 라이브러리 연계", count: "47건" },
-            ].map((p, i) => (
-              <div key={i} style={{ padding: "14px 14px", background: "rgba(255,255,255,0.06)", borderRadius: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 7, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11, fontFamily: "var(--font-mono)" }}>{p.num}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{p.label}</div>
-                </div>
-                <div style={{ fontSize: 11.5, color: "#C5D0F7", lineHeight: 1.5, marginBottom: 8 }}>{p.desc}</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: "#fff" }}>{p.count}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
-    </main>
+    </Page>
   );
 }
 
-window.R3Metrics = R3Metrics;
+function App() { return (<React.Fragment><SidebarR3 active="metrics" /><R3Metrics /></React.Fragment>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
-<script type="text/babel">
-  function App() { return (<><SidebarR3 active="metrics"/><R3Metrics/></>); }
-  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
+
 </body>
 </html>

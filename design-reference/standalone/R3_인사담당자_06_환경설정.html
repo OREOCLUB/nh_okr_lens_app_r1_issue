@@ -573,318 +573,172 @@ window.Page = Page;
 </script>
 
 <script type="text/babel">
-// R3 평가 기준 — src/app/r3/criteria/page.tsx 이식
+// R3 환경 설정 — src/app/r3/env/page.tsx 이식
 const { useState } = React;
 
-const evalSystem = {
-  version: "criteria v2026.1",
-  weights: { operation: 40, strategy: 40, post: 20 },
-  difficulty: { high: 1.2, mid: 1.0, low: 0.8 },
-  distribution: { S: 5, A: 10, B: 75, C: 10, D: null },
-  scoreCap: 110,
-  exclusionRule: "반응형(장애대응형) 유지보수는 OKR 대상 제외, 능동적 개선만 인정",
-  krRange: { min: 4, max: 6 },
-};
-const seedTaxonomy = [
-  { id: "workgroup", title: "업무군", desc: "실무 도메인 — 어떤 종류의 일인지 (bottom-up). 캘리브레이션 시 비슷한 업무끼리 공정 비교하는 축.", color: "#3B5BDB", items: ["개발/요건", "데이터/정합성", "자동화", "성능/튜닝", "장애/운영안정", "정시/납기/처리율", "매뉴얼/표준/문서", "보안/권한/개인정보", "고객/사업기여/제안"] },
-  { id: "bsc", title: "BSC 카테고리", desc: "경영 전략 관점 — 그 일이 걸리는 전략 바구니 (top-down). 경영 보고·전략 균형 점검 축.", color: "#7C4DD9", items: ["재무", "고객", "프로세스", "품질", "생산성", "조직/인재", "시스템 운영", "리스크", "프로젝트", "기타"] },
-  { id: "krtype", title: "KR 유형", desc: "KR 측정 방식. R1 작성 위저드의 KR 형태 선택지로 그대로 노출된다.", color: "#E07A3C", items: ["마일스톤", "수치", "루브릭", "이산"] },
-  { id: "jobtrack", title: "직무체계 (직렬)", desc: "직렬 구분. 사원 마스터의 직렬 필드와 연결된다.", color: "#2F9E5E", items: ["SE — System Engineer", "PM — Project Manager", "SI — System Integrator", "SM — Service Manager"] },
-];
-const seedChecklist = [
-  { no: 1, text: "수치로 측정 가능한가?", tag: "측정모호" },
-  { no: 2, text: "외부 의존 없이 통제 가능한가?", tag: "통제불가" },
-  { no: 3, text: "유지형이 아닌 도전적 목표인가?", tag: "도전성저하" },
-  { no: 4, text: "시간 내 현실적으로 달성 가능한가?", tag: "현실성낮음" },
-  { no: 5, text: "명확한 언어인가? (애매한 표현이 없는가)", tag: "표현모호", edited: true },
-  { no: 6, text: "타 팀 KR과 겹치지 않는가?", tag: "공모형" },
-  { no: 7, text: "신기술/새 도구에 과의존하지 않는가?", tag: "신기술의존" },
-  { no: 8, text: "단순 건수형이 아닌 질적 지표인가?", tag: "건수형지표" },
-  { no: 9, text: "평가자가 확인 가능한 증거가 있는가?", tag: "확인불가" },
-  { no: 10, text: "외부 증빙 기반인가? (자기보고 아님)", tag: "자기보고형", edited: true },
-  { no: 11, text: "고위험 실행 요소가 통제되는가?", tag: "고위험실행" },
-];
+const envLabel = { fontSize: 12, fontWeight: 700, color: "#3A4565", letterSpacing: "0.02em" };
 
-const numInput = { padding: "8px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, outline: "none", textAlign: "right" };
-
-const TABS = [
-  { id: "system", label: "평가제도", hint: "비중·배분·상한" },
-  { id: "taxonomy", label: "분류체계", hint: "업무군·BSC·KR유형·직무" },
-  { id: "checklist", label: "OKR 검토리스트", hint: "AI Validation 문항" },
-];
-
-function NumField({ label, value, unit, color }) {
+function EnvSection({ icon, bg, fg, title, desc, badge, children }) {
   return (
-    <div style={{ padding: "12px 14px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12 }}>
-      {label && <div style={{ fontSize: 11.5, fontWeight: 600, color: "#5B6685", marginBottom: 8 }}>{label}</div>}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <input defaultValue={String(value)} className="mono ds-num" style={{ ...numInput, width: 70, color: color || "#0F1A36" }} />
-        <span style={{ fontSize: 13, color: "#7C87A4", fontWeight: 500 }}>{unit}</span>
+    <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "22px 24px", boxShadow: "var(--shadow-xs)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 11, background: bg, color: fg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, flexShrink: 0 }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>{title}</div>
+            {badge}
+          </div>
+          <div style={{ fontSize: 12.5, color: "#5B6685", marginTop: 4, lineHeight: 1.55 }}>{desc}</div>
+        </div>
       </div>
+      {children}
     </div>
   );
 }
 
-function SystemTab() {
-  const [ops, setOps] = useState(evalSystem.weights.operation);
-  const [str, setStr] = useState(evalSystem.weights.strategy);
-  const post = 100 - ops - str;
-  const wRows = [
-    { label: "운영", value: ops, color: "#3B5BDB", bg: "#E5EBFB", set: setOps },
-    { label: "전략혁신", value: str, color: "#7C4DD9", bg: "#F0E9FB", set: setStr },
-    { label: "사후평가", value: post, color: "#E07A3C", bg: "#FFEDE2", set: null },
-  ];
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "20px 22px" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>평가 영역 비중</div>
-        <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>운영 · 전략혁신 · 사후평가의 점수 비중 (합계 100%)</div>
-        <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-          {wRows.map((w) => (
-            <div key={w.label} style={{ flex: 1, padding: "14px 16px", background: w.bg, borderRadius: 11, border: `1px solid ${w.color}33` }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: w.color, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>{w.label}</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <input type="number" value={w.value} onChange={(e) => w.set && w.set(Number(e.target.value) || 0)} disabled={!w.set} className="ds-num" style={{ width: 60, padding: "6px 8px", background: w.set ? "#fff" : "transparent", border: w.set ? "1px solid #E1E5EF" : "none", borderRadius: 7, fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: w.color, outline: "none", textAlign: "right" }} />
-                <span style={{ fontSize: 13, color: w.color, fontWeight: 600 }}>%</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", height: 36, borderRadius: 9, overflow: "hidden", border: "1px solid #E1E5EF" }}>
-          <div className="mono" style={{ width: `${ops}%`, background: "#3B5BDB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>운영 {ops}%</div>
-          <div className="mono" style={{ width: `${str}%`, background: "#7C4DD9", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>전략 {str}%</div>
-          <div className="mono" style={{ width: `${Math.max(post, 0)}%`, background: "#E07A3C", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>사후 {post}%</div>
-        </div>
-        <div className="mono" style={{ fontSize: 11.5, color: post < 0 || ops + str + post !== 100 ? "#D14343" : "#7C87A4", marginTop: 8, textAlign: "right" }}>합계 {ops + str + post}%{ops + str + post !== 100 && " · 100%가 되어야 합니다"}</div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
-        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "20px 22px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>등급 강제배분</div>
-          <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>상대평가 S/A/B/C/D 비율 — D는 규정(현저한 미달성) 수동 배정</div>
-          <div style={{ display: "flex", height: 44, borderRadius: 10, overflow: "hidden", border: "1px solid #E1E5EF", marginBottom: 16 }}>
-            {[["S", evalSystem.distribution.S, "#7C4DD9"], ["A", evalSystem.distribution.A, "#3B5BDB"], ["B", evalSystem.distribution.B, "#2F9E5E"], ["C", evalSystem.distribution.C, "#D98023"]].map(([g, v, c]) => (
-              <div key={g} className="mono" style={{ width: `${v}%`, background: c, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>{g}</div><div style={{ fontSize: 10, opacity: 0.85 }}>{v}%</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
-            {[["S", evalSystem.distribution.S, "#7C4DD9", "상위 5%"], ["A", evalSystem.distribution.A, "#3B5BDB", "S 다음 10%"], ["B", evalSystem.distribution.B, "#2F9E5E", "표준 분포"], ["C", evalSystem.distribution.C, "#D98023", "C 최대치"], ["D", evalSystem.distribution.D, "#D14343", "규정 (수동)"]].map(([g, v, c, hint]) => (
-              <div key={g} style={{ padding: "14px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, textAlign: "center" }}>
-                <div className="mono" style={{ fontSize: 18, fontWeight: 700, color: c, marginBottom: 8 }}>{g}</div>
-                {v != null ? <input defaultValue={String(v)} className="ds-num" style={{ ...numInput, width: 56, textAlign: "center", color: c, fontSize: 16 }} /> : <span style={{ fontSize: 12, color: "#7C87A4", fontStyle: "italic" }}>수동</span>}
-                <div style={{ fontSize: 10.5, color: "#7C87A4", marginTop: 8 }}>{hint}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "20px 22px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>난이도 가중치</div>
-          <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>KR 난이도(상·중·하)별 점수 가중치</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[["상", evalSystem.difficulty.high, "#D14343", "#FDECEC"], ["중", evalSystem.difficulty.mid, "#D98023", "#FFF7EC"], ["하", evalSystem.difficulty.low, "#2F9E5E", "#ECFAF1"]].map(([lvl, w, c, bg]) => (
-              <div key={lvl} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: bg, borderRadius: 10 }}>
-                <span style={{ width: 50, padding: "4px 10px", borderRadius: 999, background: "#fff", color: c, fontSize: 12, fontWeight: 700, textAlign: "center" }}>{lvl}</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                  <input defaultValue={String(w)} className="mono ds-num" style={{ ...numInput, width: 64, color: c }} />
-                  <span style={{ fontSize: 13, color: "#7C87A4", fontWeight: 500 }}>배</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "20px 22px" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>점수 상한 & 공통 제외 기준</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18 }}>
-          <div style={{ width: 160, fontSize: 13, fontWeight: 600, color: "#0F1A36" }}>KR 점수 상한</div>
-          <input defaultValue={String(evalSystem.scoreCap)} className="ds-num" style={{ ...numInput, width: 90, color: "#3B5BDB", fontSize: 16 }} /><span style={{ fontSize: 12.5, color: "#7C87A4" }}>%</span>
-          <span style={{ fontSize: 11.5, color: "#7C87A4" }}>달성률 130%여도 점수에는 {evalSystem.scoreCap}%만 반영됩니다.</span>
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36", marginBottom: 8 }}>제외 기준 문구 <span style={{ fontSize: 11, color: "#7C87A4", fontWeight: 400 }}>· R1 작성 가이드에 노출</span></div>
-        <textarea defaultValue={evalSystem.exclusionRule} style={{ width: "100%", minHeight: 64, padding: "12px 14px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, fontFamily: "var(--font-sans)", fontSize: 13, color: "#0F1A36", outline: "none", resize: "vertical", lineHeight: 1.6 }} />
-      </div>
-    </div>
-  );
-}
-
-function TaxonomyTab() {
-  const [groups, setGroups] = useState(() => seedTaxonomy.map((g) => ({ ...g, items: [...g.items] })));
-  const [drafts, setDrafts] = useState({});
-  function addItem(id) {
-    const val = (drafts[id] || "").trim();
-    if (!val) return;
-    setGroups((gs) => gs.map((g) => (g.id === id && !g.items.includes(val) ? { ...g, items: [...g.items, val] } : g)));
-    setDrafts((d) => ({ ...d, [id]: "" }));
-  }
-  function removeItem(id, item) {
-    setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, items: g.items.filter((i) => i !== item) } : g)));
-  }
+function SecretInput({ label, value, provider, configured }) {
+  const [visible, setVisible] = useState(false);
+  const [test, setTest] = useState(null);
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>분류체계 · Taxonomy</div>
-          <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 3 }}>여기서 항목을 더하거나 지우면 R1 작성 선택지·R2 검토 분류에 즉시 반영돼요.</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <label style={envLabel}>{label}</label>
+        <span style={{ padding: "2px 8px", background: configured ? "#ECFAF1" : "#FFF7EC", color: configured ? "#2F9E5E" : "#D98023", borderRadius: 999, fontSize: 10, fontWeight: 700 }}>{configured ? "● 등록됨" : "○ 미등록"}</span>
+        <span className="mono" style={{ marginLeft: "auto", fontSize: 10.5, color: "#7C87A4" }}>{provider}</span>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 9, padding: "0 4px 0 12px" }}>
+          <input type={visible ? "text" : "password"} defaultValue={value} placeholder="API 키 입력" className="mono" style={{ flex: 1, border: "none", background: "transparent", outline: "none", padding: "10px 0", fontSize: 12.5, color: "#0F1A36" }} />
+          <button onClick={() => setVisible(!visible)} style={{ width: 30, height: 30, background: "transparent", border: "none", color: "#7C87A4", cursor: "pointer", fontSize: 14 }}>{visible ? "🙈" : "👁"}</button>
         </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-        {groups.map((t) => (
-          <div key={t.id} style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0F1A36" }}>{t.title}</div>
-              <span style={{ padding: "3px 9px", borderRadius: 999, background: `${t.color}15`, color: t.color, fontSize: 11, fontWeight: 700 }}>{t.items.length}개</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#7C87A4", lineHeight: 1.5, marginBottom: 14, minHeight: 32 }}>{t.desc}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
-              {t.items.map((it) => (
-                <span key={it} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 11px", borderRadius: 7, background: "#F9FAFC", border: "1px solid #ECEFF5", fontSize: 11.5, color: "#1F2A4A", fontFamily: it.includes("—") ? "var(--font-mono)" : "var(--font-sans)" }}>
-                  {it}
-                  <button onClick={() => removeItem(t.id, it)} title="삭제" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 15, height: 15, borderRadius: "50%", border: "none", background: "#E7EBF1", color: "#7C87A4", fontSize: 10, fontWeight: 700, cursor: "pointer", lineHeight: 1 }}>×</button>
-                </span>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 6, marginTop: "auto" }}>
-              <input value={drafts[t.id] || ""} onChange={(e) => setDrafts((d) => ({ ...d, [t.id]: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && addItem(t.id)} placeholder="새 항목 입력 후 Enter" style={{ flex: 1, padding: "8px 11px", background: "var(--page-bg)", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, color: "#0F1A36", outline: "none", fontFamily: "var(--font-sans)" }} />
-              <Button variant="secondary" size="sm" leftIcon={<span>+</span>} onClick={() => addItem(t.id)}>추가</Button>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 16, padding: "12px 16px", background: "#F1F4FD", border: "1px solid #C5D0F7", borderRadius: 10, fontSize: 12, color: "#3A4565", lineHeight: 1.6 }}>
-        💡 <b>업무군</b>은 &ldquo;무슨 일을 하는가&rdquo;(실무 도메인), <b>BSC 카테고리</b>는 &ldquo;어떤 전략에 기여하는가&rdquo;(경영 관점)로 서로 다른 축이에요. 한 KR은 업무군 1개 + BSC 1개를 동시에 가집니다.
+        <button onClick={() => { setTest("testing"); setTimeout(() => setTest("ok"), 800); }} disabled={!configured} style={{ padding: "0 14px", background: test === "ok" ? "#ECFAF1" : "#fff", border: `1px solid ${test === "ok" ? "#BBE9CC" : "#E1E5EF"}`, borderRadius: 9, fontSize: 12, fontWeight: 700, color: test === "ok" ? "#2F9E5E" : "#3A4565", cursor: configured ? "pointer" : "not-allowed", opacity: configured ? 1 : 0.5, fontFamily: "var(--font-sans)", whiteSpace: "nowrap" }}>{test === "testing" ? "⏳ 테스트" : test === "ok" ? "✓ 성공" : "🧪 연결 테스트"}</button>
       </div>
     </div>
   );
 }
 
-function ChecklistTab() {
-  const [items, setItems] = useState(() => [...seedChecklist]);
-  const [text, setText] = useState("");
-  const [tag, setTag] = useState("");
-  function addCheck() {
-    if (!text.trim()) return;
-    setItems((xs) => [...xs, { no: xs.length + 1, text: text.trim(), tag: tag.trim() || "미분류", edited: true }]);
-    setText(""); setTag("");
-  }
-  function removeCheck(no) {
-    setItems((xs) => xs.filter((x) => x.no !== no).map((x, i) => ({ ...x, no: i + 1 })));
-  }
+function Toggle({ label, desc, sub, checked, onChange }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
-      <div>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>{items.length}항목 검토리스트</div>
-            <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 3 }}>R2 평가자의 AI Validation은 이 문항들을 자동 판정해요.</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {items.map((c) => (
-            <div key={c.no} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: c.edited ? "#FFF7EC" : "#fff", border: `1px solid ${c.edited ? "#FFE0BA" : "#ECEFF5"}`, borderRadius: 10 }}>
-              <div className="mono" style={{ width: 26, height: 26, borderRadius: 7, background: "#F1F4FD", color: "#213A8C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.no.toString().padStart(2, "0")}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: "#0F1A36" }}>{c.text}</div>
-                <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 3 }}>위험 태그 · <span className="mono" style={{ color: "#D14343", fontWeight: 600 }}>{c.tag}</span></div>
-              </div>
-              {c.edited && <span style={{ padding: "2px 8px", borderRadius: 999, background: "#fff", border: "1px solid #FFE0BA", color: "#D98023", fontSize: 10.5, fontWeight: 700 }}>✏️ 수정됨</span>}
-              <button onClick={() => removeCheck(c.no)} title="삭제" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 6, border: "1px solid #ECEFF5", background: "#fff", color: "#A4ADC4", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>×</button>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 12, padding: "12px 14px", background: "#F9FAFC", border: "1px dashed #D3DAE8", borderRadius: 10 }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCheck()} placeholder="새 검토 문항" style={{ flex: 1, padding: "8px 11px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12.5, color: "#0F1A36", outline: "none", fontFamily: "var(--font-sans)" }} />
-          <input value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCheck()} placeholder="위험 태그" style={{ width: 110, padding: "8px 11px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12.5, color: "#0F1A36", outline: "none", fontFamily: "var(--font-mono)" }} />
-          <Button variant="ai" size="sm" leftIcon={<span>+</span>} onClick={addCheck}>추가</Button>
-        </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 10 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36" }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 2, lineHeight: 1.5 }}>{desc}</div>
+        {sub && <div className="mono" style={{ fontSize: 10.5, color: "#7C87A4", marginTop: 3 }}>{sub}</div>}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>KR 개수 범위</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <NumField label="최소" value={evalSystem.krRange.min} unit="개" />
-          <NumField label="최대" value={evalSystem.krRange.max} unit="개" />
-        </div>
-        <div style={{ padding: "12px 14px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 10, fontSize: 11.5, color: "#5B6685", lineHeight: 1.6 }}>
-          각 검토 문항에 걸리면 위험 태그가 KR에 자동 부착돼요. 평가자가 검토 시 태그를 확인하고 <b style={{ color: "#0F1A36" }}>코칭 후보</b>로 분류합니다.
-        </div>
-      </div>
+      <button onClick={() => onChange(!checked)} style={{ width: 42, height: 24, borderRadius: 999, position: "relative", background: checked ? "#00A968" : "#D1D8E5", border: "none", cursor: "pointer", flexShrink: 0 }}>
+        <span style={{ position: "absolute", top: 3, left: checked ? 21 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 220ms cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+      </button>
     </div>
   );
 }
 
-function R3Criteria() {
-  const [tab, setTab] = useState("system");
+function R3Env() {
+  const [defaultLLM, setDefaultLLM] = useState("anthropic");
+  const [sso, setSso] = useState(true);
+  const [nEmail, setNEmail] = useState(true);
+  const [nSlack, setNSlack] = useState(true);
+  const [nKakao, setNKakao] = useState(false);
+  const [fAI, setFAI] = useState(true);
+  const [fBeta, setFBeta] = useState(false);
+  const [fDebug, setFDebug] = useState(false);
   return (
-    <Page role="R3" title="평가 기준 관리" subtitle={`${evalSystem.version} · 운영중 · 마지막 수정 3일 전`}
-      actions={<Button variant="primary" size="sm" leftIcon={<span>✓</span>} onClick={() => alert("변경사항이 저장되었습니다 (프로토타입)")}>변경사항 저장 (2건)</Button>}>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase" }}>전사 적용 기준</div>
-        <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>이 기준이 R1·R2 화면을 움직입니다</h1>
-        <p style={{ margin: "6px 0 0", fontSize: 14, color: "#5B6685" }}>평가제도 · 분류체계 · 검토리스트를 한곳에서 관리해요. 한 줄만 수정해도 피평가자 작성 가이드와 평가자 AI Validation에 즉시 반영돼요.</p>
+    <Page title="환경 설정" subtitle="한지영 · 시스템 관리자 권한"
+      actions={<Button variant="primary" size="sm" style={{ background: "#E07A3C" }} onClick={() => alert("환경 설정이 저장되었습니다 (프로토타입)")}>변경사항 저장</Button>}>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#E07A3C", letterSpacing: "0.04em", textTransform: "uppercase" }}>System Environment</div>
+        <h1 style={{ margin: "6px 0 0", fontSize: 26, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>시스템 환경 설정</h1>
+        <p style={{ margin: "4px 0 0", fontSize: 13.5, color: "#5B6685" }}>LLM API 키, DB 커넥션, SSO 연동 등 시스템 운영에 필요한 정보를 관리해요.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 18, marginBottom: 20 }}>
-        <div style={{ background: "linear-gradient(135deg, #0A1F17, #14342B)", color: "#fff", borderRadius: 14, padding: "22px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(0,169,104,0.22)", color: "#7CE9BE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🛡️</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: "#7CE9BE", letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>활성 버전</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.015em" }}>{evalSystem.version}</div>
+      <div style={{ padding: "13px 16px", background: "linear-gradient(135deg, #FFF7EC 0%, #FFFAF3 60%, #fff 100%)", border: "1px solid #FFE0BA", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 22 }}>
+        <span style={{ fontSize: 18, marginTop: 1 }}>🛡️</span>
+        <div style={{ fontSize: 12.5, color: "#7A4A14", lineHeight: 1.6 }}><b>보안 안내</b> — 여기서 입력한 API 키와 DB 접속 정보는 AES-256 암호화되어 저장돼요. 시스템 관리자만 접근할 수 있으며, 모든 변경은 감사 로그에 기록됩니다.</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+        <EnvSection icon="✨" bg="#F1FBF6" fg="#00A968" title="LLM API 등록" desc="AI 코칭·KR 정제에 사용되는 LLM API 키를 등록해주세요. 실패 시 다른 키로 자동 폴백해요." badge={<span style={{ padding: "3px 9px", background: "#ECFAF1", color: "#2F9E5E", borderRadius: 999, fontSize: 10.5, fontWeight: 700 }}>2 / 3 등록</span>}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <SecretInput label="🅰️ Anthropic Claude API Key" value="sk-ant-api03-XXXXXXXXXXXXXXXXXXXX" provider="claude-sonnet-5" configured />
+            <SecretInput label="🅾️ OpenAI API Key" value="sk-proj-YYYYYYYYYYYYYYYY" provider="gpt-4o" configured />
+            <SecretInput label="🅶 Google Gemini API Key" value="" provider="gemini-1.5-pro" configured={false} />
+            <div style={{ paddingTop: 12, borderTop: "1px solid #ECEFF5" }}>
+              <label style={{ ...envLabel, display: "block", marginBottom: 8 }}>기본 사용 모델</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+                {[["anthropic", "🅰️", "Claude"], ["openai", "🅾️", "GPT-4o"], ["gemini", "🅶", "Gemini"]].map(([id, ico, l]) => {
+                  const on = defaultLLM === id;
+                  return (
+                    <div key={id} onClick={() => setDefaultLLM(id)} style={{ padding: 10, borderRadius: 9, border: `1.5px solid ${on ? "#00A968" : "#E1E5EF"}`, background: on ? "#F1FBF6" : "#fff", cursor: "pointer", textAlign: "center" }}>
+                      <div style={{ fontSize: 18, marginBottom: 3 }}>{ico}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: on ? "#00794B" : "#3A4565" }}>{l}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <span style={{ padding: "5px 11px", background: "rgba(0,169,104,0.25)", color: "#A3E5BD", borderRadius: 7, fontSize: 11, fontWeight: 700 }}>● LIVE</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            {[["운영 비중", `${evalSystem.weights.operation}%`], ["전략 비중", `${evalSystem.weights.strategy}%`], ["사후평가", `${evalSystem.weights.post}%`], ["KR 점수 상한", String(evalSystem.scoreCap)]].map(([l, v]) => (
-              <div key={l} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.06)", borderRadius: 9 }}>
-                <div style={{ fontSize: 10.5, color: "#7CE9BE", marginBottom: 3 }}>{l}</div>
-                <div className="mono ds-num" style={{ fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-0.015em" }}>{v}</div>
+        </EnvSection>
+
+        <EnvSection icon="🗄️" bg="#F0E9FB" fg="#7C4DD9" title="DB 커넥션 정보" desc="OKR 데이터와 평가 이력을 저장할 PostgreSQL/Supabase 접속 정보를 설정합니다." badge={<span style={{ padding: "3px 9px", background: "#ECFAF1", color: "#2F9E5E", borderRadius: 999, fontSize: 10.5, fontWeight: 700 }}>연결됨</span>}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <label style={{ ...envLabel, display: "block", marginBottom: 6 }}>Database URL</label>
+              <textarea defaultValue="postgresql://okrlens_admin:****@db.okrlens.internal:5432/okrlens_prod" className="mono" style={{ width: "100%", padding: "10px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 11.5, color: "#0F1A36", outline: "none", resize: "vertical", minHeight: 54, lineHeight: 1.5 }} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div><label style={{ ...envLabel, display: "block", marginBottom: 6 }}>커넥션 풀 크기</label><input defaultValue="20" className="mono" style={{ width: "100%", padding: "10px 12px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12.5, color: "#0F1A36", outline: "none" }} /></div>
+              <div><label style={{ ...envLabel, display: "block", marginBottom: 6 }}>타임아웃 (ms)</label><input defaultValue="5000" className="mono" style={{ width: "100%", padding: "10px 12px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12.5, color: "#0F1A36", outline: "none" }} /></div>
+            </div>
+            <button onClick={() => alert("DB 연결 테스트는 준비 중이에요 🙂")} style={{ padding: 10, background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12, fontWeight: 700, color: "#3A4565", cursor: "pointer", fontFamily: "var(--font-sans)" }}>🧪 연결 테스트</button>
+          </div>
+        </EnvSection>
+
+        <EnvSection icon="🔒" bg="#ECFAF1" fg="#2F9E5E" title="사내 SSO 연동" desc="회사 계정으로만 로그인하도록 SSO(SAML/OAuth) 연동을 설정합니다." badge={sso ? <span style={{ padding: "3px 9px", background: "#ECFAF1", color: "#2F9E5E", borderRadius: 999, fontSize: 10.5, fontWeight: 700 }}>활성</span> : undefined}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <Toggle label="사내 SSO 로그인 활성화" desc="비활성화 시 이메일+비밀번호 로그인만 허용됩니다" sub="현재 연동: Azure AD · okrlens.internal" checked={sso} onChange={setSso} />
+            <div><label style={{ ...envLabel, display: "block", marginBottom: 6 }}>SSO Provider</label>
+              <select defaultValue="azure" style={{ width: "100%", padding: "10px 12px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontFamily: "var(--font-sans)", fontSize: 12.5, color: "#0F1A36", outline: "none", cursor: "pointer" }}>
+                <option value="azure">Microsoft Azure AD (SAML)</option>
+                <option value="google">Google Workspace (OAuth)</option>
+                <option value="okta">Okta</option>
+              </select>
+            </div>
+            <div><label style={{ ...envLabel, display: "block", marginBottom: 6 }}>Redirect URI</label><input readOnly defaultValue="https://okrlens.company.co.kr/auth/callback" className="mono" style={{ width: "100%", padding: "10px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 11.5, color: "#5B6685", outline: "none" }} /></div>
+          </div>
+        </EnvSection>
+
+        <EnvSection icon="📣" bg="#FFEDE2" fg="#E07A3C" title="알림 발송 채널" desc="평가 일정·마감·코칭 요청 알림을 어떤 채널로 발송할지 설정합니다.">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Toggle label="📧 이메일 알림" desc="SMTP 발송 · 사내 메일 도메인" sub="smtp.company.co.kr:587" checked={nEmail} onChange={setNEmail} />
+            <Toggle label="💬 사내 메신저 (Slack)" desc="#okr-notifications 채널로 발송" sub="Webhook URL 등록됨" checked={nSlack} onChange={setNSlack} />
+            <Toggle label="🗨️ 카카오톡 알림톡" desc="긴급 마감 시 개인 카카오톡 발송" sub="Bizmessage API 미등록" checked={nKakao} onChange={setNKakao} />
+          </div>
+        </EnvSection>
+
+        <EnvSection icon="🚩" bg="#F1F3F8" fg="#5B6685" title="Feature Flags" desc="특정 기능을 켜고 끌 수 있어요. 베타 기능은 신중히 활성화해주세요.">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Toggle label="✨ AI 코칭 기능" desc="LLM 기반 KR 정제 · 객관성 검증 · 3안 비교" checked={fAI} onChange={setFAI} />
+            <Toggle label="🧪 베타 기능 노출" desc="이력 회고·자동 요약 등 실험 기능" checked={fBeta} onChange={setFBeta} />
+            <Toggle label="🐛 디버그 모드" desc="상세 로그·성능 측정·개발자 도구" checked={fDebug} onChange={setFDebug} />
+          </div>
+        </EnvSection>
+
+        <EnvSection icon="ℹ️" bg="#F1F4FD" fg="#3B5BDB" title="시스템 정보" desc="현재 배포된 버전과 리소스 사용 현황이에요.">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {[["버전", "v2.1.3", "", "2026-06-30 배포"], ["빌드", "#a3f9e2c", "", "main branch"], ["가입 유저", "552", "명", ""], ["이번달 API 호출", "48,231", "", "한도 100,000 (48%)"], ["DB 사용량", "12.4", "GB", "여유 87.6 GB"], ["월 예상 비용", "$482", "", "LLM $310 + 인프라 $172"]].map(([l, v, u, sub]) => (
+              <div key={l} style={{ padding: "12px 14px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 9 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.04em", textTransform: "uppercase" }}>{l}</div>
+                <div className="mono" style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", marginTop: 3 }}>{v}{u && <span style={{ fontSize: 11, color: "#7C87A4", fontWeight: 500, marginLeft: 3 }}>{u}</span>}</div>
+                {sub && <div style={{ fontSize: 10.5, color: "#7C87A4", marginTop: 3 }}>{sub}</div>}
               </div>
             ))}
           </div>
-        </div>
-        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>변경 시 영향 범위</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[
-              { ico: "👤", bg: "#E5EBFB", fg: "#3B5BDB", name: "R1 피평가자", count: "552명", desc: "작성 가이드 · 분류 선택지" },
-              { ico: "👥", bg: "#E0F7EC", fg: "#00A968", name: "R2 평가자", count: "48명", desc: "AI Validation 검토 기준" },
-              { ico: "📊", bg: "#FFEDE2", fg: "#E07A3C", name: "R3 인사이트", count: "전사", desc: "위험유형 집계·사례카드" },
-            ].map((s) => (
-              <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 9, background: s.bg, color: s.fg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>{s.ico}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0F1A36" }}>{s.name} <span className="mono" style={{ fontSize: 10.5, color: "#7C87A4", fontWeight: 500 }}>· {s.count}</span></div>
-                  <div style={{ fontSize: 11, color: "#7C87A4", marginTop: 1 }}>{s.desc}</div>
-                </div>
-                <span style={{ fontSize: 11, color: "#2F9E5E", fontWeight: 600 }}>즉시 반영</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        </EnvSection>
       </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, borderBottom: "1px solid #E1E5EF", marginBottom: 18 }}>
-        {TABS.map((t) => {
-          const on = tab === t.id;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: "12px 16px", background: "transparent", border: "none", borderBottom: `2px solid ${on ? "#E07A3C" : "transparent"}`, fontFamily: "var(--font-sans)", fontSize: 13.5, fontWeight: on ? 700 : 500, color: on ? "#0F1A36" : "#5B6685", cursor: "pointer", textAlign: "left" }}>
-              {t.label} <span style={{ fontSize: 11, color: "#A4ADC4", marginLeft: 4, fontWeight: 500 }}>{t.hint}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {tab === "system" && <SystemTab />}
-      {tab === "taxonomy" && <TaxonomyTab />}
-      {tab === "checklist" && <ChecklistTab />}
     </Page>
   );
 }
 
-function App() { return (<React.Fragment><SidebarR3 active="criteria" /><R3Criteria /></React.Fragment>); }
+function App() { return (<React.Fragment><SidebarR3 active="env" /><R3Env /></React.Fragment>); }
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 
