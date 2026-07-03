@@ -1,6 +1,13 @@
 // mockData.ts — 프로토타입 더미 데이터. Supabase 연동 시 교체.
 // 원본 ui_kits/web/shared/dummyData.js 기반.
 
+// R2 검토 스냅샷 (okr_submissions.risk_analysis — 임시 저장 복원용)
+export interface RiskAnalysis {
+  risk: "low" | "mid" | "high";
+  items: { no: number; text: string; tag: string; verdict: "pass" | "warn" | "fail"; reason?: string; edited?: boolean }[];
+  savedAt: string;
+}
+
 export interface Member {
   id: string;
   grade: string;
@@ -13,6 +20,7 @@ export interface Member {
   focus: boolean;
   coaching: boolean;
   obj: string;
+  analysis?: RiskAnalysis | null;
 }
 
 // R2 평가자 팀 요약

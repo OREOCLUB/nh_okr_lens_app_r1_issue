@@ -3,7 +3,7 @@
 // 각 화면은 기존 더미 데이터를 초기값으로 유지한 채 그대로 동작한다.
 import { supabase } from "./supabase";
 import type { User } from "./auth";
-import type { Member, OKR } from "./mockData";
+import type { Member, OKR, RiskAnalysis } from "./mockData";
 import type { EvalSystem, TaxonomyGroup, CheckItem } from "./criteria";
 
 const PERIOD = "2026H2";
@@ -110,12 +110,7 @@ export interface HistoryEvent {
   note: string;
 }
 
-// 검토 스냅샷 (okr_submissions.risk_analysis)
-export interface RiskAnalysis {
-  risk: "low" | "mid" | "high";
-  items: { no: number; text: string; tag: string; verdict: "pass" | "warn" | "fail"; reason?: string; edited?: boolean }[];
-  savedAt: string;
-}
+export type { RiskAnalysis };
 
 export type ReviewDecision = "approved" | "rejected" | "adjustment";
 export interface WriteResult {
@@ -157,13 +152,13 @@ export async function getUsers(): Promise<User[] | null> {
 export async function getMembers(): Promise<Member[] | null> {
   interface Row {
     employee_id: string; submit_date: string | null; status: Member["status"]; risk: Member["risk"];
-    focus: boolean; coaching: boolean; obj: string;
+    focus: boolean; coaching: boolean; obj: string; risk_analysis: RiskAnalysis | null;
     employees: { grade: string; name: string; job_series: string; work_group: string | null } | null;
   }
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("okr_submissions")
-    .select("employee_id, submit_date, status, risk, focus, coaching, obj, employees(grade, name, job_series, work_group)")
+    .select("employee_id, submit_date, status, risk, focus, coaching, obj, risk_analysis, employees(grade, name, job_series, work_group)")
     .eq("period", PERIOD)
     .order("sort_order", { ascending: true });
   if (error || !data || data.length === 0) return null;
@@ -179,6 +174,7 @@ export async function getMembers(): Promise<Member[] | null> {
     focus: r.focus,
     coaching: r.coaching,
     obj: r.obj,
+    analysis: r.risk_analysis,
   }));
 }
 

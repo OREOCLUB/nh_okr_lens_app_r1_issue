@@ -12,6 +12,13 @@
 > 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.
 
 ### 완료
+- **R2 2단계 — OKR 검토 화면 재구축 (`src/app/r2/review/page.tsx`)**
+  - 좌측: 상태/직급/직군 필터 + 결재요청 우선 정렬, 팀원 클릭 → 중앙 실데이터 바인딩 (강동우 하드코딩 제거)
+  - 중앙: Objective별 OKR 그룹(측정방법·난이도·실행계획), criteria 테이블 기반 AI Validation(항목 수 가변), 작년 OKR 팝업(연도 탭 + 💡 자동 코멘트), 반려 이력 타임라인
+  - 우측: 처리 3택 + 메시지 필수 validation + ✨AI 초안, 승인 즉시/반려·조정 Confirm(D7), 처리 시 risk_analysis+status 동시 저장(D9) 후 다음 대상 자동 이동, 임시 저장·복원
+  - `src/lib/aiValidation.ts` 신규 — 목업 판정 단일 지점 (P2에 Gemini API로 본문만 교체)
+  - `src/lib/mockReview.ts` 신규 — 시드와 동일한 더미 폴백. `Button`에 disabled 추가
+  - Playwright 구동 검증 11스텝 통과 (딥링크 D1·Confirm D7·validation·자동이동·데모 폴백)
 - **R2 1단계 — 쓰기 기반 마련**
   - `supabase/migration_r2_write.sql` 신규 — 기존 프로젝트용 (컬럼 추가·쓰기 RLS·시드)
   - `supabase/schema.sql` 동기화 — okr_submissions(evaluator_msg·decided_at·risk_analysis), okrs(difficulty·measure·plan), okr_history(작년 OKR·타임라인 컬럼), anon update 정책 2건, 팀원 OKR·작년 OKR·반려 이벤트 시드
