@@ -1,42 +1,54 @@
 -- ============================================================
--- R2 검토 기능 마이그레이션 — 이미 schema.sql을 실행한 프로젝트용.
--- Supabase SQL Editor에서 1회 실행. (신규 프로젝트는 schema.sql만 실행하면 됨)
+-- schema_R2.sql — R2(평가자) 기능 개발로 달라진 스키마 변경분 정리
 --
--- 내용
---   ① okr_submissions: 검토 처리 결과 컬럼 (evaluator_msg · decided_at · risk_analysis)
---   ② okrs: 검토 상세 컬럼 (difficulty · measure · plan)
---   ③ okr_history: 작년 OKR 팝업·반려 이력 타임라인 컬럼 확장 (D6)
---   ④ 쓰기 RLS 정책: anon update 허용 (프로토타입 — 실 서비스 전 역할 기반으로 교체)
---   ⑤ 시드: 팀원 OKR 상세 · 작년 OKR · 반려 이력 이벤트
+-- 기준: 최초 통합 스키마(schema.sql 초기 버전, 커밋 c941d88) 대비
+-- 변경 사유: R2_REQUIREMENTS.md 4단계 구현 (승인/반려 실저장 D3·D9,
+--            작년 OKR·반려 타임라인 D6, 검토 상세 표시)
+--
+-- 사용법
+--   · 신규 Supabase 프로젝트: schema.sql(최신본)만 실행하면 됨 — 아래 내용 이미 포함
+--   · 초기 schema.sql만 실행했던 기존 프로젝트: 이 파일을 SQL Editor에서 1회 실행
+--   · 재실행해도 안전 (add column if not exists / drop policy if exists / delete 후 insert)
+--
+-- 변경 요약
+--   ① okr_submissions  컬럼 3개 추가 : evaluator_msg · decided_at · risk_analysis
+--   ② okrs             컬럼 3개 추가 : difficulty · measure · plan
+--   ③ okr_history      컬럼 7개 추가 : period · difficulty · achievement · result
+--                                      · event · event_at · note  (D6 단일 소스화)
+--   ④ RLS 쓰기 정책 2건 추가         : okr_submissions · okrs anon UPDATE 허용
+--   ⑤ 시드 추가                      : 팀원 OKR 상세 16행 · 작년 OKR 7행 · 반려 이벤트 6행
 -- ============================================================
 
--- ── ① 검토 처리 결과 (R2 → okr_submissions) ─────────────────
-alter table okr_submissions add column if not exists evaluator_msg text;
-alter table okr_submissions add column if not exists decided_at    text;          -- '2026-07-03 14:20'
-alter table okr_submissions add column if not exists risk_analysis jsonb;         -- { risk, items:[{no,text,tag,verdict,reason,edited}], savedAt }
+-- ── ① okr_submissions — R2 검토 처리 결과 저장 (D3·D9) ──────
+-- 처리 버튼 하나가 status(기존 컬럼) + 아래 3개를 동시에 갱신한다.
+alter table okr_submissions add column if not exists evaluator_msg text;   -- 반려·조정 메시지 (R1에게 전달)
+alter table okr_submissions add column if not exists decided_at    text;   -- 처리 시각 '2026-07-03 14:20'
+alter table okr_submissions add column if not exists risk_analysis jsonb;  -- 검토 스냅샷 { risk, items:[{no,text,tag,verdict,reason,edited}], savedAt }
+                                                                            -- 임시 저장(D9)도 이 컬럼만 갱신
 
--- ── ② OKR 검토 상세 (중앙 아코디언) ──────────────────────────
-alter table okrs add column if not exists difficulty text;                         -- '상' · '중' · '하'
-alter table okrs add column if not exists measure    text;                         -- 측정 방법
-alter table okrs add column if not exists plan       text;                         -- 실행 계획 요약
+-- ── ② okrs — 검토 화면 중앙 아코디언 상세 표시용 ─────────────
+alter table okrs add column if not exists difficulty text;                  -- '상' · '중' · '하'
+alter table okrs add column if not exists measure    text;                  -- 측정 방법
+alter table okrs add column if not exists plan       text;                  -- 실행 계획 요약
 
--- ── ③ 작년 OKR · 반려 이력 (D6: okr_history 단일 소스) ───────
--- 연도 적재 행: event = null / 타임라인 행: event = submit·reject·resubmit
-alter table okr_history add column if not exists period      text;                 -- 타임라인 행의 반기 '2026H2'
+-- ── ③ okr_history — 작년 OKR 팝업 + 반려 이력 타임라인 (D6) ──
+-- 행 구분: event 가 null 이면 "연도 적재 행"(작년 OKR), 값이 있으면 "타임라인 행"
+alter table okr_history add column if not exists period      text;          -- 타임라인 행의 반기 '2026H2'
 alter table okr_history add column if not exists difficulty  text;
-alter table okr_history add column if not exists achievement int;                  -- 달성률 %
-alter table okr_history add column if not exists result      text;                 -- 최종 결과 한 줄
+alter table okr_history add column if not exists achievement int;           -- 달성률 %
+alter table okr_history add column if not exists result      text;          -- 최종 결과 한 줄
 alter table okr_history add column if not exists event       text check (event in ('submit', 'reject', 'resubmit') or event is null);
-alter table okr_history add column if not exists event_at    text;                 -- '05/24 09:30'
-alter table okr_history add column if not exists note        text;                 -- 반려 사유 등
+alter table okr_history add column if not exists event_at    text;          -- '05/24 09:30'
+alter table okr_history add column if not exists note        text;          -- 반려 사유 등
 
--- ── ④ 쓰기 RLS (프로토타입: anon update 허용) ────────────────
+-- ── ④ RLS 쓰기 정책 — 검토 처리 저장용 ──────────────────────
+-- 프로토타입 정책: anon UPDATE 전면 허용. 실 서비스 전 역할(SSO) 기반으로 교체할 것.
 drop policy if exists "anon update okr_submissions" on okr_submissions;
 create policy "anon update okr_submissions" on okr_submissions for update to anon using (true) with check (true);
 drop policy if exists "anon update okrs" on okrs;
 create policy "anon update okrs" on okrs for update to anon using (true) with check (true);
 
--- ── ⑤-1 시드: 팀원 OKR 상세 (검토 중앙 패널 — 재실행 대비 삭제 후 적재) ──
+-- ── ⑤-1 시드: 팀원 OKR 상세 (r2/review 중앙 패널 — 박정훈 팀 8명 × 2KR) ──
 delete from okrs where employee_id in ('E1001','E1002','E1003','E1004','E1005','E1007','E1009','E1011') and period = '2026H2';
 insert into okrs (employee_id, period, status, obj, kr, format, baseline, goal, weight, progress, difficulty, measure, plan, sort_order) values
   ('E1001', '2026H2', 'approved',  'Objective · 결제 게이트웨이 응답속도 개선', '결제 게이트웨이 APM p95 응답속도를 900ms → 550ms로 단축한다.', '수치', '900ms', '550ms', 30, 20, '중', 'APM p95 월평균', '3건 · 캐시·인덱스·쿼리 튜닝', 1),
