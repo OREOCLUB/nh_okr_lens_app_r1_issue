@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
-import { scheduleTypes, members } from "@/lib/mockData";
+import { scheduleTypes, members as seedMembers, type Member } from "@/lib/mockData";
+import { getMembers } from "@/lib/dataAccess";
 
 interface Ev { type: keyof typeof scheduleTypes; title: string; time: string; focus?: boolean }
 
@@ -90,6 +92,12 @@ function Calendar() {
 }
 
 export default function R2CalendarPage() {
+  const [members, setMembers] = useState<Member[]>(seedMembers);
+
+  useEffect(() => {
+    getMembers().then((m) => m && setMembers(m));
+  }, []);
+
   const unregistered = members.filter((m) => m.focus && !m.coaching);
   return (
     <RoleShell

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
-import { members } from "@/lib/mockData";
+import { members as seedMembers, type Member } from "@/lib/mockData";
+import { getMembers } from "@/lib/dataAccess";
 
 const TONES = [
   { id: "praise", ico: "🌟", label: "칭찬", desc: "잘한 점을 짚어줘요", color: "#2F9E5E", bg: "#ECFAF1" },
@@ -18,10 +19,16 @@ const SENT = [
 ];
 
 export default function R2FeedbackPage() {
-  const [selected, setSelected] = useState(members[0].id);
+  const [members, setMembers] = useState<Member[]>(seedMembers);
+  const [selected, setSelected] = useState(seedMembers[0].id);
   const [tone, setTone] = useState("praise");
   const [msg, setMsg] = useState("");
-  const member = members.find((m) => m.id === selected)!;
+
+  useEffect(() => {
+    getMembers().then((m) => m && setMembers(m));
+  }, []);
+
+  const member = members.find((m) => m.id === selected) ?? members[0];
 
   const AI_DRAFT: Record<string, string> = {
     praise: `${member.name} 님, 이번 KR은 측정 기준이 명확하고 진척 관리가 꾸준해서 인상적이었어요. 이 방식 그대로 이어가주세요!`,

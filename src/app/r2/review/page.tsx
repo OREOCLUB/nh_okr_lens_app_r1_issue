@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
-import { members, type Member } from "@/lib/mockData";
+import { members as seedMembers, type Member } from "@/lib/mockData";
+import { getMembers } from "@/lib/dataAccess";
 
 const STATUS_CFG: Record<Member["status"], { label: string; bg: string; fg: string }> = {
   pending: { label: "결재 요청", bg: "#FFF0F0", fg: "#D14343" },
@@ -61,6 +62,12 @@ function CheckItem({ check, onChange }: { check: Check; onChange: (v: Check["ver
 }
 
 export default function R2ReviewPage() {
+  const [members, setMembers] = useState<Member[]>(seedMembers);
+
+  useEffect(() => {
+    getMembers().then((m) => m && setMembers(m));
+  }, []);
+
   const reviewMembers = members.filter((m) => ["pending", "rejected", "adjustment"].includes(m.status));
   const [selectedId, setSelectedId] = useState(reviewMembers[0]?.id ?? members[0].id);
   const [checks, setChecks] = useState(INITIAL_CHECKS);

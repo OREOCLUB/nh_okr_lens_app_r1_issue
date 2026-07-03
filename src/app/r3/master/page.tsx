@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { getDepartments, getEmployees, getImports, type Dept, type Employee, type ImportRecord } from "@/lib/dataAccess";
 
-interface Emp { id: string; name: string; grade: string; band: string; series: string; team: string; role: string; evaluator: string; join: string; certs: string[] }
-
-const EMPLOYEES: Emp[] = [
+const EMPLOYEES: Employee[] = [
   { id: "E1024", name: "김지훈", grade: "4급갑", band: "4급", series: "SE", team: "결제플랫폼팀", role: "R1", evaluator: "정태영", join: "2018", certs: ["AWS SAA", "CKA"] },
   { id: "E1037", name: "박서연", grade: "4급을", band: "4급", series: "SE", team: "결제플랫폼팀", role: "R1", evaluator: "정태영", join: "2020", certs: ["AWS SAA"] },
   { id: "E1051", name: "이도윤", grade: "3급", band: "3급", series: "PM", team: "결제플랫폼팀", role: "R1", evaluator: "정태영", join: "2015", certs: ["PMP"] },
@@ -16,7 +15,6 @@ const EMPLOYEES: Emp[] = [
   { id: "T0103", name: "정태영", grade: "3급", band: "3급", series: "PM", team: "결제플랫폼팀", role: "R2", evaluator: "—", join: "2012", certs: ["PMP"] },
 ];
 
-interface Dept { name: string; code: string; count: number; depth: number; leader: string; sel?: boolean }
 const DEPTS: Dept[] = [
   { name: "OKR LENS 본사", code: "HQ", count: 552, depth: 0, leader: "대표이사" },
   { name: "운영본부", code: "OPS", count: 142, depth: 1, leader: "김운영 본부장" },
@@ -44,6 +42,12 @@ const TABS = [
 
 // ── ① 조직 데이터 (부서 정보) ───────────────────────────────
 function OrgTab() {
+  const [depts, setDepts] = useState<Dept[]>(DEPTS);
+
+  useEffect(() => {
+    getDepartments().then((d) => d && setDepts(d));
+  }, []);
+
   return (
     <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, overflow: "hidden" }}>
       <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #ECEFF5" }}>
@@ -57,7 +61,7 @@ function OrgTab() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead><tr>{["부서명", "부서코드", "부서장", "인원", ""].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
           <tbody>
-            {DEPTS.map((d) => (
+            {depts.map((d) => (
               <tr key={d.code} style={{ borderBottom: "1px solid #ECEFF5", background: d.sel ? "#F1F4FD" : "transparent" }}>
                 <td style={{ ...td, paddingLeft: 14 + d.depth * 22 }}>
                   <span style={{ fontSize: 13, fontWeight: d.depth === 0 ? 700 : d.depth === 1 ? 600 : 500, color: d.sel ? "#1B2A4E" : "#0F1A36" }}>
@@ -81,6 +85,12 @@ function OrgTab() {
 
 // ── ② 사원 정보 ─────────────────────────────────────────────
 function EmpTab() {
+  const [emps, setEmps] = useState<Employee[]>(EMPLOYEES);
+
+  useEffect(() => {
+    getEmployees().then((e) => e && setEmps(e));
+  }, []);
+
   return (
     <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, overflow: "hidden" }}>
       <div style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #ECEFF5" }}>
@@ -93,7 +103,7 @@ function EmpTab() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead><tr>{["사번", "이름", "직급/밴드", "직렬", "역할", "평가자", "입사", "자격증"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
           <tbody>
-            {EMPLOYEES.map((e) => {
+            {emps.map((e) => {
               const rc = ROLE_CHIP[e.role];
               return (
                 <tr key={e.id} style={{ borderBottom: "1px solid #ECEFF5" }}>
@@ -128,13 +138,19 @@ function EmpTab() {
 }
 
 // ── ③ 이전 OKR 가져오기 (Import 전용) ───────────────────────
-const IMPORT_HISTORY = [
+const IMPORT_HISTORY: ImportRecord[] = [
   { file: "OKR_2025_전사.xlsx", year: "2025", rows: 552, at: "2026-06-28 14:20", by: "한지영", status: "완료" },
   { file: "OKR_2024_전사.xlsx", year: "2024", rows: 498, at: "2026-06-28 14:12", by: "한지영", status: "완료" },
   { file: "OKR_2023_전사.xlsx", year: "2023", rows: 237, at: "2026-06-28 14:05", by: "한지영", status: "완료" },
 ];
 
 function ImportTab() {
+  const [history, setHistory] = useState<ImportRecord[]>(IMPORT_HISTORY);
+
+  useEffect(() => {
+    getImports().then((h) => h && setHistory(h));
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {/* 목적 설명 */}
@@ -170,7 +186,7 @@ function ImportTab() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr>{["파일", "연도", "건수", "일시", "상태"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>
-              {IMPORT_HISTORY.map((r) => (
+              {history.map((r) => (
                 <tr key={r.file} style={{ borderBottom: "1px solid #ECEFF5" }}>
                   <td style={td}><span style={{ fontSize: 12.5, fontWeight: 600, color: "#0F1A36" }}>📊 {r.file}</span></td>
                   <td style={td}><span className="mono" style={{ fontSize: 12, color: "#5B6685" }}>{r.year}</span></td>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
-import { USERS, login, ROLE_HOME, type Role, type User } from "@/lib/auth";
+import { USERS, loginAs, ROLE_HOME, type Role, type User } from "@/lib/auth";
+import { getUsers } from "@/lib/dataAccess";
 
 const ROLE_META: Record<Role, { label: string; bg: string; fg: string; hint: string }> = {
   R1: { label: "피평가자", bg: "#E5EBFB", fg: "#3B5BDB", hint: "본인의 OKR을 작성·관리합니다" },
@@ -76,25 +77,29 @@ function FeatureItem({ icon, iconBg, iconFg, title, desc }: { icon: string; icon
 
 export default function LoginPage() {
   const router = useRouter();
+  const [users, setUsers] = useState<User[]>(USERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
+  useEffect(() => {
+    getUsers().then((u) => u && setUsers(u));
+  }, []);
+
   const grouped = useMemo(
     () => ({
-      R1: USERS.filter((u) => u.role === "R1"),
-      R2: USERS.filter((u) => u.role === "R2"),
-      R3: USERS.filter((u) => u.role === "R3"),
+      R1: users.filter((u) => u.role === "R1"),
+      R2: users.filter((u) => u.role === "R2"),
+      R3: users.filter((u) => u.role === "R3"),
     }),
-    []
+    [users]
   );
 
-  const selectedUser = USERS.find((u) => u.id === selectedId);
+  const selectedUser = users.find((u) => u.id === selectedId);
 
   function handleLogin() {
-    if (!selectedId || loggingIn) return;
+    if (!selectedUser || loggingIn) return;
     setLoggingIn(true);
-    const user = login(selectedId);
-    if (!user) return setLoggingIn(false);
+    const user = loginAs(selectedUser);
     setTimeout(() => router.push(ROLE_HOME[user.role]), 450);
   }
 

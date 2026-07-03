@@ -48,6 +48,11 @@ const STORAGE_KEY = "okrlens_current_user";
 export function login(userId: string): Session | null {
   const user = USERS.find((u) => u.id === userId);
   if (!user) return null;
+  return loginAs(user);
+}
+
+// DB(dataAccess.getUsers)에서 조회한 사용자 객체로 로그인
+export function loginAs(user: User): Session {
   const session: Session = { ...user, loginAt: Date.now() };
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));

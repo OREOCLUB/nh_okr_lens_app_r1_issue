@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
-import { evalSystem, taxonomy as seedTaxonomy, checklist as seedChecklist, type TaxonomyGroup } from "@/lib/criteria";
+import { evalSystem, taxonomy as seedTaxonomy, checklist as seedChecklist, type EvalSystem, type TaxonomyGroup, type CheckItem } from "@/lib/criteria";
+import { getCriteria, type CriteriaData } from "@/lib/dataAccess";
 
 const numInput: CSSProperties = { padding: "8px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, outline: "none", textAlign: "right" };
 
@@ -26,9 +27,9 @@ function NumField({ label, value, unit, color }: { label?: string; value: string
 }
 
 // ── ① 평가제도 (구 운영안 흡수 + 등급 강제배분 통합) ─────────────
-function SystemTab() {
-  const [ops, setOps] = useState(evalSystem.weights.operation);
-  const [str, setStr] = useState(evalSystem.weights.strategy);
+function SystemTab({ sys }: { sys: EvalSystem }) {
+  const [ops, setOps] = useState(sys.weights.operation);
+  const [str, setStr] = useState(sys.weights.strategy);
   const post = 100 - ops - str;
   const wRows = [
     { label: "운영", value: ops, color: "#3B5BDB", bg: "#E5EBFB", set: setOps },
@@ -66,14 +67,14 @@ function SystemTab() {
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>등급 강제배분</div>
           <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>상대평가 S/A/B/C/D 비율 — D는 규정(현저한 미달성) 수동 배정</div>
           <div style={{ display: "flex", height: 44, borderRadius: 10, overflow: "hidden", border: "1px solid #E1E5EF", marginBottom: 16 }}>
-            {([["S", evalSystem.distribution.S, "#7C4DD9"], ["A", evalSystem.distribution.A, "#3B5BDB"], ["B", evalSystem.distribution.B, "#2F9E5E"], ["C", evalSystem.distribution.C, "#D98023"]] as const).map(([g, v, c]) => (
+            {([["S", sys.distribution.S, "#7C4DD9"], ["A", sys.distribution.A, "#3B5BDB"], ["B", sys.distribution.B, "#2F9E5E"], ["C", sys.distribution.C, "#D98023"]] as const).map(([g, v, c]) => (
               <div key={g} className="mono" style={{ width: `${v}%`, background: c, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{g}</div><div style={{ fontSize: 10, opacity: 0.85 }}>{v}%</div>
               </div>
             ))}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
-            {([["S", evalSystem.distribution.S, "#7C4DD9", "상위 5%"], ["A", evalSystem.distribution.A, "#3B5BDB", "S 다음 10%"], ["B", evalSystem.distribution.B, "#2F9E5E", "표준 분포"], ["C", evalSystem.distribution.C, "#D98023", "C 최대치"], ["D", evalSystem.distribution.D, "#D14343", "규정 (수동)"]] as const).map(([g, v, c, hint]) => (
+            {([["S", sys.distribution.S, "#7C4DD9", "상위 5%"], ["A", sys.distribution.A, "#3B5BDB", "S 다음 10%"], ["B", sys.distribution.B, "#2F9E5E", "표준 분포"], ["C", sys.distribution.C, "#D98023", "C 최대치"], ["D", sys.distribution.D, "#D14343", "규정 (수동)"]] as const).map(([g, v, c, hint]) => (
               <div key={g} style={{ padding: "14px 12px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, textAlign: "center" }}>
                 <div className="mono" style={{ fontSize: 18, fontWeight: 700, color: c, marginBottom: 8 }}>{g}</div>
                 {v != null ? <input defaultValue={String(v)} className="ds-num" style={{ ...numInput, width: 56, textAlign: "center", color: c, fontSize: 16 }} /> : <span style={{ fontSize: 12, color: "#7C87A4", fontStyle: "italic" }}>수동</span>}
@@ -88,7 +89,7 @@ function SystemTab() {
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>난이도 가중치</div>
           <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>KR 난이도(상·중·하)별 점수 가중치</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {([["상", evalSystem.difficulty.high, "#D14343", "#FDECEC"], ["중", evalSystem.difficulty.mid, "#D98023", "#FFF7EC"], ["하", evalSystem.difficulty.low, "#2F9E5E", "#ECFAF1"]] as const).map(([lvl, w, c, bg]) => (
+            {([["상", sys.difficulty.high, "#D14343", "#FDECEC"], ["중", sys.difficulty.mid, "#D98023", "#FFF7EC"], ["하", sys.difficulty.low, "#2F9E5E", "#ECFAF1"]] as const).map(([lvl, w, c, bg]) => (
               <div key={lvl} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: bg, borderRadius: 10 }}>
                 <span style={{ width: 50, padding: "4px 10px", borderRadius: 999, background: "#fff", color: c, fontSize: 12, fontWeight: 700, textAlign: "center" }}>{lvl}</span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -106,19 +107,19 @@ function SystemTab() {
         <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 14 }}>점수 상한 & 공통 제외 기준</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18 }}>
           <div style={{ width: 160, fontSize: 13, fontWeight: 600, color: "#0F1A36" }}>KR 점수 상한</div>
-          <input defaultValue={String(evalSystem.scoreCap)} className="ds-num" style={{ ...numInput, width: 90, color: "#3B5BDB", fontSize: 16 }} /><span style={{ fontSize: 12.5, color: "#7C87A4" }}>%</span>
-          <span style={{ fontSize: 11.5, color: "#7C87A4" }}>달성률 130%여도 점수에는 {evalSystem.scoreCap}%만 반영됩니다.</span>
+          <input defaultValue={String(sys.scoreCap)} className="ds-num" style={{ ...numInput, width: 90, color: "#3B5BDB", fontSize: 16 }} /><span style={{ fontSize: 12.5, color: "#7C87A4" }}>%</span>
+          <span style={{ fontSize: 11.5, color: "#7C87A4" }}>달성률 130%여도 점수에는 {sys.scoreCap}%만 반영됩니다.</span>
         </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: "#0F1A36", marginBottom: 8 }}>제외 기준 문구 <span style={{ fontSize: 11, color: "#7C87A4", fontWeight: 400 }}>· R1 작성 가이드에 노출</span></div>
-        <textarea defaultValue={evalSystem.exclusionRule} style={{ width: "100%", minHeight: 64, padding: "12px 14px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, fontFamily: "var(--font-sans)", fontSize: 13, color: "#0F1A36", outline: "none", resize: "vertical", lineHeight: 1.6 }} />
+        <textarea defaultValue={sys.exclusionRule} style={{ width: "100%", minHeight: 64, padding: "12px 14px", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 10, fontFamily: "var(--font-sans)", fontSize: 13, color: "#0F1A36", outline: "none", resize: "vertical", lineHeight: 1.6 }} />
       </div>
     </div>
   );
 }
 
 // ── ② 분류체계 (추가/삭제 가능) ─────────────────────────────
-function TaxonomyTab() {
-  const [groups, setGroups] = useState<TaxonomyGroup[]>(() => seedTaxonomy.map((g) => ({ ...g, items: [...g.items] })));
+function TaxonomyTab({ seed }: { seed: TaxonomyGroup[] }) {
+  const [groups, setGroups] = useState<TaxonomyGroup[]>(() => seed.map((g) => ({ ...g, items: [...g.items] })));
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   function addItem(id: string) {
@@ -176,8 +177,8 @@ function TaxonomyTab() {
 }
 
 // ── ③ OKR 검토리스트 ────────────────────────────────────────
-function ChecklistTab() {
-  const [items, setItems] = useState(() => [...seedChecklist]);
+function ChecklistTab({ seed, krRange }: { seed: CheckItem[]; krRange: EvalSystem["krRange"] }) {
+  const [items, setItems] = useState(() => [...seed]);
   const [text, setText] = useState("");
   const [tag, setTag] = useState("");
 
@@ -221,8 +222,8 @@ function ChecklistTab() {
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>KR 개수 범위</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <NumField label="최소" value={evalSystem.krRange.min} unit="개" />
-          <NumField label="최대" value={evalSystem.krRange.max} unit="개" />
+          <NumField label="최소" value={krRange.min} unit="개" />
+          <NumField label="최대" value={krRange.max} unit="개" />
         </div>
         <div style={{ padding: "12px 14px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 10, fontSize: 11.5, color: "#5B6685", lineHeight: 1.6 }}>
           각 검토 문항에 걸리면 위험 태그가 KR에 자동 부착돼요. 평가자가 검토 시 태그를 확인하고 <b style={{ color: "#0F1A36" }}>코칭 후보</b>로 분류합니다.
@@ -234,11 +235,24 @@ function ChecklistTab() {
 
 export default function R3CriteriaPage() {
   const [tab, setTab] = useState("system");
+  const [criteria, setCriteria] = useState<CriteriaData>({ system: evalSystem, taxonomy: seedTaxonomy, checklist: seedChecklist });
+  const [source, setSource] = useState<"seed" | "db">("seed"); // 탭 remount 키 — DB 로드 시 초기값 갱신
+
+  useEffect(() => {
+    getCriteria().then((c) => {
+      if (c) {
+        setCriteria(c);
+        setSource("db");
+      }
+    });
+  }, []);
+
+  const sys = criteria.system;
   return (
     <RoleShell
       role="R3"
       title="평가 기준 관리"
-      subtitle={`${evalSystem.version} · 운영중 · 마지막 수정 3일 전`}
+      subtitle={`${sys.version} · 운영중 · 마지막 수정 3일 전`}
       actions={<Button variant="primary" size="sm" leftIcon={<span>✓</span>} onClick={() => alert("변경사항이 저장되었습니다 (프로토타입)")}>변경사항 저장 (2건)</Button>}
     >
       <div style={{ marginBottom: 22 }}>
@@ -254,12 +268,12 @@ export default function R3CriteriaPage() {
             <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(0,169,104,0.22)", color: "#7CE9BE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🛡️</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: "#7CE9BE", letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>활성 버전</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.015em" }}>{evalSystem.version}</div>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.015em" }}>{sys.version}</div>
             </div>
             <span style={{ padding: "5px 11px", background: "rgba(0,169,104,0.25)", color: "#A3E5BD", borderRadius: 7, fontSize: 11, fontWeight: 700 }}>● LIVE</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            {[["운영 비중", `${evalSystem.weights.operation}%`], ["전략 비중", `${evalSystem.weights.strategy}%`], ["사후평가", `${evalSystem.weights.post}%`], ["KR 점수 상한", String(evalSystem.scoreCap)]].map(([l, v]) => (
+            {[["운영 비중", `${sys.weights.operation}%`], ["전략 비중", `${sys.weights.strategy}%`], ["사후평가", `${sys.weights.post}%`], ["KR 점수 상한", String(sys.scoreCap)]].map(([l, v]) => (
               <div key={l} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.06)", borderRadius: 9 }}>
                 <div style={{ fontSize: 10.5, color: "#7CE9BE", marginBottom: 3 }}>{l}</div>
                 <div className="mono ds-num" style={{ fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-0.015em" }}>{v}</div>
@@ -300,9 +314,9 @@ export default function R3CriteriaPage() {
         })}
       </div>
 
-      {tab === "system" && <SystemTab />}
-      {tab === "taxonomy" && <TaxonomyTab />}
-      {tab === "checklist" && <ChecklistTab />}
+      {tab === "system" && <SystemTab key={source} sys={sys} />}
+      {tab === "taxonomy" && <TaxonomyTab key={source} seed={criteria.taxonomy} />}
+      {tab === "checklist" && <ChecklistTab key={source} seed={criteria.checklist} krRange={sys.krRange} />}
     </RoleShell>
   );
 }

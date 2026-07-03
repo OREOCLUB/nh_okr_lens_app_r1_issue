@@ -1,23 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
 import { scheduleTypes } from "@/lib/mockData";
+import { getEvalPhases, type Phase } from "@/lib/dataAccess";
 
 // ── 평가 입력 제어 단계 ─────────────────────────────────────
 // 각 단계의 기간이 R1·R2 화면에서 무엇을 할 수 있는지 제어한다.
-// (설정 UI 단계 — 실제 R1 잠금 동작 연결은 Supabase 연동 시)
-interface Phase {
-  id: string;
-  ico: string;
-  name: string;
-  start: string;
-  end: string;
-  control: string; // 이 기간의 제어 효과
-  who: string;
-  status: "done" | "active" | "up";
-}
+// (DB eval_phases 테이블 — 미연결 시 아래 더미로 동작)
 
 const INITIAL_PHASES: Phase[] = [
   { id: "write", ico: "📝", name: "목표 수립", start: "2026-07-01", end: "2026-07-10", control: "R1이 OKR을 작성·수정할 수 있어요. 이 기간에만 신규 목표 등록 가능.", who: "R1 전사 552명", status: "active" },
@@ -76,6 +67,10 @@ function CalendarPreview() {
 
 export default function R3SchedulePage() {
   const [phases, setPhases] = useState<Phase[]>(INITIAL_PHASES);
+
+  useEffect(() => {
+    getEvalPhases().then((p) => p && setPhases(p));
+  }, []);
 
   function setDate(id: string, field: "start" | "end", value: string) {
     setPhases((ps) => ps.map((p) => (p.id === id ? { ...p, [field]: value } : p)));

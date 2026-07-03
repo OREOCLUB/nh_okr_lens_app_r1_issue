@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { getMetrics, type Metric } from "@/lib/dataAccess";
 
 const STATUS: Record<string, { bg: string; bd: string; fg: string }> = {
   "수집": { bg: "#F1F3F8", bd: "#E1E5EF", fg: "#5B6685" },
@@ -9,8 +11,6 @@ const STATUS: Record<string, { bg: string; bd: string; fg: string }> = {
   "표준승인": { bg: "#ECFAF1", bd: "#BBE9CC", fg: "#2F9E5E" },
   "비권장": { bg: "#FFF0F0", bd: "#FFD4D4", fg: "#D14343" },
 };
-
-interface Metric { id: string; name: string; category: string; group: string; status: string; definition: string; formula: string; unit: string; usage: number; orgs: number; exampleKR: string; warnings?: string[] }
 
 const METRICS: Metric[] = [
   { id: "M_PERF_001", name: "APM p95 응답속도 (ms)", status: "표준승인", category: "프로세스", group: "성능/튜닝", definition: "외부 사용자가 체감하는 응답 지연의 상위 5% 값. 단순 평균보다 사용자 경험을 더 정확히 반영합니다.", formula: "P95(response_time) · 월평균", unit: "ms", usage: 87, orgs: 6, exampleKR: "결제 게이트웨이 APM p95 응답속도 850ms → 500ms" },
@@ -73,6 +73,12 @@ function MetricCard({ m }: { m: Metric }) {
 }
 
 export default function R3MetricsPage() {
+  const [metrics, setMetrics] = useState<Metric[]>(METRICS);
+
+  useEffect(() => {
+    getMetrics().then((m) => m && setMetrics(m));
+  }, []);
+
   return (
     <RoleShell
       role="R3"
@@ -102,7 +108,7 @@ export default function R3MetricsPage() {
 
       {/* Metric grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-        {METRICS.map((m) => <MetricCard key={m.id} m={m} />)}
+        {metrics.map((m) => <MetricCard key={m.id} m={m} />)}
       </div>
 
       {/* Flywheel */}

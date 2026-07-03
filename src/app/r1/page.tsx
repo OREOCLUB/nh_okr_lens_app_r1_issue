@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { StatCard } from "@/components/StatCard";
 import { r1Okrs, type OKR } from "@/lib/mockData";
+import { getR1Okrs } from "@/lib/dataAccess";
 
 const STATUS: Record<OKR["status"], { bg: string; bd: string; fg: string; label: string }> = {
   submitted: { bg: "#EFF4FE", bd: "#C5D5F7", fg: "#2B5DD9", label: "제출 · 검토 대기" },
@@ -81,6 +83,12 @@ function AICoachingCard() {
 
 export default function R1HomePage() {
   const router = useRouter();
+  const [okrs, setOkrs] = useState<OKR[]>(r1Okrs);
+
+  useEffect(() => {
+    getR1Okrs().then((o) => o && setOkrs(o));
+  }, []);
+
   return (
     <RoleShell role="R1" title="피평가자 홈" subtitle="정태영 · 운영본부 · 결제플랫폼팀">
       {/* Greeting */}
@@ -124,7 +132,7 @@ export default function R1HomePage() {
             <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>나의 OKR</div>
             <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 3 }}>2026 하반기 · 총 3개 · 가중치 75 / 110</div>
           </div>
-          {r1Okrs.map((o, i) => <OKRItem key={i} okr={o} />)}
+          {okrs.map((o, i) => <OKRItem key={i} okr={o} />)}
         </div>
         <div><AICoachingCard /></div>
       </div>

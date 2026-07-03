@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { StatCard } from "@/components/StatCard";
-import { members, r2Stats, type Member } from "@/lib/mockData";
+import { members as seedMembers, r2Stats, type Member } from "@/lib/mockData";
+import { getMembers } from "@/lib/dataAccess";
 
 const STATUS: Record<Member["status"], { fg: string; bg: string; label: string }> = {
   approved: { fg: "#2F9E5E", bg: "#ECFAF1", label: "승인" },
@@ -24,6 +26,12 @@ const STAT_ICON: Record<string, { icon: string; bg: string; fg: string }> = {
 };
 
 export default function R2HomePage() {
+  const [members, setMembers] = useState<Member[]>(seedMembers);
+
+  useEffect(() => {
+    getMembers().then((m) => m && setMembers(m));
+  }, []);
+
   const coachingCandidates = members.filter((m) => m.risk === "high" || m.risk === "mid");
   return (
     <RoleShell role="R2" title="평가자 대시보드" subtitle="박정훈 팀장 · 운영본부 · 결제플랫폼팀">
