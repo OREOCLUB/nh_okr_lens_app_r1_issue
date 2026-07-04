@@ -38,16 +38,66 @@ export interface WizardKR {
   measureCycle: string;
   weight: number;
   grades: KRGrades; // 확정된 등급 기준
-  gradesDraft?: KRGrades | null; // STEP 5 수정 중(미확정) 등급 — 확정 시 grades로 커밋
+  gradesDraft?: KRGrades | null; // STEP 5·7 수정 중(미확정) 등급 — 확정 시 grades로 커밋
+  textDraft?: KRTextDraft | null; // STEP 7 텍스트 필드 미확정 변경 — 확정 시 본 필드로 커밋
   refined: boolean; // STEP 3 정제 완료 여부
   chosenAI: string | null; // STEP 6 채택 AI vendor id
   aiSuggestion: string; // 채택된 의견 요약
 }
 
-/** STEP 5 등급 기준에 확정하지 않은 변경이 있는가 */
+// STEP 7 인라인 편집 draft (measure는 도구·단위·주기를 합친 표기 문자열)
+export interface KRTextDraft {
+  objective?: string;
+  kr?: string;
+  baseline?: string;
+  goal?: string;
+  measure?: string;
+}
+
+/** measure 3필드의 표시용 결합 문자열 (STEP 7 편집 단위) */
+export const measureText = (kr: WizardKR) =>
+  [kr.measureTool, kr.measureStat, kr.measureCycle].filter(Boolean).join(" · ");
+
+/** 등급 기준에 확정하지 않은 변경이 있는가 */
 export function gradesDirty(kr: WizardKR): boolean {
   if (!kr.gradesDraft) return false;
   return (Object.keys(kr.grades) as (keyof KRGrades)[]).some((g) => kr.gradesDraft![g] !== kr.grades[g]);
+}
+
+/** 텍스트 필드에 확정하지 않은 변경이 있는가 */
+export function textDirty(kr: WizardKR): boolean {
+  const d = kr.textDraft;
+  if (!d) return false;
+  return (
+    (d.objective !== undefined && d.objective !== kr.objective) ||
+    (d.kr !== undefined && d.kr !== kr.kr) ||
+    (d.baseline !== undefined && d.baseline !== kr.baseline) ||
+    (d.goal !== undefined && d.goal !== kr.goal) ||
+    (d.measure !== undefined && d.measure !== measureText(kr))
+  );
+}
+
+/** 어떤 종류든 미확정 변경이 있는가 */
+export const anyDirty = (kr: WizardKR) => gradesDirty(kr) || textDirty(kr);
+
+/** 미확정 변경 전부 커밋 — 다음 단계 진행·제출 시 일괄 확정에 사용 */
+export function commitDrafts(kr: WizardKR): WizardKR {
+  let next = kr;
+  if (kr.gradesDraft) next = { ...next, grades: kr.gradesDraft, gradesDraft: null };
+  const d = kr.textDraft;
+  if (d) {
+    const measureChanged = d.measure !== undefined && d.measure !== measureText(kr);
+    next = {
+      ...next,
+      objective: d.objective ?? next.objective,
+      kr: d.kr ?? next.kr,
+      baseline: d.baseline ?? next.baseline,
+      goal: d.goal ?? next.goal,
+      ...(measureChanged ? { measureTool: d.measure as string, measureStat: "", measureCycle: "" } : {}),
+      textDraft: null,
+    };
+  }
+  return next;
 }
 
 export interface ChatMsg {
@@ -276,7 +326,6 @@ export function submitReadiness(
   const noFormat = krs.filter((k) => !k.format);
   const noMeasure = krs.filter((k) => !k.measureTool.trim());
   const noA = krs.filter((k) => !k.grades.A.trim());
-  const dirty = krs.filter(gradesDirty);
   const highRisk = krs.filter((k) => {
     const checks = deriveChecks(
       { kr: k.kr, baseline: k.baseline, goal: k.goal, measureTool: k.measureTool, format: k.format, grades: { A: k.grades.A } },
@@ -310,12 +359,6 @@ export function submitReadiness(
       label: "A등급(목표선) 기준",
       pass: noA.length === 0,
       detail: noA.length > 0 ? `${fmtKr(noA)}의 A등급 기준을 STEP 5에서 정해주세요` : "전체 정의 완료",
-    },
-    {
-      key: "gradeConfirm",
-      label: "등급 기준 확정",
-      pass: dirty.length === 0,
-      detail: dirty.length > 0 ? `${fmtKr(dirty)}에 확정하지 않은 등급 변경이 있어요 (STEP 5에서 ✓ 확정)` : "미확정 변경 없음",
     },
     {
       key: "risk",

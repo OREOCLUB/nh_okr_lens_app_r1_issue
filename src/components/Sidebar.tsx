@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { ROLE_LABEL, ROLE_HOME, logout, type Role } from "@/lib/auth";
+
+const COLLAPSE_KEY = "okrlens_sidebar_collapsed";
 
 interface NavItem {
   label: string;
@@ -73,6 +76,27 @@ export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   const router = useRouter();
   const chip = ROLE_CHIP[role];
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  function toggleCollapse() {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  }
 
   function handleLogout() {
     logout();
@@ -82,7 +106,7 @@ export function Sidebar({ role }: { role: Role }) {
   return (
     <aside
       style={{
-        width: "var(--sidebar-w)",
+        width: collapsed ? 72 : "var(--sidebar-w)",
         flexShrink: 0,
         background: "var(--ink-brand)",
         color: "#C7D6CE",
@@ -91,13 +115,25 @@ export function Sidebar({ role }: { role: Role }) {
         height: "100vh",
         position: "sticky",
         top: 0,
+        transition: "width 180ms ease-out",
+        overflow: "hidden",
       }}
     >
-      {/* Brand */}
-      <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <Logo size={20} dark />
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+      {/* Brand + 접기 토글 */}
+      <div style={{ padding: collapsed ? "18px 12px 14px" : "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {!collapsed && <Logo size={20} dark />}
+          <button
+            onClick={toggleCollapse}
+            title={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
+            style={{ marginLeft: collapsed ? 0 : "auto", width: collapsed ? "100%" : 28, height: 28, borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#9DB3A9", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {collapsed ? "»" : "«"}
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 8, marginTop: 12 }}>
           <span
+            title={`${role} · ${ROLE_LABEL[role]}`}
             style={{
               fontSize: 10.5,
               fontWeight: 700,
@@ -106,38 +142,43 @@ export function Sidebar({ role }: { role: Role }) {
               background: chip.bg,
               color: chip.fg,
               letterSpacing: "0.02em",
+              whiteSpace: "nowrap",
             }}
           >
-            {role} · {ROLE_LABEL[role]}
+            {collapsed ? role : `${role} · ${ROLE_LABEL[role]}`}
           </span>
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+      <nav style={{ flex: 1, overflowY: "auto", padding: collapsed ? "14px 10px" : "14px 12px" }}>
         {NAV[role].map((group) => (
-          <div key={group.header} style={{ marginBottom: 18 }}>
-            <div
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.14em",
-                color: "#5F7C6E",
-                fontSize: 10.5,
-                fontWeight: 700,
-                padding: "6px 14px 8px",
-              }}
-            >
-              {group.header}
-            </div>
+          <div key={group.header} style={{ marginBottom: collapsed ? 10 : 18 }}>
+            {!collapsed && (
+              <div
+                style={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.14em",
+                  color: "#5F7C6E",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  padding: "6px 14px 8px",
+                }}
+              >
+                {group.header}
+              </div>
+            )}
             {group.items.map((item) => {
               const active = item.href === pathname;
               const inner = (
                 <div
+                  title={item.label}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
-                    padding: "9px 14px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    gap: collapsed ? 0 : 10,
+                    padding: collapsed ? "10px 0" : "9px 14px",
                     borderRadius: 10,
                     fontSize: 14,
                     fontWeight: active ? 700 : 500,
@@ -149,8 +190,8 @@ export function Sidebar({ role }: { role: Role }) {
                   }}
                 >
                   <span style={{ fontSize: 15, width: 18, textAlign: "center" }}>{item.icon}</span>
-                  <span>{item.label}</span>
-                  {!item.href && (
+                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && !item.href && (
                     <span style={{ marginLeft: "auto", fontSize: 9.5, color: "#5F7C6E", fontWeight: 600 }}>
                       곧
                     </span>
@@ -178,12 +219,12 @@ export function Sidebar({ role }: { role: Role }) {
       {/* Footer — 역할 전환 · 로그아웃 */}
       <div style={{ padding: "12px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: 4 }}>
         <Link href="/role-select" style={{ textDecoration: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}>
-            <span>🔄</span> 역할 전환
+          <div title="역할 전환" style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 10, padding: collapsed ? "9px 0" : "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer" }}>
+            <span>🔄</span> {!collapsed && "역할 전환"}
           </div>
         </Link>
-        <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer", background: "none", border: "none", width: "100%", textAlign: "left" }}>
-          <span>↩</span> 로그아웃
+        <button onClick={handleLogout} title="로그아웃" style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 10, padding: collapsed ? "9px 0" : "9px 14px", borderRadius: 10, fontSize: 13, color: "#9DB3A9", cursor: "pointer", background: "none", border: "none", width: "100%", textAlign: "left" }}>
+          <span>↩</span> {!collapsed && "로그아웃"}
         </button>
       </div>
     </aside>

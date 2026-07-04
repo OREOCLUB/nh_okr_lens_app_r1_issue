@@ -153,12 +153,12 @@ button {
 
 .toast-pop {
   position: fixed;
-  top: calc(var(--topbar-h) + 14px);
+  top: 22px; /* 탑바 위에 떠서 명확한 팝업으로 보이게 */
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 2000;
   animation: toast-in 220ms ease-out;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 18px 44px -10px rgba(15, 26, 54, 0.35);
 }
 
 /* ── 드래그 패닝 컨테이너 (스크롤바 숨김) ── */

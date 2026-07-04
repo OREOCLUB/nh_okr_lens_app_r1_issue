@@ -12,11 +12,15 @@ import { getCurrentUser, type Session } from "@/lib/auth";
 import { getCoachPrompts, saveCoachPrompts } from "@/lib/dataAccess";
 import {
   DEFAULT_COACH_PROMPTS,
+  DEFAULT_LLM_MODEL,
   MODE_LABEL,
   loadPublishedPrompts,
   loadPromptHistory,
   publishPrompts,
   nextVersion,
+  loadLlmSettings,
+  saveLlmSettings,
+  clearLlmSettings,
   type CoachMode,
   type CoachPromptConfig,
 } from "@/lib/coachPrompts";
@@ -53,6 +57,12 @@ export default function R3CoachPage() {
   const [previewResult, setPreviewResult] = useState<{ text: string; source: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  // LLM 연동 설정 (Gemini)
+  const [llmKey, setLlmKey] = useState("");
+  const [llmModel, setLlmModel] = useState(DEFAULT_LLM_MODEL);
+  const [llmSaved, setLlmSaved] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [llmTesting, setLlmTesting] = useState(false);
   const { showToast, toastNode } = useToast();
 
   useEffect(() => {
@@ -60,6 +70,12 @@ export default function R3CoachPage() {
     if (u) setUser(u);
     setHistory(loadPromptHistory());
     setPreviewText(PREVIEW_SAMPLE[activeMode]);
+    const llm = loadLlmSettings();
+    if (llm) {
+      setLlmKey(llm.apiKey);
+      setLlmModel(llm.model || DEFAULT_LLM_MODEL);
+      setLlmSaved(true);
+    }
     // 발행본 로드: DB → localStorage → 기본값
     getCoachPrompts().then((db) => {
       if (db) {
@@ -98,6 +114,7 @@ export default function R3CoachPage() {
           messages: [{ role: "user", content: previewText }],
           context: { userName: "김지훈", okrType: "운영", duty: "결제플랫폼 백엔드 성능/튜닝", krs: [{ num: 1, kr: "결제 게이트웨이 APM p95 응답속도 850ms → 500ms", baseline: "850ms", goal: "500ms" }] },
           promptConfig: draft, // 발행 전 초안으로 테스트
+          llm: llmKey.trim() ? { provider: "gemini", apiKey: llmKey.trim(), model: llmModel.trim() || DEFAULT_LLM_MODEL } : undefined,
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
@@ -107,6 +124,54 @@ export default function R3CoachPage() {
       showToast("미리보기 호출이 원활하지 않았어요. 잠시 후 다시 시도해주세요.", "warn");
     } finally {
       setPreviewLoading(false);
+    }
+  }
+
+  // ── LLM 연동 설정 ──
+  function saveLlm() {
+    const key = llmKey.trim();
+    if (!key) {
+      showToast("API 키를 입력해주세요.", "warn");
+      return;
+    }
+    saveLlmSettings({ provider: "gemini", apiKey: key, model: llmModel.trim() || DEFAULT_LLM_MODEL });
+    setLlmSaved(true);
+    showToast("Gemini 연동 설정을 저장했어요. 지금부터 이 브라우저의 AI 코치가 Gemini로 응답해요.", "success");
+  }
+
+  function removeLlm() {
+    if (!window.confirm("저장된 Gemini API 키를 삭제할까요?\n삭제하면 AI 코치는 목 응답 모드로 돌아가요.")) return;
+    clearLlmSettings();
+    setLlmKey("");
+    setLlmModel(DEFAULT_LLM_MODEL);
+    setLlmSaved(false);
+    showToast("Gemini 연동 설정을 삭제했어요.", "info");
+  }
+
+  async function testLlm() {
+    const key = llmKey.trim();
+    if (!key) {
+      showToast("먼저 API 키를 입력해주세요.", "warn");
+      return;
+    }
+    setLlmTesting(true);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mode: "coaching",
+          messages: [{ role: "user", content: "연결 테스트입니다. 한 문장으로 인사해주세요." }],
+          llm: { provider: "gemini", apiKey: key, model: llmModel.trim() || DEFAULT_LLM_MODEL },
+        }),
+      });
+      const data = (await res.json()) as { source: string };
+      if (data.source === "gemini") showToast("✅ Gemini 연결 성공! 실제 LLM 응답이 확인됐어요.", "success");
+      else showToast("연결에 실패해 목 응답으로 폴백됐어요. API 키와 모델명을 확인해주세요.", "warn");
+    } catch {
+      showToast("연결 테스트 중 문제가 있었어요. 잠시 후 다시 시도해주세요.", "warn");
+    } finally {
+      setLlmTesting(false);
     }
   }
 
@@ -231,8 +296,41 @@ export default function R3CoachPage() {
           </div>
         </div>
 
-        {/* 우측 — 미리보기 + 이력 */}
+        {/* 우측 — LLM 연동 + 미리보기 + 이력 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* LLM 연동 설정 (Gemini) */}
+          <div style={cardStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 15 }}>🔌</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36" }}>LLM 연동 설정</span>
+              <span style={{ padding: "2px 9px", borderRadius: 999, background: "#E8F0FE", color: "#4285F4", fontSize: 10.5, fontWeight: 700 }}>✧ Gemini</span>
+              <span style={{ marginLeft: "auto", padding: "2px 9px", borderRadius: 999, background: llmSaved ? "#ECFAF1" : "#F1F3F8", color: llmSaved ? "#2F9E5E" : "#7C87A4", fontSize: 10.5, fontWeight: 700 }}>{llmSaved ? "연동됨" : "미설정"}</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: "#7C87A4", marginBottom: 12, lineHeight: 1.55 }}>
+              키를 저장하면 AI 코치가 Gemini 실응답으로 동작해요. 키는 이 브라우저에만 저장돼요 (전사 적용은 서버 환경 변수 <span className="mono">GEMINI_API_KEY</span> 권장).
+            </div>
+            <label style={label}>API 키</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type={showKey ? "text" : "password"}
+                style={{ ...input, flex: 1 }}
+                value={llmKey}
+                onChange={(e) => setLlmKey(e.target.value)}
+                placeholder="AIza… (Google AI Studio에서 발급)"
+                autoComplete="off"
+              />
+              <button onClick={() => setShowKey((v) => !v)} title={showKey ? "가리기" : "표시"} style={{ width: 42, borderRadius: 10, border: "1px solid #E1E5EF", background: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>{showKey ? "🙈" : "👁"}</button>
+            </div>
+            <label style={label}>모델</label>
+            <input className="mono" style={{ ...input, marginBottom: 12 }} value={llmModel} onChange={(e) => setLlmModel(e.target.value)} placeholder={DEFAULT_LLM_MODEL} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <Button variant="primary" size="sm" onClick={saveLlm}>저장</Button>
+              <Button variant="secondary" size="sm" onClick={testLlm} disabled={llmTesting}>{llmTesting ? "테스트 중…" : "연결 테스트"}</Button>
+              <div style={{ flex: 1 }} />
+              <Button variant="ghost" size="sm" onClick={removeLlm}>키 삭제</Button>
+            </div>
+          </div>
+
           {/* 미리보기 테스트 */}
           <div style={{ ...cardStyle, background: "linear-gradient(135deg, #F1FBF6, #fff 60%)", border: "1px solid #B9F1D8" }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 4 }}>🔬 미리보기 테스트</div>
@@ -251,8 +349,8 @@ export default function R3CoachPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                   <span style={{ fontSize: 12 }}>✨</span>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: "#0F1A36" }}>코치 응답</span>
-                  <span style={{ marginLeft: "auto", padding: "1px 8px", borderRadius: 999, background: previewResult.source === "claude" ? "#FBF0E9" : "#F1F3F8", color: previewResult.source === "claude" ? "#D97757" : "#7C87A4", fontSize: 10, fontWeight: 700 }}>
-                    {previewResult.source === "claude" ? "Claude 실응답" : "목 응답 (키 미설정)"}
+                  <span style={{ marginLeft: "auto", padding: "1px 8px", borderRadius: 999, background: previewResult.source === "gemini" ? "#E8F0FE" : previewResult.source === "claude" ? "#FBF0E9" : "#F1F3F8", color: previewResult.source === "gemini" ? "#4285F4" : previewResult.source === "claude" ? "#D97757" : "#7C87A4", fontSize: 10, fontWeight: 700 }}>
+                    {previewResult.source === "gemini" ? "✧ Gemini 실응답" : previewResult.source === "claude" ? "Claude 실응답" : "목 응답 (키 미설정)"}
                   </span>
                 </div>
                 <div style={{ fontSize: 12.5, color: "#1F2A4A", lineHeight: 1.65, whiteSpace: "pre-line" }}>{previewResult.text}</div>

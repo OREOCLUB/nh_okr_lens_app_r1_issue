@@ -1,8 +1,10 @@
 "use client";
 
 // Toast — 전 구간 공통 안내 팝업 (검증 안내·스텝 이동·저장 결과).
+// document.body 포털로 렌더해 어떤 화면 구조 안에서도 항상 화면 위에 뜨는 팝업으로 보장한다.
 // 사용: const { showToast, toastNode } = useToast(); … {toastNode}
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export type ToastTone = "info" | "warn" | "success";
 
@@ -20,7 +22,10 @@ interface ToastItem {
 
 export function useToast(durationMs = 3200): { showToast: (msg: string, tone?: ToastTone) => void; toastNode: ReactNode } {
   const [toast, setToast] = useState<ToastItem | null>(null);
+  const [mounted, setMounted] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   const showToast = useCallback(
     (msg: string, tone: ToastTone = "info") => {
@@ -31,33 +36,37 @@ export function useToast(durationMs = 3200): { showToast: (msg: string, tone?: T
     [durationMs]
   );
 
-  const toastNode: ReactNode = toast ? (
-    <div
-      key={toast.key}
-      className="toast-pop"
-      role="status"
-      onClick={() => setToast(null)}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 10,
-        maxWidth: 480,
-        padding: "13px 18px",
-        background: TONE[toast.tone].bg,
-        border: `1px solid ${TONE[toast.tone].bd}`,
-        borderRadius: 12,
-        color: TONE[toast.tone].fg,
-        fontSize: 13,
-        fontWeight: 600,
-        lineHeight: 1.55,
-        cursor: "pointer",
-        whiteSpace: "pre-line",
-      }}
-    >
-      <span style={{ fontSize: 15, flexShrink: 0 }}>{TONE[toast.tone].ico}</span>
-      <span>{toast.msg}</span>
-    </div>
-  ) : null;
+  const toastNode: ReactNode =
+    toast && mounted
+      ? createPortal(
+          <div
+            key={toast.key}
+            className="toast-pop"
+            role="status"
+            onClick={() => setToast(null)}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              maxWidth: 480,
+              padding: "13px 18px",
+              background: TONE[toast.tone].bg,
+              border: `1px solid ${TONE[toast.tone].bd}`,
+              borderRadius: 12,
+              color: TONE[toast.tone].fg,
+              fontSize: 13,
+              fontWeight: 600,
+              lineHeight: 1.55,
+              cursor: "pointer",
+              whiteSpace: "pre-line",
+            }}
+          >
+            <span style={{ fontSize: 15, flexShrink: 0 }}>{TONE[toast.tone].ico}</span>
+            <span>{toast.msg}</span>
+          </div>,
+          document.body
+        )
+      : null;
 
   return { showToast, toastNode };
 }

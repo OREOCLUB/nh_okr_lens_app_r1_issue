@@ -120,6 +120,37 @@ export function publishPrompts(config: CoachPromptConfig): void {
   localStorage.setItem(KEY, JSON.stringify(config));
 }
 
+// ── LLM 연동 설정 (R3 관리 — Gemini API 키·모델) ────────────
+// 프로토타입: localStorage 저장(이 브라우저). 실 운영은 서버 환경 변수(GEMINI_API_KEY) 권장.
+export interface LlmSettings {
+  provider: "gemini";
+  apiKey: string;
+  model: string;
+}
+
+export const DEFAULT_LLM_MODEL = "gemini-1.5-pro";
+const LLM_KEY = "okrlens_llm_settings";
+
+export function loadLlmSettings(): LlmSettings | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LLM_KEY);
+    return raw ? (JSON.parse(raw) as LlmSettings) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLlmSettings(settings: LlmSettings): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LLM_KEY, JSON.stringify(settings));
+}
+
+export function clearLlmSettings(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(LLM_KEY);
+}
+
 export function nextVersion(by: string): Pick<CoachPromptConfig, "version" | "publishedAt" | "publishedBy"> {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");

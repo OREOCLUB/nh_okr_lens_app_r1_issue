@@ -1,16 +1,20 @@
-// /api/coach — R1 AI 코치 단일 엔드포인트 (빌드스펙 D-0: Anthropic Claude).
+// /api/coach — R1 AI 코치 단일 엔드포인트.
+//
+// LLM 프로바이더 체인: Gemini(요청 llm.apiKey → env GEMINI_API_KEY) → Claude(env ANTHROPIC_API_KEY) → 결정적 목.
+// Gemini 키는 R3 "AI 코치 관리 > LLM 연동 설정"에서 세팅 (프로토타입: 브라우저 저장 → 요청에 첨부).
 //
 // 프롬프트 3-레이어 조립:
 //   ① 안전 코어  — 이 파일에 고정. 소송 안전·역할 고정·출력 규칙. 관리자 편집·요청으로 오버라이드 불가.
 //   ② 운영 레이어 — R3가 /r3/coach 에서 발행. 우선순위: 요청 promptConfig(브라우저 발행본) → DB → 기본값.
 //   ③ 컨텍스트   — 사용자 프로필·KR 목록 (요청에서 주입).
 //
-// 응답은 금칙어 사전으로 후처리(코칭 톤 이중화). ANTHROPIC_API_KEY 없거나 실패 시 결정적 목 폴백.
-// 응답 스키마 고정: { text, source: "claude"|"mock", promptVersion }
+// 응답은 금칙어 사전으로 후처리(코칭 톤 이중화).
+// 응답 스키마 고정: { text, source: "gemini"|"claude"|"mock", promptVersion }
 
 import { NextRequest, NextResponse } from "next/server";
 import {
   DEFAULT_COACH_PROMPTS,
+  DEFAULT_LLM_MODEL,
   applyBannedWords,
   type CoachMode,
   type CoachPromptConfig,
@@ -28,6 +32,8 @@ interface CoachRequest {
   };
   /** R3 발행본(브라우저) 또는 미리보기 초안 — 안전 코어는 이걸로 못 바꾼다 */
   promptConfig?: CoachPromptConfig;
+  /** R3 LLM 연동 설정 (Gemini 키·모델) — 프로토타입: 브라우저 저장분 첨부 */
+  llm?: { provider: "gemini"; apiKey?: string; model?: string };
 }
 
 // ── ① 안전 코어 (코드 고정 — 관리자 수정 불가) ──────────────
@@ -86,7 +92,39 @@ function buildSystem(req: CoachRequest, cfg: CoachPromptConfig): string {
     .join("\n\n");
 }
 
-// ── Claude API 호출 ─────────────────────────────────────────
+// ── Gemini API 호출 (기본 프로바이더) ────────────────────────
+async function callGemini(system: string, messages: CoachRequest["messages"], apiKey: string, model: string): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: messages.map((m) => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          })),
+          generationConfig: { maxOutputTokens: 700, temperature: 0.6 },
+        }),
+        signal: controller.signal,
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+    return text || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── Claude API 호출 (폴백 프로바이더) ────────────────────────
 async function callClaude(system: string, messages: CoachRequest["messages"], apiKey: string): Promise<string | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
@@ -137,10 +175,26 @@ export async function POST(request: NextRequest) {
     if (dbCfg) cfg = dbCfg;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (apiKey) {
-    const system = buildSystem(body, cfg);
-    const text = await callClaude(system, body.messages, apiKey);
+  const system = buildSystem(body, cfg);
+
+  // ① Gemini (기본) — R3 설정 키 → 서버 환경 변수
+  const geminiKey = body.llm?.apiKey || process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const model = body.llm?.model || process.env.GEMINI_MODEL || DEFAULT_LLM_MODEL;
+    const text = await callGemini(system, body.messages, geminiKey, model);
+    if (text) {
+      return NextResponse.json({
+        text: applyBannedWords(text, cfg.bannedWords),
+        source: "gemini",
+        promptVersion: cfg.version,
+      });
+    }
+  }
+
+  // ② Claude (폴백)
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (anthropicKey) {
+    const text = await callClaude(system, body.messages, anthropicKey);
     if (text) {
       return NextResponse.json({
         text: applyBannedWords(text, cfg.bannedWords),
@@ -149,6 +203,8 @@ export async function POST(request: NextRequest) {
       });
     }
   }
+
+  // ③ 결정적 목 (키 없음·호출 실패)
   return NextResponse.json({
     text: applyBannedWords(mockReply(body), cfg.bannedWords),
     source: "mock",

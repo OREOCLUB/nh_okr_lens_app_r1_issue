@@ -13,7 +13,8 @@ import {
   loadWizard,
   saveWizard,
   stepBlocker,
-  gradesDirty,
+  anyDirty,
+  commitDrafts,
   submitReadiness,
   type WizardState,
 } from "@/lib/wizard";
@@ -151,19 +152,16 @@ export default function R1WritePage() {
     if (!state) return;
     let effective = state;
 
-    // STEP 5: 확정하지 않은 등급 변경이 있으면 일괄 확정 여부 확인 후 진행
-    if (step === 5) {
-      const dirtyKrs = state.krs.filter(gradesDirty);
+    // STEP 5·7: 확정하지 않은 변경이 있으면 일괄 확정 여부 확인 후 진행
+    if (step === 5 || step === 7) {
+      const dirtyKrs = state.krs.filter(anyDirty);
       if (dirtyKrs.length > 0) {
         const names = dirtyKrs.map((k) => `KR ${String(k.num).padStart(2, "0")}`).join(", ");
-        const ok = window.confirm(`${names}의 등급 기준에 확정하지 않은 변경이 있어요.\n전부 확정 처리하고 다음 단계로 넘어갈까요?`);
+        const ok = window.confirm(`${names}에 확정하지 않은 변경이 있어요.\n전부 확정 처리하고 다음으로 넘어갈까요?`);
         if (!ok) return;
-        effective = {
-          ...state,
-          krs: state.krs.map((k) => (k.gradesDraft ? { ...k, grades: k.gradesDraft, gradesDraft: null } : k)),
-        };
+        effective = { ...state, krs: state.krs.map(commitDrafts) };
         set(() => effective);
-        showToast(`${names}의 등급 기준을 확정했어요 ✓`, "success");
+        showToast(`${names}의 변경 내용을 확정했어요 ✓`, "success");
       }
     }
 
@@ -222,22 +220,32 @@ export default function R1WritePage() {
         return;
       }
     }
-    // 최종 검증 ② — 제출 적합성 게이트 (가중치·형태·측정·등급·위험도)
-    const readiness = submitReadiness(state, criteria.system, criteria.checklist);
+    // 최종 검증 ② — 확정하지 않은 변경이 있으면 일괄 확정 여부 확인 (거절 시 제출 중단)
+    let effective = state;
+    const dirtyKrs = state.krs.filter(anyDirty);
+    if (dirtyKrs.length > 0) {
+      const names = dirtyKrs.map((k) => `KR ${String(k.num).padStart(2, "0")}`).join(", ");
+      const ok = window.confirm(`${names}에 확정하지 않은 변경이 있어요.\n전부 확정 처리하고 제출을 진행할까요?`);
+      if (!ok) return;
+      effective = { ...state, krs: state.krs.map(commitDrafts) };
+      set(() => effective);
+    }
+    // 최종 검증 ③ — 제출 적합성 게이트 (가중치·형태·측정·등급·위험도)
+    const readiness = submitReadiness(effective, criteria.system, criteria.checklist);
     if (!readiness.ok) {
       const fails = readiness.items.filter((i) => !i.pass);
       showToast(`제출 전에 보완이 필요해요:\n${fails.map((f) => `· ${f.label} — ${f.detail}`).join("\n")}`, "warn");
       return;
     }
     const { min, max } = criteria.system.krRange;
-    const countHint = state.krs.length < min || state.krs.length > max ? `\n(참고: 운영안 권장 KR 개수는 ${min}~${max}개예요 — 현재 ${state.krs.length}개)` : "";
-    if (!window.confirm(`${evaluatorName} 팀장에게 OKR ${state.krs.length}건을 제출할까요?${countHint}\n제출 후에도 조정 요청 시 수정할 수 있어요.`)) return;
+    const countHint = effective.krs.length < min || effective.krs.length > max ? `\n(참고: 운영안 권장 KR 개수는 ${min}~${max}개예요 — 현재 ${effective.krs.length}개)` : "";
+    if (!window.confirm(`${evaluatorName} 팀장에게 OKR ${effective.krs.length}건을 제출할까요?${countHint}\n제출 후에도 조정 요청 시 수정할 수 있어요.`)) return;
 
     setSubmitting(true);
     try {
       const result = await submitOkrs(
         user.id,
-        state.krs.map((k) => ({
+        effective.krs.map((k) => ({
           obj: `Objective · ${k.objective}`,
           kr: k.kr,
           format: k.format,

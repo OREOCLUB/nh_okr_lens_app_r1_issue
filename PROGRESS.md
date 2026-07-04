@@ -94,6 +94,22 @@
 
 ---
 
+## 2026-07-04 (세션 2) — 입력 UX 통일·Gemini 전환·사이드바 접기·CI
+
+### 완료
+- **토스트 포털화**: document.body 포털 + 탑바 위 표시로 어떤 화면 구조에서도 팝업으로 부유 (스텝 이동/검증 안내 전 구간)
+- **STEP 5·7 입력 수정 UX 통일** (`shared.DraftRow`): 바로 입력 + 칸별 개나리색·"확정 전" 배지 + 줄별 ✓확정/↩취소(버튼 슬롯 상시 예약 — 레이아웃 불변) + 영역/카드 단위 일괄 확정·취소(고정 슬롯). STEP 7 텍스트 필드는 `textDraft`, 등급은 `gradesDraft` 공용. 다음/제출 시 미확정 변경 일괄 확정 confirm (`anyDirty`/`commitDrafts`)
+- **STEP 5 AI 코치 재배치**: 우측 고정 컬럼(세로 전체 점유) 제거 → 우하단 플로팅 버튼+오버레이 패널 (콘텐츠 폭 회복)
+- **사이드바 접기**: 토글(«/») → 72px 아이콘 모드, localStorage 유지, 항목 title 툴팁
+- **LLM Gemini 전환**: /api/coach 프로바이더 체인 Gemini(요청 키→GEMINI_API_KEY) → Claude(ANTHROPIC_API_KEY) → 목. R3 "AI 코치 관리 > LLM 연동 설정"에서 API 키(마스킹)·모델 저장/삭제/연결 테스트 — 저장 즉시 이 브라우저 코치가 Gemini 실응답
+- **CI**: `.github/workflows/ci.yml` — main push/PR 시 tsc + next build (팀 머지 빌드 깨짐 방지)
+
+### 다음 할 일
+- Gemini 구조화 출력(function calling) — 정제 카드·키워드·등급 초안 실출력
+- (기존 유지) 실 키 설정, supabase sql 3종 실행, 코치 발행 승인 워크플로
+
+---
+
 ## 2026-07-04 — AI 코치 관리(R3 편집형 프롬프트) + 팀 머지 정합
 
 ### 완료

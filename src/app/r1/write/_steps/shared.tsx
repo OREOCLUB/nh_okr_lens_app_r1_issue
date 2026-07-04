@@ -48,6 +48,83 @@ export function DragScroll({ children, gap = 10, style }: { children: ReactNode;
   );
 }
 
+// ── 통일 편집 행 (STEP 5·7 공용) ─────────────────────────────
+// 바로 입력 가능 + 변경 시 옅은 개나리색·"확정 전" 배지 + 줄별 ✓ 확정/↩ 취소.
+// 버튼 자리는 항상 예약(visibility)해서 나타나고 사라져도 레이아웃이 움직이지 않는다.
+export function DraftRow({
+  value,
+  committed,
+  onChange,
+  onCommit,
+  onRevert,
+  multiline,
+  mono,
+  fontSize = 13,
+  fontWeight = 500,
+  color = "#0F1A36",
+  placeholder,
+}: {
+  value: string; // 표시값 (draft ?? committed)
+  committed: string; // 확정값
+  onChange: (v: string) => void; // draft 기록
+  onCommit: () => void; // 이 줄만 확정
+  onRevert: () => void; // 이 줄만 원복
+  multiline?: boolean;
+  mono?: boolean;
+  fontSize?: number;
+  fontWeight?: number;
+  color?: string;
+  placeholder?: string;
+}) {
+  const dirty = value !== committed;
+  const font = mono ? "var(--font-mono)" : "var(--font-sans)";
+  const fieldStyle: CSSProperties = {
+    width: "100%",
+    padding: "9px 12px",
+    fontSize,
+    fontWeight,
+    color,
+    fontFamily: font,
+    background: dirty ? "#FFFBE6" : "#fff",
+    border: dirty ? "1.5px solid #F0DFA0" : "1px solid #E1E5EF",
+    borderRadius: 9,
+    outline: "none",
+    lineHeight: 1.5,
+  };
+  const iconBtn: CSSProperties = {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    flexShrink: 0,
+  };
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: multiline ? "flex-start" : "center" }}>
+      <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+        {multiline ? (
+          <textarea value={value} rows={2} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={{ ...fieldStyle, resize: "vertical" }} />
+        ) : (
+          <input value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && dirty) onCommit(); }} placeholder={placeholder} style={fieldStyle} />
+        )}
+        {dirty && (
+          <span style={{ position: "absolute", top: -8, right: 8, padding: "1px 8px", borderRadius: 999, background: "#FFFBE6", border: "1px solid #F0DFA0", color: "#B8860B", fontSize: 9.5, fontWeight: 800, lineHeight: 1.4 }}>
+            확정 전
+          </span>
+        )}
+      </div>
+      {/* 버튼 슬롯 — 공간 상시 예약 (레이아웃 고정) */}
+      <div style={{ display: "flex", gap: 4, flexShrink: 0, visibility: dirty ? "visible" : "hidden", marginTop: multiline ? 4 : 0 }}>
+        <button title="이 줄 확정" onClick={onCommit} style={{ ...iconBtn, background: "#2F9E5E", border: "1px solid #2F9E5E", color: "#fff" }}>✓</button>
+        <button title="이 줄 취소 (원복)" onClick={onRevert} style={{ ...iconBtn, background: "#fff", border: "1px solid #E1E5EF", color: "#7C87A4" }}>↩</button>
+      </div>
+    </div>
+  );
+}
+
 // ── 공용 스타일 ──
 export const label: CSSProperties = { display: "block", fontSize: 12.5, fontWeight: 600, color: "#3A4565", marginBottom: 7 };
 export const input: CSSProperties = { width: "100%", padding: "11px 14px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, fontSize: 14, color: "#0F1A36", fontFamily: "var(--font-sans)", outline: "none" };
