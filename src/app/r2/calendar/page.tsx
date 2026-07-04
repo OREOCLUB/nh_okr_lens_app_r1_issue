@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
@@ -56,13 +56,13 @@ export default function R2CalendarPage() {
   const [ym, setYm] = useState({ y: today.getFullYear(), m: today.getMonth() + 1 });
 
   useEffect(() => {
-    Promise.all([getMembers(), getEvalPhases()]).then(([m, p]) => {
+    Promise.all([getMembers(user?.id), getEvalPhases()]).then(([m, p]) => {
       if (m) setMembers(m);
       if (p) setPhases(p);
-      if (!p) setDemoMode(true);
+      if (!m || !p) setDemoMode(true); // 팀원(1on1 카드)·일정 어느 쪽이든 더미 폴백이면 안내 (QA CAL-01)
       setLoading(false);
     });
-  }, []);
+  }, [user?.id]);
 
   const events = useMemo(() => phasesToEvents(phases), [phases]);
   const monthPrefix = `${ym.y}-${pad(ym.m)}`;
@@ -99,7 +99,7 @@ export default function R2CalendarPage() {
     <RoleShell
       role="R2"
       title="코칭 캘린더"
-      subtitle={`${user?.name ?? ""} 팀장 · 이번 달 평가 일정 ${monthEvents.length}건`}
+      subtitle={`${user?.name ?? ""} ${user?.grade ?? ""} · ${ym.m}월 평가 일정 ${monthEvents.length}건`}
       actions={<Button variant="primary" size="sm" leftIcon={<span>+</span>} onClick={() => alert("일정 등록은 준비 중이에요 🙂")}>일정 등록</Button>}
     >
       <div style={{ marginBottom: 18 }}>
@@ -176,7 +176,7 @@ export default function R2CalendarPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* 이번 달 일정 — eval_phases 기반 */}
           <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>이번 달 일정</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>{ym.m}월 일정</div>
             {loading ? (
               <div style={{ padding: "14px 0", fontSize: 12, color: "#7C87A4", textAlign: "center" }}>불러오는 중이에요…</div>
             ) : monthEvents.length === 0 ? (

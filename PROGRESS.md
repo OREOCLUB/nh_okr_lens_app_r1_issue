@@ -7,6 +7,36 @@
 
 ---
 
+## 2026-07-04 (CR-1/CR-2 롤백 세션)
+
+### 완료
+- **롤백**: CR-1(직급·직책 분리)·CR-2(결재요청만 수정)·테스트 데이터 작업분 전체를 `git stash`로 보존 후 워킹 트리를 `d5c807f`로 복원
+  - stash: `stash@{0} "CR-1/CR-2 + 테스트데이터 작업분 보존 (2026-07-04 롤백 전)"` — 삭제 아님, 필요 시 조각 복원 가능
+- **QA §7 수정 6건 재적용** (R2_QA_REPORT.md §8 기록 기준, CR 변경 제외):
+  - REV-02: `review/page.tsx` — 승인 건 열람 전용 (readOnly = approved, 카드/버튼 비활성 + 핸들러 가드 + 코칭 톤 안내)
+  - FB-01: `feedback/page.tsx` — 전송분 localStorage(`okrlens_r2_feedback_sent`) 저장·병합 표시
+  - CAL-01/02: `calendar/page.tsx` — demoMode `!m || !p`, 부제 `${ym.m}월`
+  - REV-04: `review/page.tsx` — Objective 아코디언 접기/펼치기 (기본 펼침, 팀원 변경 시 리셋)
+  - DASH-01: 대시보드·검토·캘린더 부제 `user.grade` 사용
+- **검증**: `npx tsc --noEmit` 통과, R2 7개 라우트 전부 200
+
+- **평가 라인 분리 (사용자 지시)**: OKR 사상 = R2 1명 → R1 N명 전속, 평가자 간 중복 배정 없음
+  - `dataAccess.getMembers(evaluatorLoginId?)` — login_id → 사번 해석 후 `employees.evaluator_id` 필터. R2 4개 화면 모두 `getMembers(user?.id)`로 호출
+  - 시드: 박정훈(T0201) 팀 8명 유지 + **최민경(T0301) 전속 팀원 6명 신규** (E1301~E1306, 인프라운영팀 — 제출현황 6건·KR 상세 12건·이력 5건 포함)
+- **DB 정리 스크립트**: `supabase/reseed_data.sql` — 오염 5개 테이블(employees·okr_submissions·okrs·okr_history·okr_imports) delete 후 원본+최민경 팀 시드 재적재, CR-1의 employees.title 컬럼 drop 포함. **사용자가 SQL Editor에서 실행** (개인 DB 확인됨). 기대값: employees 26 · submissions 14 · okrs 31 · history 18 · imports 3
+- **스키마 문서 정리**: schema.sql(신규 프로젝트용 통합본)에 최민경 팀 시드 반영, schema_R2.sql에 변경 내역 ⑥ 평가 라인 분리·⑦ title 컬럼 롤백 기록
+
+### 이슈/결정사항
+- CR-1(직급·직책 분리)은 **롤백 확정** — title 컬럼 제거, grade 단일 표기로 복귀. CR-2(결재요청만 수정)는 미적용 상태(§7의 REV-02 승인 건 열람 전용까지만). 재추진 시 stash 참고 가능하나 재구현 권장
+- stash: `stash@{0} "CR-1/CR-2 + 테스트데이터 작업분 보존 (2026-07-04 롤백 전)"`
+
+### 다음 할 일
+1. reseed_data.sql 실행 후 화면 확인 (박정훈 8명 / 최민경 6명 분리 표시)
+2. §5 수동 확인 체크리스트 재점검
+3. CR-2(결재요청만 수정 가능 + 처리 내용 표시) 재추진 여부 결정
+
+---
+
 ## 2026-07-03 (R2 요건 구현 세션)
 
 > 기준 문서: `R2_REQUIREMENTS.md` — 4단계 커밋 단위로 진행.

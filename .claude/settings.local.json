@@ -8,7 +8,16 @@
       "Bash(node build.js)",
       "Bash(node validate.js)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "PowerShell(Set-Content *)",
+      "PowerShell(git checkout *)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(Test-NetConnection *)",
+      "PowerShell(npm run *)",
+      "PowerShell(Select-String -Path .env.local -Pattern \"SUPABASE_URL\" | ForEach-Object { $_.Line.Split\\('='\\)[0] })",
+      "PowerShell(Get-Content .env.local | ForEach-Object { \\($_ -split '='\\)[0] })",
+      "Bash(python -c \"import json,sys; print\\('\\\\n'.join\\(json.load\\(sys.stdin\\)[0].keys\\(\\)\\)\\)\")",
+      "PowerShell(git *)"
     ]
   }
 }
