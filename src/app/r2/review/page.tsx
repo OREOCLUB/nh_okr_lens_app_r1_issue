@@ -182,13 +182,14 @@ function ReviewContent() {
   const [demoMode, setDemoMode] = useState(false); // DB 미연결 → 더미 폴백
 
   useEffect(() => {
-    Promise.all([getMembers(), getCriteria()]).then(([m, c]) => {
+    // 평가 라인: 로그인한 R2의 전속 팀원만 조회
+    Promise.all([getMembers(user?.id), getCriteria()]).then(([m, c]) => {
       if (m) setMembers(m);
       if (c) setChecklist(c.checklist);
       if (!m) setDemoMode(true);
       setListLoading(false);
     });
-  }, []);
+  }, [user?.id]);
 
   // ── 선택 (D1: ?member= 수신) ───────────────────────────────
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -203,6 +204,9 @@ function ReviewContent() {
   }, [members, searchParams, selectedId]);
 
   const selected = members.find((m) => m.id === selectedId) ?? null;
+
+  // 승인(approved) 팀원은 열람 전용 — 재처리 금지 (QA REV-02 · Q2 확정). AI 검토 실행은 열람 참고용으로 허용
+  const readOnly = !!selected && selected.status === "approved";
 
   // ── 좌측 필터 ──────────────────────────────────────────────
   const [fStatus, setFStatus] = useState("all");
@@ -232,6 +236,7 @@ function ReviewContent() {
   const [saving, setSaving] = useState<"decision" | "draft" | null>(null);
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "warn" | "err" } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [collapsedObjs, setCollapsedObjs] = useState<Set<string>>(new Set()); // 아코디언 접힘 상태 (QA REV-04 — 기본 전체 펼침)
   const membersRef = useRef(members);
   membersRef.current = members;
 
@@ -246,7 +251,7 @@ function ReviewContent() {
     setAiComment(saved ? "임시 저장된 검토 내용을 불러왔어요. 이어서 진행해주세요 🙂" : null);
     setAiSource(null);
     // notice는 여기서 지우지 않는다 — 처리 성공 후 자동 이동 시 성공 알림이 유지되어야 함
-    setDecision(null); setMessage(""); setMsgError(false); setHistoryOpen(false);
+    setDecision(null); setMessage(""); setMsgError(false); setHistoryOpen(false); setCollapsedObjs(new Set());
     Promise.all([getMemberOkrs(selectedId), getMemberHistory(selectedId), getMemberEvents(selectedId)]).then(([o, h, e]) => {
       if (!alive) return;
       setOkrs(o ?? mockMemberOkrs[selectedId] ?? []);
@@ -292,7 +297,7 @@ function ReviewContent() {
 
   // ── 처리 저장 (D9 통합형 · D7 Confirm) ─────────────────────
   async function handleDecision() {
-    if (!selected || !items || !decision) return;
+    if (!selected || !items || !decision || readOnly) return; // 승인 건 재처리 금지 (REV-02 이중 방어)
     if (decision !== "approved" && message.trim() === "") {
       setMsgError(true);
       setNotice({ text: "팀원에게 전할 메시지를 함께 남겨주세요 🙂", tone: "warn" });
@@ -331,7 +336,7 @@ function ReviewContent() {
 
   // ── 임시 저장 (D9: risk_analysis만) ─────────────────────────
   async function handleDraft() {
-    if (!selected || !items) return;
+    if (!selected || !items || readOnly) return; // 승인 건 재처리 금지 (REV-02 이중 방어)
     setSaving("draft");
     const analysis = snapshot();
     const res = await saveReviewDraft(selected.id, analysis);
@@ -346,7 +351,7 @@ function ReviewContent() {
 
   // ── 부제 (세션 사용자 + 실데이터 건수) ──────────────────────
   const cnt = (s: Member["status"]) => members.filter((m) => m.status === s).length;
-  const subtitle = `${user?.name ?? ""} ${user?.role === "R2" ? "팀장" : ""} · 결재요청 ${cnt("pending")}건 / 반려 ${cnt("rejected")}건 / 조정 ${cnt("adjustment")}건`;
+  const subtitle = `${user?.name ?? ""} ${user?.grade ?? ""} · 결재요청 ${cnt("pending")}건 / 반려 ${cnt("rejected")}건 / 조정 ${cnt("adjustment")}건`;
 
   // Objective별 그룹 (아코디언)
   const objGroups = useMemo(() => {
@@ -444,13 +449,21 @@ function ReviewContent() {
               ) : okrs.length === 0 ? (
                 <div style={{ padding: "40px 0", textAlign: "center", color: "#7C87A4", fontSize: 13 }}>아직 제출된 OKR이 없어요. 작성이 끝나면 여기서 검토할 수 있어요 🙂</div>
               ) : (
-                objGroups.map(([obj, krs]) => (
-                  <div key={obj} style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: "16px 20px", marginBottom: 14 }}>
-                    <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                objGroups.map(([obj, krs]) => {
+                  const isCollapsed = collapsedObjs.has(obj);
+                  return (
+                  <div key={obj} style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, padding: isCollapsed ? "14px 20px" : "16px 20px", marginBottom: 14 }}>
+                    {/* Objective 헤더 클릭 시 접기/펼치기 (QA REV-04 — 기본 펼침) */}
+                    <div
+                      onClick={() => setCollapsedObjs((cur) => { const next = new Set(cur); if (next.has(obj)) next.delete(obj); else next.add(obj); return next; })}
+                      title={isCollapsed ? "펼치기" : "접기"}
+                      style={{ fontSize: 12, color: "#7C87A4", marginBottom: isCollapsed ? 0 : 10, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}
+                    >
+                      <span style={{ fontSize: 10, color: "#A4ADC4" }}>{isCollapsed ? "▶" : "▼"}</span>
                       <span style={{ fontWeight: 700, color: "#3A4565" }}>{obj}</span>
                       <span className="mono" style={{ fontSize: 10.5 }}>KR {krs.length}건</span>
                     </div>
-                    {krs.map((o, i) => (
+                    {!isCollapsed && krs.map((o, i) => (
                       <div key={o.id} style={{ paddingTop: i === 0 ? 0 : 14, marginTop: i === 0 ? 0 : 14, borderTop: i === 0 ? "none" : "1px solid #ECEFF5" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
                           <span className="mono" style={{ fontSize: 11.5, color: "#7C87A4" }}>KR_{String(o.id).padStart(3, "0")}</span>
@@ -467,7 +480,8 @@ function ReviewContent() {
                       </div>
                     ))}
                   </div>
-                ))
+                  );
+                })
               )}
 
               {/* AI Validation — 항목은 criteria 테이블, 판정은 aiValidation.ts 목업 (D2) */}
@@ -521,7 +535,8 @@ function ReviewContent() {
                 ] as const).map((v) => {
                   const active = decision === v.key;
                   return (
-                    <div key={v.key} onClick={() => { setDecision(v.key); setMsgError(false); }} style={{ padding: "11px 13px", background: active ? v.bg : "#fff", border: `1.5px solid ${active ? v.color : "#E1E5EF"}`, borderRadius: 10, cursor: "pointer" }}>
+                    // 승인 건은 처리 방향 선택 비활성 (QA REV-02)
+                    <div key={v.key} onClick={() => { if (readOnly) return; setDecision(v.key); setMsgError(false); }} style={{ padding: "11px 13px", background: active ? v.bg : "#fff", border: `1.5px solid ${active ? v.color : "#E1E5EF"}`, borderRadius: 10, cursor: readOnly ? "not-allowed" : "pointer", opacity: readOnly ? 0.45 : 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: active ? v.color : "#0F1A36" }}>{v.label}</div>
                       <div style={{ fontSize: 11.5, color: active ? v.color : "#7C87A4", marginTop: 1 }}>{v.desc}</div>
                     </div>
@@ -553,17 +568,22 @@ function ReviewContent() {
                 {notice.text}
               </div>
             )}
-            {!items && selected && (
+            {readOnly && (
+              <div style={{ padding: "9px 12px", borderRadius: 10, fontSize: 11.5, lineHeight: 1.5, background: "#ECFAF1", color: "#1F6E4A" }}>
+                이미 승인된 OKR이에요. 열람만 가능해요 🙂
+              </div>
+            )}
+            {!items && selected && !readOnly && (
               <div style={{ padding: "9px 12px", borderRadius: 10, fontSize: 11.5, lineHeight: 1.5, background: "#F1F4FD", color: "#3A4565" }}>
                 먼저 <b>AI 검토 실행</b>으로 체크 결과를 만들어주세요. 처리 시 체크 결과와 위험도가 함께 저장돼요.
               </div>
             )}
           </div>
           <div style={{ padding: "14px 20px", borderTop: "1px solid #ECEFF5", display: "flex", flexDirection: "column", gap: 8 }}>
-            <Button variant="primary" fullWidth style={{ padding: 12 }} disabled={!selected || !items || !decision || saving !== null} onClick={handleDecision}>
-              {saving === "decision" ? "처리 중…" : !decision ? "처리 방향을 선택해주세요" : decision === "approved" ? "승인하기 →" : decision === "rejected" ? "반려 보내기 →" : "조정요청 보내기 →"}
+            <Button variant="primary" fullWidth style={{ padding: 12 }} disabled={readOnly || !selected || !items || !decision || saving !== null} onClick={handleDecision}>
+              {readOnly ? "승인 완료 · 열람 전용" : saving === "decision" ? "처리 중…" : !decision ? "처리 방향을 선택해주세요" : decision === "approved" ? "승인하기 →" : decision === "rejected" ? "반려 보내기 →" : "조정요청 보내기 →"}
             </Button>
-            <Button variant="ghost" fullWidth style={{ padding: 9, fontSize: 12 }} disabled={!selected || !items || saving !== null} onClick={handleDraft}>
+            <Button variant="ghost" fullWidth style={{ padding: 9, fontSize: 12 }} disabled={readOnly || !selected || !items || saving !== null} onClick={handleDraft}>
               {saving === "draft" ? "저장 중…" : "임시 저장 (검토 내용만)"}
             </Button>
           </div>

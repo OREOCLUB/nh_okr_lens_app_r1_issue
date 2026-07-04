@@ -59,12 +59,13 @@ export default function R2HomePage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    getMembers().then((m) => {
+    // 평가 라인: 로그인한 R2의 전속 팀원만 조회
+    getMembers(user?.id).then((m) => {
       if (m) setMembers(m);
       else setDemoMode(true);
       setLoading(false);
     });
-  }, []);
+  }, [user?.id]);
 
   const count = (k: CardKey) => (k === "all" ? members.length : members.filter((m) => m.status === k).length);
 
@@ -104,7 +105,7 @@ export default function R2HomePage() {
   const pendingCnt = count("pending");
 
   return (
-    <RoleShell role="R2" title="평가자 대시보드" subtitle={user ? `${user.name} 팀장 · ${user.dept} · ${user.team}` : "평가자"}>
+    <RoleShell role="R2" title="평가자 대시보드" subtitle={user ? `${user.name} ${user.grade} · ${user.dept} · ${user.team}` : "평가자"}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "#00A968", letterSpacing: "0.04em", textTransform: "uppercase" }}>2026 하반기 · 팀 OKR 검토 기간</div>
         <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>팀원 {members.length}명의 OKR을 함께 정제합니다 🌱</h1>

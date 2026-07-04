@@ -241,6 +241,15 @@ insert into employees (id, name, role, grade, grade_band, job_series, dept, team
   ('E1073', '정민재', 'R1', '4급을', '4급', 'SE', '운영본부', '결제플랫폼팀', 'T0103', 2021, '[]'::jsonb,                25),
   ('E1084', '한지윤', 'R1', '4급갑', '4급', 'SE', '운영본부', '결제플랫폼팀', 'T0103', 2017, '["CISSP"]'::jsonb,         26);
 
+-- 사원 ④ R2 화면 팀원 (평가자 최민경 — 평가 라인 분리: R2 1명 → R1 N명 전속, 중복 없음)
+insert into employees (id, name, role, grade, job_series, dept, team, work_group, evaluator_id, sort_order) values
+  ('E1301', '서준혁', 'R1', '책임', 'SM', 'IT본부', '인프라운영팀', '서버운영',   'T0301', 31),
+  ('E1302', '문가영', 'R1', '차장', 'SM', 'IT본부', '인프라운영팀', '클라우드',   'T0301', 32),
+  ('E1303', '배성호', 'R1', '선임', 'SE', 'IT본부', '인프라운영팀', '네트워크',   'T0301', 33),
+  ('E1304', '윤소라', 'R1', '책임', 'SM', 'IT본부', '인프라운영팀', '스토리지',   'T0301', 34),
+  ('E1305', '노태민', 'R1', '선임', 'SE', 'IT본부', '인프라운영팀', '가상화',     'T0301', 35),
+  ('E1306', '김하늘', 'R1', '차장', 'SM', 'IT본부', '인프라운영팀', '보안인프라', 'T0301', 36);
+
 -- 반기 제출 현황 (mockData.ts members → r2 화면)
 insert into okr_submissions (employee_id, period, submit_date, status, risk, focus, coaching, obj, sort_order) values
   ('E1001', '2026H2', '05/20', 'approved',   'low',  true,  true,  '결제 게이트웨이 응답속도 개선', 1),
@@ -251,6 +260,15 @@ insert into okr_submissions (employee_id, period, submit_date, status, risk, foc
   ('E1007', '2026H2', '05/28', 'pending',    'mid',  true,  false, '권한 점검 자동화', 6),
   ('E1009', '2026H2', '05/19', 'approved',   'low',  false, true,  '결제 인증모듈 리팩토링', 7),
   ('E1011', '2026H2', '05/23', 'pending',    'mid',  true,  false, 'DB 인덱싱 개선', 8);
+
+-- 반기 제출 현황 — 최민경 팀 (평가 라인 분리)
+insert into okr_submissions (employee_id, period, submit_date, status, risk, focus, coaching, obj, sort_order) values
+  ('E1301', '2026H2', '05/21', 'pending',    'mid',  true,  false, '서버 프로비저닝 자동화', 11),
+  ('E1302', '2026H2', '05/19', 'approved',   'low',  false, true,  '클라우드 비용 최적화', 12),
+  ('E1303', '2026H2', '05/25', 'rejected',   'high', true,  false, '네트워크 장애 ZERO', 13),
+  ('E1304', '2026H2', '05/26', 'pending',    null,   false, false, '스토리지 용량 예측 체계', 14),
+  ('E1305', '2026H2', '05/24', 'adjustment', 'mid',  false, true,  '가상화 전환 확대', 15),
+  ('E1306', '2026H2', '05/27', 'pending',    'mid',  true,  false, '방화벽 정책 정비', 16);
 
 -- R1 본인 OKR (mockData.ts r1Okrs — 정태영)
 insert into okrs (employee_id, period, status, obj, kr, format, baseline, goal, weight, progress, evaluator_from, evaluator_msg, sort_order) values
@@ -277,6 +295,21 @@ insert into okrs (employee_id, period, status, obj, kr, format, baseline, goal, 
   ('E1011', '2026H2', 'submitted', 'Objective · DB 인덱싱 개선', '주요 조회 쿼리 p95를 1.2초 → 0.5초로 단축한다.', '수치', '1.2초', '0.5초', 30, 0, '중', '슬로우쿼리 로그 p95', '3건 · 인덱스 재설계·통계 갱신·쿼리 리라이트', 1),
   ('E1011', '2026H2', 'submitted', 'Objective · DB 인덱싱 개선', '슬로우쿼리 발생 건수를 주 25건 → 5건으로 줄인다.', '수치', '주 25건', '5건', 20, 0, '중', '슬로우쿼리 주간 집계', '2건 · 임계치 알림·정기 리뷰', 2);
 
+-- 팀원 OKR 상세 — 최민경 팀 (평가 라인 분리)
+insert into okrs (employee_id, period, status, obj, kr, format, baseline, goal, weight, progress, difficulty, measure, plan, sort_order) values
+  ('E1301', '2026H2', 'submitted', 'Objective · 서버 프로비저닝 자동화', '신규 서버 프로비저닝 소요 시간을 3일 → 4시간으로 단축한다.', '수치', '3일', '4시간', 30, 0, '상', '프로비저닝 티켓 처리 시간 집계', '3건 · IaC 템플릿·승인 자동화·셀프서비스', 1),
+  ('E1301', '2026H2', 'submitted', 'Objective · 서버 프로비저닝 자동화', '수동 설정 작업 건수를 월 60건 → 15건으로 줄인다.', '수치', '월 60건', '15건', 20, 0, '중', '작업 대장 월간 집계', '2건 · 표준 이미지·구성 관리 도입', 2),
+  ('E1302', '2026H2', 'approved',  'Objective · 클라우드 비용 최적화', '월 클라우드 비용을 12% 절감한다.', '수치', '월 4.2억', '월 3.7억', 30, 15, '중', '월별 청구서 비교', '3건 · 미사용 자원 정리·RI 전환·오토스케일 튜닝', 1),
+  ('E1302', '2026H2', 'approved',  'Objective · 클라우드 비용 최적화', '비용 이상 감지 알림 커버리지를 0% → 90%로 구축한다.', '수치', '0%', '90%', 20, 10, '하', '비용 알림 룰 커버리지', '2건 · 예산 알림·태깅 표준화', 2),
+  ('E1303', '2026H2', 'rejected',  'Objective · 네트워크 장애 ZERO', '네트워크 장애 건수를 분기 0건으로 만든다.', '이산', '분기 3건', '0건', 35, 0, '상', '장애 관리 시스템 집계', '2건 · 이중화 점검·펌웨어 일괄 업그레이드', 1),
+  ('E1303', '2026H2', 'rejected',  'Objective · 네트워크 장애 ZERO', '스위치 구성 백업 자동화율을 40% → 100%로 올린다.', '수치', '40%', '100%', 25, 0, '중', '백업 스케줄러 리포트', '2건 · 백업 스크립트·검증 절차', 2),
+  ('E1304', '2026H2', 'submitted', 'Objective · 스토리지 용량 예측 체계', '용량 부족 긴급 증설 건수를 연 6건 → 1건으로 줄인다.', '수치', '연 6건', '1건', 30, 0, '중', '증설 요청 티켓 집계', '3건 · 사용량 추세 대시보드·임계치 알림·분기 리뷰', 1),
+  ('E1304', '2026H2', 'submitted', 'Objective · 스토리지 용량 예측 체계', '스토리지 사용률 예측 오차를 ±25% → ±10%로 낮춘다.', '수치', '±25%', '±10%', 20, 0, '상', '예측치-실측치 월간 비교', '2건 · 예측 모델 보정·데이터 정제', 2),
+  ('E1305', '2026H2', 'submitted', 'Objective · 가상화 전환 확대', '물리 서버 가상화 전환율을 55% → 80%로 높인다.', '수치', '55%', '80%', 30, 0, '중', '자산 대장 전환율 집계', '3건 · 대상 선별·전환 일정·검증', 1),
+  ('E1305', '2026H2', 'submitted', 'Objective · 가상화 전환 확대', 'VM 리소스 과할당률을 30% → 10%로 낮춘다.', '수치', '30%', '10%', 20, 0, '하', '리소스 모니터링 월평균', '2건 · 사이징 기준·정기 회수', 2),
+  ('E1306', '2026H2', 'submitted', 'Objective · 방화벽 정책 정비', '미사용 방화벽 정책 정리율 100%를 달성한다.', '수치', '0%', '100%', 30, 0, '중', '정책 대장 정리율', '3건 · 전수 조사·소유자 확인·단계 폐기', 1),
+  ('E1306', '2026H2', 'submitted', 'Objective · 방화벽 정책 정비', '정책 신청 처리 시간을 3일 → 1일로 단축한다.', '수치', '3일', '1일', 20, 0, '하', '신청 티켓 처리 시간', '2건 · 표준 템플릿·자동 검증', 2);
+
 -- 작년 OKR (r2/review 팝업 — 연도 적재 행, event null)
 insert into okr_history (year, emp_no, emp_name, obj, kr, grade, difficulty, achievement, result) values
   (2025, 'E1002', '강동우', '장애 대응 체계 고도화', '장애 알림 오탐율을 30% → 15%로 낮춘다.', 'B', '중', 82, '오탐율 18%까지 개선 — 목표 근접 달성'),
@@ -295,6 +328,16 @@ insert into okr_history (year, emp_no, emp_name, period, event, event_at, note) 
   (2026, 'E1005', '박서연', '2026H2', 'submit',   '05/21 11:00', '1차 제출'),
   (2026, 'E1005', '박서연', '2026H2', 'reject',   '05/23 17:40', '"장애 ZERO"는 통제 밖 요인이 커요. 재처리 자동화율 같은 통제 가능한 KR로 함께 정제해요.'),
   (2026, 'E1005', '박서연', '2026H2', 'resubmit', '05/26 09:20', '2차 제출 — 감지시간 단축 KR 추가');
+
+-- 최민경 팀 이력 (작년 OKR + 반려 타임라인 — E1303 반려 건)
+insert into okr_history (year, emp_no, emp_name, obj, kr, grade, difficulty, achievement, result) values
+  (2025, 'E1303', '배성호', '네트워크 안정화', '코어 스위치 이중화 구성을 100% 완료한다.', 'B', '중', 90, '이중화 완료 — 페일오버 테스트 1건 이월'),
+  (2025, 'E1302', '문가영', '클라우드 거버넌스', '전 계정 태깅 표준 적용률을 30% → 85%로 올린다.', 'A', '중', 102, '87% 적용 — 초과 달성');
+
+insert into okr_history (year, emp_no, emp_name, period, event, event_at, note) values
+  (2026, 'E1303', '배성호', '2026H2', 'submit',   '05/22 10:15', '1차 제출'),
+  (2026, 'E1303', '배성호', '2026H2', 'reject',   '05/23 16:30', '"장애 ZERO"는 통제 밖 요인이 커요. 백업 자동화율처럼 통제 가능한 KR 중심으로 함께 정제해요.'),
+  (2026, 'E1303', '배성호', '2026H2', 'resubmit', '05/25 09:40', '2차 제출 — 구성 백업 자동화 KR 보강');
 
 -- 이전 OKR 가져오기 이력 (r3/master IMPORT_HISTORY)
 insert into okr_imports (file_name, year, row_count, imported_at, imported_by, status) values

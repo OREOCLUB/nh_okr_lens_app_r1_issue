@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
 import { members as seedMembers, type Member } from "@/lib/mockData";
 import { getMembers } from "@/lib/dataAccess";
+import { getCurrentUser } from "@/lib/auth";
 
 const TONES = [
   { id: "praise", ico: "🌟", label: "칭찬", desc: "잘한 점을 짚어줘요", color: "#2F9E5E", bg: "#ECFAF1" },
@@ -18,15 +19,61 @@ const SENT = [
   { to: "정하은", kr: "KR 01 · DB 인덱싱", tone: "💬 안내", date: "06/25 11:05", preview: "진행률 업데이트를 주 1회 정도 남겨주면 관리가 수월해요." },
 ];
 
+type SentItem = (typeof SENT)[number];
+
+// 전송분 보관 (QA FB-01) — DB 신설 없이 같은 브라우저에서 새로고침·메뉴 이동 후에도 유지
+const SENT_KEY = "okrlens_r2_feedback_sent";
+
+function loadSent(): SentItem[] {
+  try {
+    const raw = localStorage.getItem(SENT_KEY);
+    return raw ? (JSON.parse(raw) as SentItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function R2FeedbackPage() {
+  const user = useMemo(() => getCurrentUser(), []);
   const [members, setMembers] = useState<Member[]>(seedMembers);
   const [selected, setSelected] = useState(seedMembers[0].id);
   const [tone, setTone] = useState("praise");
   const [msg, setMsg] = useState("");
+  const [mySent, setMySent] = useState<SentItem[]>([]);
 
   useEffect(() => {
-    getMembers().then((m) => m && setMembers(m));
-  }, []);
+    // 평가 라인: 로그인한 R2의 전속 팀원만 조회
+    getMembers(user?.id).then((m) => {
+      if (m && m.length > 0) {
+        setMembers(m);
+        setSelected(m[0].id); // 팀이 바뀌면 첫 팀원 선택 (더미 id 잔류 방지)
+      }
+    });
+    setMySent(loadSent()); // localStorage는 클라이언트에서만 접근
+  }, [user?.id]);
+
+  function handleSend() {
+    if (!msg.trim()) return alert("메시지를 입력해주세요");
+    const t = TONES.find((x) => x.id === tone) ?? TONES[0];
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const item: SentItem = {
+      to: member.name,
+      kr: member.obj,
+      tone: `${t.ico} ${t.label}`,
+      date: `${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      preview: msg.trim(),
+    };
+    const next = [item, ...loadSent()];
+    try {
+      localStorage.setItem(SENT_KEY, JSON.stringify(next));
+    } catch {
+      // 저장 실패해도 전송 흐름은 유지 (화면 상태에는 반영됨)
+    }
+    setMySent(next);
+    alert(`${member.name} 님에게 피드백을 전송했어요! 💬`);
+    setMsg("");
+  }
 
   const member = members.find((m) => m.id === selected) ?? members[0];
 
@@ -97,7 +144,7 @@ export default function R2FeedbackPage() {
               <div style={{ fontSize: 11.5, color: "#7C87A4" }}>💡 &ldquo;위반&rdquo;보다 &ldquo;함께 정제&rdquo; 톤으로 남겨주세요.</div>
               <div style={{ flex: 1 }} />
               <Button variant="secondary" size="sm" onClick={() => alert("임시 저장되었습니다 🙂")}>임시 저장</Button>
-              <Button variant="primary" size="sm" onClick={() => { if (!msg.trim()) return alert("메시지를 입력해주세요"); alert(`${member.name} 님에게 피드백을 전송했어요! 💬`); setMsg(""); }}>피드백 보내기 →</Button>
+              <Button variant="primary" size="sm" onClick={handleSend}>피드백 보내기 →</Button>
             </div>
           </div>
 
@@ -105,7 +152,7 @@ export default function R2FeedbackPage() {
           <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "18px 20px" }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>최근 보낸 피드백</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {SENT.map((s, i) => (
+              {[...mySent, ...SENT].map((s, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 10 }}>
                   <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#E0F7EC", color: "#00A968", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{s.to[0]}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>

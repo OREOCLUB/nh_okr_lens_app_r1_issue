@@ -149,18 +149,25 @@ export async function getUsers(): Promise<User[] | null> {
 }
 
 // ── R2 팀원 현황 (okr_submissions ⨝ employees) ──────────────
-export async function getMembers(): Promise<Member[] | null> {
+// evaluatorLoginId를 주면 해당 R2의 전속 팀원만 조회 (평가 라인: R2 1명 → R1 N명, 중복 없음)
+export async function getMembers(evaluatorLoginId?: string): Promise<Member[] | null> {
   interface Row {
     employee_id: string; submit_date: string | null; status: Member["status"]; risk: Member["risk"];
     focus: boolean; coaching: boolean; obj: string; risk_analysis: RiskAnalysis | null;
     employees: { grade: string; name: string; job_series: string; work_group: string | null } | null;
   }
   if (!supabase) return null;
-  const { data, error } = await supabase
+  let evaluatorEmpId: string | null = null;
+  if (evaluatorLoginId) {
+    const { data: me } = await supabase.from("employees").select("id").eq("login_id", evaluatorLoginId).maybeSingle();
+    evaluatorEmpId = (me as { id: string } | null)?.id ?? null;
+  }
+  let query = supabase
     .from("okr_submissions")
-    .select("employee_id, submit_date, status, risk, focus, coaching, obj, risk_analysis, employees(grade, name, job_series, work_group)")
-    .eq("period", PERIOD)
-    .order("sort_order", { ascending: true });
+    .select("employee_id, submit_date, status, risk, focus, coaching, obj, risk_analysis, employees!inner(grade, name, job_series, work_group)")
+    .eq("period", PERIOD);
+  if (evaluatorEmpId) query = query.eq("employees.evaluator_id", evaluatorEmpId);
+  const { data, error } = await query.order("sort_order", { ascending: true });
   if (error || !data || data.length === 0) return null;
   return (data as unknown as Row[]).map((r) => ({
     id: r.employee_id,
