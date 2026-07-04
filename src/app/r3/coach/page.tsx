@@ -63,6 +63,8 @@ export default function R3CoachPage() {
   const [llmSaved, setLlmSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [llmTesting, setLlmTesting] = useState(false);
+  const [models, setModels] = useState<{ id: string; displayName: string }[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
   const { showToast, toastNode } = useToast();
 
   useEffect(() => {
@@ -128,6 +130,39 @@ export default function R3CoachPage() {
   }
 
   // ── LLM 연동 설정 ──
+  // 키만 넣으면 사용 가능한 모델 목록을 불러와 드롭다운으로 고른다 (모델명 직접 입력 불필요)
+  async function fetchModels(): Promise<{ id: string; displayName: string }[] | null> {
+    const key = llmKey.trim();
+    if (!key) {
+      showToast("먼저 API 키를 입력해주세요.", "warn");
+      return null;
+    }
+    setLoadingModels(true);
+    try {
+      const res = await fetch("/api/coach/models", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ apiKey: key }),
+      });
+      const data = (await res.json()) as { models?: { id: string; displayName: string }[]; error?: string };
+      if (data.error || !data.models) {
+        showToast(`모델 목록을 불러오지 못했어요.\n${data.error ?? ""}`, "warn");
+        return null;
+      }
+      setModels(data.models);
+      // 저장돼 있던 모델이 목록에 있으면 유지, 없으면 첫 번째(flash 우선) 자동 선택
+      const keep = data.models.find((m) => m.id === llmModel);
+      setLlmModel(keep ? keep.id : data.models[0].id);
+      showToast(`사용 가능한 모델 ${data.models.length}개를 불러왔어요. 목록에서 골라주세요.`, "success");
+      return data.models;
+    } catch {
+      showToast("모델 목록 조회 중 문제가 있었어요. 잠시 후 다시 시도해주세요.", "warn");
+      return null;
+    } finally {
+      setLoadingModels(false);
+    }
+  }
+
   function saveLlm() {
     const key = llmKey.trim();
     if (!key) {
@@ -156,18 +191,26 @@ export default function R3CoachPage() {
     }
     setLlmTesting(true);
     try {
+      // ① 키 검증 + 모델 확보 — 실패 시 Google 에러 메시지 그대로 안내
+      let model = llmModel.trim();
+      if (models.length === 0) {
+        const fetched = await fetchModels();
+        if (!fetched) return; // fetchModels가 원인 토스트를 띄움
+        model = fetched.find((m) => m.id === model) ? model : fetched[0].id;
+      }
+      // ② 실제 대화 호출 테스트
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           mode: "coaching",
           messages: [{ role: "user", content: "연결 테스트입니다. 한 문장으로 인사해주세요." }],
-          llm: { provider: "gemini", apiKey: key, model: llmModel.trim() || DEFAULT_LLM_MODEL },
+          llm: { provider: "gemini", apiKey: key, model: model || DEFAULT_LLM_MODEL },
         }),
       });
       const data = (await res.json()) as { source: string };
-      if (data.source === "gemini") showToast("✅ Gemini 연결 성공! 실제 LLM 응답이 확인됐어요.", "success");
-      else showToast("연결에 실패해 목 응답으로 폴백됐어요. API 키와 모델명을 확인해주세요.", "warn");
+      if (data.source === "gemini") showToast(`✅ Gemini 연결 성공! (${model}) 실제 LLM 응답이 확인됐어요.`, "success");
+      else showToast(`키는 유효하지만 ${model} 모델 호출에 실패했어요. 목록에서 다른 모델을 골라 다시 테스트해주세요.`, "warn");
     } catch {
       showToast("연결 테스트 중 문제가 있었어요. 잠시 후 다시 시도해주세요.", "warn");
     } finally {
@@ -309,26 +352,51 @@ export default function R3CoachPage() {
             <div style={{ fontSize: 11.5, color: "#7C87A4", marginBottom: 12, lineHeight: 1.55 }}>
               키를 저장하면 AI 코치가 Gemini 실응답으로 동작해요. 키는 이 브라우저에만 저장돼요 (전사 적용은 서버 환경 변수 <span className="mono">GEMINI_API_KEY</span> 권장).
             </div>
-            <label style={label}>API 키</label>
+            <label style={label}>① API 키</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 type={showKey ? "text" : "password"}
                 style={{ ...input, flex: 1 }}
                 value={llmKey}
                 onChange={(e) => setLlmKey(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") fetchModels(); }}
                 placeholder="AIza… (Google AI Studio에서 발급)"
                 autoComplete="off"
               />
               <button onClick={() => setShowKey((v) => !v)} title={showKey ? "가리기" : "표시"} style={{ width: 42, borderRadius: 10, border: "1px solid #E1E5EF", background: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>{showKey ? "🙈" : "👁"}</button>
             </div>
-            <label style={label}>모델</label>
-            <input className="mono" style={{ ...input, marginBottom: 12 }} value={llmModel} onChange={(e) => setLlmModel(e.target.value)} placeholder={DEFAULT_LLM_MODEL} />
+            <label style={label}>② 모델 — 직접 입력할 필요 없어요</label>
+            {models.length > 0 ? (
+              <select
+                className="mono"
+                value={llmModel}
+                onChange={(e) => setLlmModel(e.target.value)}
+                style={{ ...input, marginBottom: 12, cursor: "pointer" }}
+              >
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>{m.displayName} ({m.id})</option>
+                ))}
+              </select>
+            ) : (
+              <button
+                onClick={fetchModels}
+                disabled={loadingModels}
+                style={{ ...input, marginBottom: 12, textAlign: "left", cursor: loadingModels ? "default" : "pointer", color: "#3B5BDB", fontWeight: 600, background: "#F1F4FD", border: "1px dashed #C5D0F7" }}
+              >
+                {loadingModels ? "모델 목록 불러오는 중…" : "🔄 키 입력 후 여기를 눌러 사용 가능한 모델 불러오기"}
+              </button>
+            )}
             <div style={{ display: "flex", gap: 8 }}>
               <Button variant="primary" size="sm" onClick={saveLlm}>저장</Button>
-              <Button variant="secondary" size="sm" onClick={testLlm} disabled={llmTesting}>{llmTesting ? "테스트 중…" : "연결 테스트"}</Button>
+              <Button variant="secondary" size="sm" onClick={testLlm} disabled={llmTesting || loadingModels}>{llmTesting ? "테스트 중…" : "연결 테스트"}</Button>
               <div style={{ flex: 1 }} />
               <Button variant="ghost" size="sm" onClick={removeLlm}>키 삭제</Button>
             </div>
+            {models.length > 0 && (
+              <div style={{ marginTop: 8, fontSize: 11, color: "#7C87A4" }}>
+                ✓ 이 키로 쓸 수 있는 모델 {models.length}개 확인됨 · 목록이 바뀌면 <button onClick={fetchModels} style={{ border: "none", background: "none", color: "#3B5BDB", cursor: "pointer", fontSize: 11, fontWeight: 600, padding: 0 }}>다시 불러오기</button>
+              </div>
+            )}
           </div>
 
           {/* 미리보기 테스트 */}

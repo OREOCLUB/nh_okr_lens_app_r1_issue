@@ -128,7 +128,7 @@ export interface LlmSettings {
   model: string;
 }
 
-export const DEFAULT_LLM_MODEL = "gemini-1.5-pro";
+export const DEFAULT_LLM_MODEL = "gemini-2.0-flash";
 const LLM_KEY = "okrlens_llm_settings";
 
 export function loadLlmSettings(): LlmSettings | null {
