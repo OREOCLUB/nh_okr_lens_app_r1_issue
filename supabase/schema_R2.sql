@@ -20,7 +20,12 @@
 --   ⑥ (07-04) 평가 라인 분리 시드    : 최민경(T0301) 전속 팀원 6명 신규
 --                                      — R2 1명 → R1 N명 전속, 평가자 간 중복 배정 없음
 --                                      — dataAccess.getMembers(evaluatorLoginId)가 employees.evaluator_id로 필터
---   ⑦ (07-04) CR-1 롤백              : employees.title 컬럼 제거 (직급/직책 분리 작업 되돌림)
+--
+-- 팀 공용 DB 적용 확인 (2026-07-04 실조회 검증)
+--   · 팀 DB는 초기 스키마 상태 확인: okr_submissions/okrs/okr_history에 R2 확장 컬럼 없음,
+--     okrs 3건(정태영)·okr_history 0건, 최민경 팀 미존재 → ①~⑥ 전부 필요, 이 파일 1회 실행이면 됨
+--   · 이전 ⑦(employees.title 컬럼 drop — CR-1 롤백)은 팀 DB에 title 컬럼이 애초에 없어 제거함.
+--     개인 DB의 title 정리는 reseed_data.sql에 이미 포함 (2026-07-04 실행 완료)
 --
 -- 참고: 테스트 데이터로 오염된 기존 DB의 일괄 정리는 reseed_data.sql 사용
 --       (5개 테이블 delete 후 원본+⑥ 시드 재적재 — 결과는 schema.sql 최신본과 동일)
@@ -146,8 +151,3 @@ insert into okr_history (year, emp_no, emp_name, period, event, event_at, note) 
   (2026, 'E1303', '배성호', '2026H2', 'submit',   '05/22 10:15', '1차 제출'),
   (2026, 'E1303', '배성호', '2026H2', 'reject',   '05/23 16:30', '"장애 ZERO"는 통제 밖 요인이 커요. 백업 자동화율처럼 통제 가능한 KR 중심으로 함께 정제해요.'),
   (2026, 'E1303', '배성호', '2026H2', 'resubmit', '05/25 09:40', '2차 제출 — 구성 백업 자동화 KR 보강');
-
--- ── ⑦ CR-1 롤백 (2026-07-04) — 직급/직책 분리 작업 되돌림 ─────
--- 2026-07-04 CR-1 작업에서 employees.title(직책) 컬럼을 추가했으나 롤백 결정.
--- grade 컬럼(직위 표기 그대로: 책임·차장·선임·2급 등)이 유일한 표기 기준으로 복귀.
-alter table employees drop column if exists title;
