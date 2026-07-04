@@ -25,12 +25,27 @@ export interface CoachReply {
   keywords?: string[];
   /** basic 모드: 다음 답변 추천 칩 (대화 맥락 기반) */
   suggestions?: string[];
+  /** refine 모드: 기존 KR 정제안 (사용자가 적용 버튼으로 확정) */
+  refinement?: { num: number; after: string; reason: string };
+  /** refine 모드: 신규 KR 초안 제안 */
+  newKrs?: { kr: string; baseline: string; goal: string }[];
 }
 
 // LLM에 보내는 대화 이력 상한 — 오래된 턴은 토큰만 쓰고 코칭 품질에 기여가 적다
 const MAX_TURNS_TO_LLM = 12;
 // 화면·localStorage에 보관하는 대화 상한 (스텝별 채팅 저장 시 사용)
 export const MAX_CHAT_STORE = 30;
+
+// 12개를 넘긴 앞부분 대화는 사용자 발화 중심의 압축 요약으로 기억을 유지한다
+function summarizeDropped(dropped: CoachTurn[]): string {
+  if (dropped.length === 0) return "";
+  const userPoints = dropped
+    .filter((m) => m.role === "user")
+    .map((m) => m.content.replace(/\s+/g, " ").trim().slice(0, 60))
+    .filter(Boolean);
+  if (userPoints.length === 0) return "";
+  return `사용자가 앞서 언급한 내용 (${userPoints.length}건): ${userPoints.join(" / ")}`.slice(0, 600);
+}
 
 export async function askCoach(
   mode: CoachMode,
@@ -42,10 +57,11 @@ export async function askCoach(
   const promptConfig = loadPublishedPrompts() ?? undefined;
   const llm = loadLlmSettings() ?? undefined;
   const recent = messages.slice(-MAX_TURNS_TO_LLM); // 최근 12개 메시지만 전송
+  const historySummary = summarizeDropped(messages.slice(0, -MAX_TURNS_TO_LLM)) || undefined; // 초과분은 요약으로
   const res = await fetch("/api/coach", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ mode, messages: recent, context, promptConfig, llm }),
+    body: JSON.stringify({ mode, messages: recent, context, promptConfig, llm, historySummary }),
   });
   if (!res.ok) throw new Error(`코치 응답을 받지 못했어요 (${res.status})`);
   return (await res.json()) as CoachReply;

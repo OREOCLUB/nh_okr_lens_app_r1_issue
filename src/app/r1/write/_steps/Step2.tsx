@@ -54,10 +54,11 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   const setBasic = (patch: Partial<WizardState["basic"]>) =>
     set((s) => ({ ...s, basic: { ...s.basic, ...patch } }));
 
+  const okrTypeLabel = state.okrType === "ops" ? "운영" : "전략혁신";
   const greeting = (): ChatMsg => ({
     from: "ai",
     time: nowTime(),
-    text: `[STEP 2 · 기초 정보] 올해 목표의 재료(키워드)를 모으는 단계예요. 대화에서 나온 키워드가 우측 패널에 쌓이고, 다음 단계 KR 초안이 됩니다.\n\n첫 질문: 올해 본업에서 반드시 지킬 것 1가지는 무엇인가요?`,
+    text: `[STEP 2 · 기초 정보 — ${okrTypeLabel} OKR]\n이 단계는 KR을 만드는 단계가 아니라, KR의 재료가 될 키워드를 도출하는 단계예요. 업무 이야기를 편하게 들려주시면 키워드 정리는 제가 할게요 (우측 패널에 쌓입니다).\n\n첫 질문: 올해 본업에서 반드시 지킬 것 1가지는 무엇인가요?`,
   });
 
   // 첫 진입 시 인사말 시드

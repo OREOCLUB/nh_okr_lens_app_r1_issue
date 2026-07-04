@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@/lib/auth";
-import type { WizardState, ChatMsg } from "@/lib/wizard";
+import type { WizardState, ChatMsg, WizardKR } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
-import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
+import { askCoach, nowTime, MAX_CHAT_STORE, type CoachReply } from "@/lib/aiCoach";
 import { deriveChecks } from "@/lib/diagnosticEngine";
 
 function ChatBubble({ from, text, time, userInitial }: ChatMsg & { userInitial: string }) {
@@ -28,6 +28,9 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false); // 11항목 신호등 상세 (팝업 대신 카드 내 아코디언)
+  // 구조화 출력 — 코치가 제안한 정제안·신규 KR 초안 (사용자가 버튼으로 확정해야 반영)
+  const [pendingRefinement, setPendingRefinement] = useState<CoachReply["refinement"] | null>(null);
+  const [pendingNewKrs, setPendingNewKrs] = useState<NonNullable<CoachReply["newKrs"]>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const opener = (): ChatMsg => {
@@ -36,8 +39,8 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
       from: "ai",
       time: nowTime(),
       text: target
-        ? `[STEP 3 · 정제] KR 문장을 측정 가능하게 다듬는 단계예요. 통계 단위·측정 도구·집계 주기가 빠지면 평가 때 해석이 갈립니다.\n\n대상: "${target.kr}"\n질문: 측정 단위는 무엇으로 할까요? (평균 / p95 / p99)`
-        : "[STEP 3 · 정제] KR 문장을 측정 가능하게 다듬는 단계예요. 정제할 KR 후보가 아직 없으니 STEP 2에서 기초 정보를 먼저 입력해주세요.",
+        ? `[STEP 3 · 정제 — 키워드를 KR 문장으로]\n이 단계는 STEP 2의 키워드를 KR 문장으로 만들고, 측정 가능하게 다듬는 단계예요. 편하게 답하시면 문장은 제가 정리합니다.\n\n대상: "${target.kr}"\n질문: 측정 단위는 무엇으로 할까요? (평균 / p95 / p99)`
+        : "[STEP 3 · 정제 — 키워드를 KR 문장으로]\n이 단계는 STEP 2의 키워드를 KR 문장으로 만들고 다듬는 단계예요. 정제할 재료가 아직 없으니 STEP 2에서 키워드를 먼저 모아주세요.",
     };
   };
 
@@ -48,7 +51,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [state.refineChat.length, loading]);
+  }, [state.refineChat.length, loading, pendingRefinement, pendingNewKrs.length]);
 
   async function send(raw: string) {
     const t = raw.trim();
@@ -67,11 +70,62 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
         krs: state.krs.map((k) => ({ num: k.num, kr: k.kr, baseline: k.baseline, goal: k.goal })),
       });
       set((s) => ({ ...s, refineChat: [...s.refineChat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE) }));
+      // 구조화 출력 — 정제안·신규 KR 초안은 카드로 띄우고 사용자가 버튼으로 확정
+      if (reply.refinement) setPendingRefinement(reply.refinement);
+      if (reply.newKrs && reply.newKrs.length > 0) setPendingNewKrs(reply.newKrs);
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {
       setLoading(false);
     }
+  }
+
+  // ── 구조화 출력 적용 — 정제안·신규 KR은 사용자가 버튼으로 확정해야 반영 ──
+  function applyRefinement() {
+    if (!pendingRefinement) return;
+    const r = pendingRefinement;
+    set((s) => ({ ...s, krs: s.krs.map((k) => (k.num === r.num ? { ...k, before: k.kr, kr: r.after, refined: true } : k)) }));
+    setPendingRefinement(null);
+  }
+
+  function addNewKr(draft: { kr: string; baseline: string; goal: string }) {
+    set((s) => {
+      const num = Math.max(0, ...s.krs.map((k) => k.num)) + 1;
+      const newKr: WizardKR = {
+        id: `kr${num}`,
+        num,
+        objective: s.basic.objective || "신규 목표",
+        kr: draft.kr,
+        format: "",
+        baseline: draft.baseline,
+        goal: draft.goal,
+        measureTool: "",
+        measureStat: "",
+        measureCycle: "",
+        weight: 15,
+        grades: { S: "", A: "", B: "", C: "", D: "" },
+        refined: false,
+        chosenAI: null,
+        aiSuggestion: "",
+      };
+      return { ...s, krs: [...s.krs, newKr] };
+    });
+    setPendingNewKrs((list) => list.filter((d) => d.kr !== draft.kr));
+  }
+
+  // 체크된 키워드 중 아직 KR 후보에 반영되지 않은 것 (토큰 매칭)
+  const uncoveredKeywords = Object.entries(state.basic.keywords)
+    .filter(([, on]) => on)
+    .map(([k]) => k)
+    .filter((kw) => {
+      const tokens = kw.split(/[\s/·]+/).filter((t) => t.length >= 2);
+      if (tokens.length === 0) return false;
+      return !state.krs.some((k) => tokens.every((t) => k.kr.includes(t)));
+    });
+
+  function generateFromKeywords() {
+    if (uncoveredKeywords.length === 0 || loading) return;
+    send(`다음 키워드로 KR 초안을 만들어주세요: ${uncoveredKeywords.join(", ")}`);
   }
 
   // ── 실시간 진단 — criteria 체크리스트를 주입해 계산 (하드코딩 없음) ──
@@ -107,7 +161,25 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
-      {/* Main chat */}
+      {/* Main column — 키워드 배너 + 채팅 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
+      {/* STEP 2 키워드 → KR 초안 연결 배너 */}
+      {uncoveredKeywords.length > 0 && (
+        <div style={{ background: "linear-gradient(135deg, #F1F4FD, #fff 60%)", border: "1px solid #C5D0F7", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>STEP 2에서 체크한 키워드 {uncoveredKeywords.length}개가 아직 KR 후보에 없어요</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
+              {uncoveredKeywords.map((kw) => (
+                <span key={kw} style={{ padding: "3px 10px", borderRadius: 999, background: "#fff", border: "1px solid #C5D0F7", color: "#213A8C", fontSize: 11.5, fontWeight: 600 }}>{kw}</span>
+              ))}
+            </div>
+          </div>
+          <button onClick={generateFromKeywords} disabled={loading} style={{ padding: "10px 16px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, fontFamily: "var(--font-sans)", flexShrink: 0 }}>
+            ✨ 키워드로 KR 초안 만들기
+          </button>
+        </div>
+      )}
+
       <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", height: 620 }}>
         <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "20px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0" }}>
@@ -137,6 +209,39 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
               ))}
             </div>
           </div>
+
+          {/* 코치 정제안 카드 — 적용해야 KR에 반영 */}
+          {pendingRefinement && (
+            <div style={{ border: "1px solid #B9F1D8", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+              <div style={{ padding: "10px 15px", background: "#F1FBF6", fontSize: 12.5, fontWeight: 700, color: "#0A6B44", borderBottom: "1px solid #DFF3E8" }}>💎 AI 정제 제안 · KR {String(pendingRefinement.num).padStart(2, "0")}</div>
+              <div style={{ padding: "14px 15px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.04em" }}>BEFORE</div>
+                <div style={{ fontSize: 12.5, color: "#5B6685", margin: "3px 0 10px", lineHeight: 1.5, textDecoration: "line-through" }}>
+                  {state.krs.find((k) => k.num === pendingRefinement.num)?.kr ?? "—"}
+                </div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#0A6B44", letterSpacing: "0.04em" }}>AFTER →</div>
+                <div style={{ fontSize: 13, color: "#0F1A36", fontWeight: 600, margin: "3px 0 10px", lineHeight: 1.5 }}>{pendingRefinement.after}</div>
+                {pendingRefinement.reason && <div style={{ fontSize: 11.5, color: "#5B6685", lineHeight: 1.5 }}><b>이유:</b> {pendingRefinement.reason}</div>}
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={applyRefinement} style={{ padding: "7px 14px", background: "#00A968", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✓ 이대로 적용</button>
+                  <button onClick={() => setPendingRefinement(null)} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 코치 신규 KR 초안 카드 — 추가해야 후보에 반영 */}
+          {pendingNewKrs.map((d) => (
+            <div key={d.kr} style={{ border: "1px solid #C5D0F7", borderRadius: 12, background: "#fff", padding: "13px 15px" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#2748C8", marginBottom: 5 }}>🆕 신규 KR 초안</div>
+              <div style={{ fontSize: 13, color: "#0F1A36", fontWeight: 600, lineHeight: 1.5 }}>{d.kr}</div>
+              <div className="mono" style={{ fontSize: 11, color: "#7C87A4", marginTop: 4 }}>Baseline: {d.baseline || "미정"} · Goal: {d.goal || "미정"}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button onClick={() => addNewKr(d)} style={{ padding: "7px 14px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>+ KR 후보로 추가</button>
+                <button onClick={() => setPendingNewKrs((list) => list.filter((x) => x.kr !== d.kr))} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
+              </div>
+            </div>
+          ))}
         </div>
         <div style={{ padding: "12px 22px 16px", borderTop: "1px solid #ECEFF5" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
@@ -156,6 +261,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
             <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Right sidebar */}
