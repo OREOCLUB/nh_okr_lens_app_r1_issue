@@ -194,14 +194,17 @@ function ReviewContent() {
   // ── 선택 (D1: ?member= 수신) ───────────────────────────────
   const [selectedId, setSelectedId] = useState<string | null>(null);
   useEffect(() => {
-    if (selectedId) return;
+    // 실데이터 로드 완료 후에만 선택 — 더미 목록 기준으로 먼저 선택하면
+    // 팀이 다른 계정(예: 최민경)에서 ?member= 자동 선택이 무효화됨
+    if (listLoading) return;
+    if (selectedId && members.some((m) => m.id === selectedId)) return;
     const param = searchParams.get("member");
     if (param && members.some((m) => m.id === param)) setSelectedId(param);
     else {
       const first = sortTargets(members.filter(isTarget))[0];
       if (first) setSelectedId(first.id);
     }
-  }, [members, searchParams, selectedId]);
+  }, [members, searchParams, selectedId, listLoading]);
 
   const selected = members.find((m) => m.id === selectedId) ?? null;
 
