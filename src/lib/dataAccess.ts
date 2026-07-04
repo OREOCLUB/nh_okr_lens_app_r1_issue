@@ -381,14 +381,14 @@ export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise
 
 /** 제출 회수 — 제출한 OKR을 작성중 상태로 되돌려 수정·재제출을 가능하게 한다 */
 export async function recallOkrs(loginId: string): Promise<WriteResult> {
-  if (!supabase) return { saved: "local", reason: "Supabase 미연결 (환경 변수 없음)" };
+  if (!supabase) return { ok: false, error: "NO_DB" };
   const employeeId = await employeeIdByLogin(loginId);
-  if (!employeeId) return { saved: "local", reason: "사원 정보를 찾지 못했어요" };
+  if (!employeeId) return { ok: false, error: "사원 정보를 찾지 못했어요" };
   const okrsUp = await supabase.from("okrs").update({ status: "draft" }).eq("employee_id", employeeId).eq("period", PERIOD);
-  if (okrsUp.error) return { saved: "local", reason: okrsUp.error.message };
+  if (okrsUp.error) return { ok: false, error: okrsUp.error.message };
   const subUp = await supabase.from("okr_submissions").update({ status: "draft" }).eq("employee_id", employeeId).eq("period", PERIOD);
-  if (subUp.error) return { saved: "local", reason: subUp.error.message };
-  return { saved: "db" };
+  if (subUp.error) return { ok: false, error: subUp.error.message };
+  return { ok: true };
 }
 
 /** 나의 OKR 진행률 업데이트 */
@@ -482,6 +482,32 @@ export async function getMetrics(): Promise<Metric[] | null> {
     exampleKR: r.example_kr,
     warnings: r.warnings && r.warnings.length > 0 ? r.warnings : undefined,
   }));
+}
+
+// ── AI 코치 프롬프트 운영 레이어 (R3 편집·발행 → 전 역할 코치가 사용) ──
+export async function getCoachPrompts(): Promise<import("./coachPrompts").CoachPromptConfig | null> {
+  if (!supabase) return null;
+  interface Row { version: string; config: Omit<import("./coachPrompts").CoachPromptConfig, "version"> }
+  const { data, error } = await supabase
+    .from("coach_prompts")
+    .select("version, config")
+    .order("published_at", { ascending: false })
+    .limit(1);
+  if (error || !data || data.length === 0) return null;
+  const r = data[0] as unknown as Row;
+  return { version: r.version, ...r.config };
+}
+
+export async function saveCoachPrompts(config: import("./coachPrompts").CoachPromptConfig): Promise<WriteResult> {
+  if (!supabase) return { ok: false, error: "NO_DB" };
+  const { version, ...rest } = config;
+  const { error } = await supabase.from("coach_prompts").insert({
+    version,
+    config: rest,
+    published_by: config.publishedBy,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 // ── 자격증 검색 DB (R1 STEP 0 · 회사 등급표는 R3가 관리) ─────

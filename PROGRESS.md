@@ -94,6 +94,25 @@
 
 ---
 
+## 2026-07-04 — AI 코치 관리(R3 편집형 프롬프트) + 팀 머지 정합
+
+### 완료
+- **AI 코치 프롬프트 3-레이어 체계**
+  - ① 안전 코어(코드 고정 — 소송 안전·역할 고정·출력 규칙, `/api/coach` SAFETY_CORE)
+  - ② 운영 레이어(R3 편집): `src/lib/coachPrompts.ts` — 페르소나·스텝별 지침·few-shot 예시·금칙어 사전, localStorage 발행/이력(최근 10), `supabase/coach_prompts.sql`(버전드 발행 테이블)
+  - ③ 컨텍스트(자동 주입): 사용자 프로필·KR 목록
+- **R3 "AI 코치 관리" 화면** (`/r3/coach` + 사이드바 메뉴): 편집 → 미리보기 테스트(발행 전 초안으로 실호출) → 발행(버전 자동 부여, localStorage 즉시 + DB 시도) → 버전 이력·롤백(불러오기 후 재발행)
+- `/api/coach` 개편: 3-레이어 조립, 운영 레이어 우선순위(요청 발행본 → DB → 기본값), 응답 금칙어 후처리(claude·목 공통), `promptVersion` 반환
+- `aiCoach.ts`: R3 발행본을 요청에 자동 첨부 → 같은 브라우저에서 R3 발행 → R1 코치 즉시 반영 데모 성립
+- **팀 머지 정합**: R2 작업 머지로 `WriteResult`가 `{ok, error?}`로 변경됨 → `recallOkrs`·write/my-okr 호출부 마이그레이션 (머지 직후 빌드 깨짐 복구)
+
+### 다음 할 일
+- 코치 구조화 출력(tool use) — 정제 카드 BEFORE/AFTER·키워드·등급 초안을 LLM 실출력으로
+- coach_prompts R3 편집 권한 정책(P2 인증 후), 발행 승인 워크플로
+- (기존 유지) .env.local 실 키, rls_write.sql/certifications.sql/coach_prompts.sql 실행
+
+---
+
 ## 2026-07-03 (세션 2) — R1 피평가자 전면 실기능 전환
 
 ### 완료

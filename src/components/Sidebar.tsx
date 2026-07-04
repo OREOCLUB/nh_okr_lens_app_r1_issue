@@ -56,6 +56,7 @@ const NAV: Record<Role, NavGroup[]> = {
       { label: "표준 지표", icon: "🧭", href: "/r3/metrics" },
     ]},
     { header: "운영", items: [
+      { label: "AI 코치 관리", icon: "🤖", href: "/r3/coach" },
       { label: "산출물", icon: "📤", href: "/r3/export" },
       { label: "환경 설정", icon: "⚙️", href: "/r3/env" },
     ]},

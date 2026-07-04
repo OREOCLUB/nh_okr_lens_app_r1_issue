@@ -247,10 +247,11 @@ export default function R1WritePage() {
         }))
       );
       set((s) => ({ ...s, submitted: true }));
-      if (result.saved === "db") {
+      if (result.ok) {
         window.alert(`OKR이 ${evaluatorName} 팀장에게 제출되었어요! 🎉`);
       } else {
-        window.alert(`제출 내용을 이 브라우저에 안전하게 보관했어요 🙂\n(서버 연결 후 자동 반영 예정 — ${result.reason})`);
+        const reason = result.error === "NO_DB" ? "Supabase 미연결" : result.error;
+        window.alert(`제출 내용을 이 브라우저에 안전하게 보관했어요 🙂\n(서버 연결 후 자동 반영 예정 — ${reason})`);
       }
       router.push("/r1");
     } catch (e) {
@@ -270,7 +271,7 @@ export default function R1WritePage() {
       const result = await recallOkrs(user.id);
       set((s) => ({ ...s, submitted: false }));
       showToast(
-        result.saved === "db"
+        result.ok
           ? "OKR을 회수했어요. 수정 후 다시 제출해주세요 🙂"
           : "OKR을 회수했어요 (서버 연결 후 자동 반영). 수정 후 다시 제출해주세요 🙂",
         "success"

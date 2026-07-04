@@ -170,7 +170,7 @@ export default function R1MyOKRPage() {
     try {
       if (target.dbId != null) {
         const result = await updateOkrProgress(target.dbId, progress);
-        if (result.saved === "local") showToast(`진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요 (${result.reason}).`, "info");
+        if (!result.ok) showToast(`진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요${result.error === "NO_DB" ? "" : ` (${result.error})`}.`, "info");
         else showToast("진행률을 저장했어요", "success");
       } else {
         showToast("진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요.", "info");
