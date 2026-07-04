@@ -56,7 +56,7 @@ function FinalKRCard({
   revertGrade,
   commitCard,
   revertCard,
-  forceOpen,
+  bulk,
 }: {
   kr: WizardKR;
   patchText: (field: keyof KRTextDraft, v: string) => void;
@@ -67,10 +67,12 @@ function FinalKRCard({
   revertGrade: (g: keyof KRGrades) => void;
   commitCard: () => void;
   revertCard: () => void;
-  forceOpen?: boolean;
+  bulk: { mode: "open" | "close"; seq: number };
 }) {
   const [expanded, setExpanded] = useState(kr.num === 1);
-  useEffect(() => { if (forceOpen) setExpanded(true); }, [forceOpen]);
+  useEffect(() => {
+    if (bulk.seq > 0) setExpanded(bulk.mode === "open");
+  }, [bulk.seq, bulk.mode]);
   const fmtColor = FORMAT_COLOR[kr.format] ?? { bg: "#F1F3F8", fg: "#5B6685" };
   const dirty = anyDirty(kr);
 
@@ -161,7 +163,7 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
   onPickKr: (krId: string) => void;
 }) {
   const krs = state.krs;
-  const [allOpen, setAllOpen] = useState(false);
+  const [bulk, setBulk] = useState<{ mode: "open" | "close"; seq: number }>({ mode: "open", seq: 0 });
   const sum = weightSum(krs);
   const adopted = krs.filter((k) => k.chosenAI).length;
   const unadopted = krs.filter((k) => !k.chosenAI);
@@ -249,14 +251,17 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>📋 KR 최종 검토</h2>
         <span style={{ fontSize: 12, color: "#7C87A4" }}>바로 수정할 수 있어요 · 수정한 줄은 ✓ 확정 또는 ↩ 취소로 정리해주세요</span>
-        <Button variant="ai" size="sm" style={{ marginLeft: "auto" }} onClick={() => setAllOpen(true)}>⚗️ 전체 펼쳐서 검토</Button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <Button variant="ai" size="sm" onClick={() => setBulk((b) => ({ mode: "open", seq: b.seq + 1 }))}>⚗️ 전체 펼치기</Button>
+          <Button variant="secondary" size="sm" onClick={() => setBulk((b) => ({ mode: "close", seq: b.seq + 1 }))}>▲ 전체 접기</Button>
+        </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {krs.map((kr) => (
           <FinalKRCard
             key={kr.id}
             kr={kr}
-            forceOpen={allOpen}
+            bulk={bulk}
             patchText={(f, v) => patchText(kr.id, f, v)}
             commitText={(f) => commitText(kr.id, f)}
             revertText={(f) => revertText(kr.id, f)}

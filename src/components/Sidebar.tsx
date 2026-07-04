@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "./Logo";
@@ -77,13 +77,17 @@ export function Sidebar({ role }: { role: Role }) {
   const router = useRouter();
   const chip = ROLE_CHIP[role];
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  // 페이지 이동 시 사이드바가 "펼쳐졌다 접히는" 플래시 방지:
+  // 페인트 전에 저장값을 적용하고(useLayoutEffect), 트랜지션은 마운트 후에만 켠다
+  useLayoutEffect(() => {
     try {
       setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
     } catch {
       /* noop */
     }
+    setMounted(true);
   }, []);
 
   function toggleCollapse() {
@@ -115,7 +119,7 @@ export function Sidebar({ role }: { role: Role }) {
         height: "100vh",
         position: "sticky",
         top: 0,
-        transition: "width 180ms ease-out",
+        transition: mounted ? "width 180ms ease-out" : "none",
         overflow: "hidden",
       }}
     >

@@ -15,10 +15,7 @@ export function Step1({ state, set, criteria }: { state: WizardState; set: (fn: 
   ];
   return (
     <div style={card}>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.02em" }}>OKR 유형을 선택해주세요</h2>
-        <p style={{ margin: "6px 0 0", fontSize: 13.5, color: "#5B6685" }}>이번 분기 OKR이 어떤 성격인지 알려주시면, AI가 더 적절한 가이드를 드릴 수 있어요.</p>
-      </div>
+      {/* 페이지 상단 Hero가 제목·설명을 담당 — 카드 내부 중복 헤더 제거 */}
       <div style={{ display: "flex", gap: 16 }}>
         {cards.map((c) => {
           const sel = type === c.value;

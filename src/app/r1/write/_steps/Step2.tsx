@@ -6,6 +6,8 @@ import type { Session } from "@/lib/auth";
 import type { WizardState, ChatMsg } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
 import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
+import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
+import { mergeKeywords } from "@/lib/wizard";
 
 // 대화에서 키워드 자동 추출용 사전 (결정적)
 const KEYWORD_DICT: [RegExp, string][] = [
@@ -43,6 +45,8 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   // 키워드 반영 순간 표시 — 새로 추가된 칩이 잠깐 펄스 + 패널에 +N 배지
   const [flashKeys, setFlashKeys] = useState<string[]>([]);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // API 키 게이트 — 무효 시 대화 차단, 목업모드 선택 가능, 정상화 시 자동 복귀+초기화
+  const llmGate = useLlmGate();
 
   function flash(keys: string[]) {
     if (keys.length === 0) return;
@@ -67,6 +71,14 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 목업모드에서 키가 정상화되면 실제 코치로 자동 복귀 — 대화를 초기화해 처음부터
+  useEffect(() => {
+    if (llmGate.recovered) {
+      setBasic({ chat: [greeting()], suggestions: undefined });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llmGate.recovered]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [b.chat.length, loading]);
@@ -74,19 +86,19 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   async function send(raw: string) {
     const t = raw.trim();
     if (!t || loading) return;
+    if (llmGate.gate === "blocked" || llmGate.gate === "checking") return; // 키 점검 전에는 대화 차단
     setText("");
     setError(null);
     const userMsg: ChatMsg = { from: "user", time: nowTime(), text: t };
 
-    // 키워드 자동 추출 (결정적 사전 매칭)
+    // 키워드 자동 추출 (결정적 사전 매칭) — mergeKeywords가 중복·포함관계 정리
     const found = KEYWORD_DICT.filter(([re]) => re.test(t)).map(([, kw]) => kw);
-    const foundNew = found.filter((kw) => !(kw in b.keywords));
-    set((s) => {
-      const keywords = { ...s.basic.keywords };
-      for (const kw of found) if (!(kw in keywords)) keywords[kw] = true;
-      return { ...s, basic: { ...s.basic, chat: [...s.basic.chat, userMsg].slice(-MAX_CHAT_STORE), keywords } };
-    });
-    flash(foundNew);
+    const m1 = mergeKeywords(b.keywords, found);
+    set((s) => ({
+      ...s,
+      basic: { ...s.basic, chat: [...s.basic.chat, userMsg].slice(-MAX_CHAT_STORE), keywords: mergeKeywords(s.basic.keywords, found).keywords },
+    }));
+    flash(m1.added);
 
     setLoading(true);
     try {
@@ -96,22 +108,18 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
         okrType: state.okrType === "ops" ? "운영" : "전략혁신",
         duty: state.profile.mainDuty,
       });
-      // AI가 뽑은 키워드는 우측 패널에 체크 상태로 합류, 추천 답변 칩은 대화 맥락 따라 갱신
-      const replyNew = (reply.keywords ?? []).filter((kw) => !(kw in b.keywords) && !found.includes(kw));
-      set((s) => {
-        const keywords = { ...s.basic.keywords };
-        for (const kw of reply.keywords ?? []) if (!(kw in keywords)) keywords[kw] = true;
-        return {
-          ...s,
-          basic: {
-            ...s.basic,
-            chat: [...s.basic.chat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE),
-            keywords,
-            suggestions: reply.suggestions && reply.suggestions.length > 0 ? reply.suggestions : s.basic.suggestions,
-          },
-        };
-      });
-      flash([...foundNew, ...replyNew]);
+      // AI가 뽑은 키워드는 중복 정리 후 체크 상태로 합류, 추천 답변 칩은 대화 맥락 따라 갱신
+      const m2 = mergeKeywords(m1.keywords, reply.keywords ?? []);
+      set((s) => ({
+        ...s,
+        basic: {
+          ...s.basic,
+          chat: [...s.basic.chat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE),
+          keywords: mergeKeywords(s.basic.keywords, reply.keywords ?? []).keywords,
+          suggestions: reply.suggestions && reply.suggestions.length > 0 ? reply.suggestions : s.basic.suggestions,
+        },
+      }));
+      flash(m2.added);
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {
@@ -150,7 +158,7 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
             <div style={{ padding: "14px 20px", borderBottom: "1px solid #ECEFF5", display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 32, height: 32, borderRadius: 9, background: "linear-gradient(135deg, #00A968, #14342B)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>✨</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36" }}>AI 코치와 대화하기</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36", display: "flex", alignItems: "center", gap: 8 }}>AI 코치와 대화하기 <MockBadge gate={llmGate.gate} /></div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
                   <span style={{ fontSize: 11, color: "#7C87A4" }}>질문 {progress} / 5</span>
                   <div style={{ width: 80, height: 5, background: "#ECEFF5", borderRadius: 3, overflow: "hidden" }}><div style={{ height: "100%", width: `${(progress / 5) * 100}%`, background: "#00A968" }} /></div>
@@ -170,23 +178,29 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
               {error && <div style={{ padding: "10px 14px", background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 10, fontSize: 12.5, color: "#7A4A14" }}>{error}</div>}
             </div>
             <div style={{ padding: "12px 20px 16px", borderTop: "1px solid #ECEFF5" }}>
-              {/* 추천 답변 칩 — AI 응답마다 대화 맥락에 맞게 갱신 */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                {(b.suggestions ?? ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "SRE팀 협업이 필요해요"]).map((s) => (
-                  <button key={s} onClick={() => send(s)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{s}</button>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
-                  rows={1}
-                  placeholder="답변을 입력하세요… (Enter로 전송)"
-                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
-                />
-                <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
-              </div>
+              {llmGate.gate === "blocked" || llmGate.gate === "checking" ? (
+                <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
+              ) : (
+                <>
+                  {/* 추천 답변 칩 — AI 응답마다 대화 맥락에 맞게 갱신 */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {(b.suggestions ?? ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "SRE팀 협업이 필요해요"]).map((s) => (
+                      <button key={s} onClick={() => send(s)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{s}</button>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
+                    <textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
+                      rows={1}
+                      placeholder="답변을 입력하세요… (Enter로 전송)"
+                      style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
+                    />
+                    <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (

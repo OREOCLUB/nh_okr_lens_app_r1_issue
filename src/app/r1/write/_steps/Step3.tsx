@@ -6,6 +6,7 @@ import type { WizardState, ChatMsg, WizardKR } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
 import { askCoach, nowTime, MAX_CHAT_STORE, type CoachReply } from "@/lib/aiCoach";
 import { deriveChecks } from "@/lib/diagnosticEngine";
+import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
 
 function ChatBubble({ from, text, time, userInitial }: ChatMsg & { userInitial: string }) {
   const isAI = from === "ai";
@@ -32,6 +33,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const [pendingRefinement, setPendingRefinement] = useState<CoachReply["refinement"] | null>(null);
   const [pendingNewKrs, setPendingNewKrs] = useState<NonNullable<CoachReply["newKrs"]>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const llmGate = useLlmGate();
 
   const opener = (): ChatMsg => {
     const target = state.krs.find((k) => !k.refined) ?? state.krs[0];
@@ -49,6 +51,16 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 목업모드에서 키 정상화 시 자동 복귀 — 대화 초기화
+  useEffect(() => {
+    if (llmGate.recovered) {
+      set((s) => ({ ...s, refineChat: [opener()] }));
+      setPendingRefinement(null);
+      setPendingNewKrs([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llmGate.recovered]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [state.refineChat.length, loading, pendingRefinement, pendingNewKrs.length]);
@@ -56,6 +68,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   async function send(raw: string) {
     const t = raw.trim();
     if (!t || loading) return;
+    if (llmGate.gate === "blocked" || llmGate.gate === "checking") return; // 키 점검 전 대화 차단
     setText("");
     setError(null);
     const userMsg: ChatMsg = { from: "user", time: nowTime(), text: t };
@@ -244,22 +257,29 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
           ))}
         </div>
         <div style={{ padding: "12px 22px 16px", borderTop: "1px solid #ECEFF5" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-            {["측정 단위는 p95 월평균으로 할게요", "목표 수치의 근거를 설명할게요", "측정 방법을 한 번 더 점검해주세요"].map((c) => (
-              <button key={c} onClick={() => send(c)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{c}</button>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
-              rows={1}
-              placeholder="KR에 대해 답변하거나 질문하세요… (Enter로 전송)"
-              style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
-            />
-            <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
-          </div>
+          {llmGate.gate === "blocked" || llmGate.gate === "checking" ? (
+            <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
+          ) : (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10, alignItems: "center" }}>
+                <MockBadge gate={llmGate.gate} />
+                {["측정 단위는 p95 월평균으로 할게요", "목표 수치의 근거를 설명할게요", "측정 방법을 한 번 더 점검해주세요"].map((c) => (
+                  <button key={c} onClick={() => send(c)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{c}</button>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
+                  rows={1}
+                  placeholder="KR에 대해 답변하거나 질문하세요… (Enter로 전송)"
+                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
+                />
+                <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
       </div>

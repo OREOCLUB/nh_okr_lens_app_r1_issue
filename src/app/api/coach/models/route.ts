@@ -33,18 +33,31 @@ export async function POST(request: NextRequest) {
         error: `Google 응답: ${data.error?.status ?? res.status} — ${data.error?.message ?? "알 수 없는 오류"}`,
       });
     }
-    const models = (data.models ?? [])
+    // 대화 코칭에 실사용 가능한 모델만 노출 — 임베딩·이미지·오디오·실험판 등 제외
+    const EXCLUDE = /(embedding|aqa|imagen|image|audio|tts|live|vision|thinking|exp|preview|learnlm|gemma|nano|robotics|dialog)/i;
+    const raw = (data.models ?? [])
       .filter((m) => m.supportedGenerationMethods?.includes("generateContent") && m.name.includes("gemini"))
       .map((m) => ({
         id: m.name.replace(/^models\//, ""),
         displayName: m.displayName ?? m.name.replace(/^models\//, ""),
       }))
+      .filter((m) => !EXCLUDE.test(m.id))
       // flash 계열(빠르고 저렴)을 앞으로, 이후 이름 역순(최신 우선)
       .sort((a, b) => {
         const af = a.id.includes("flash") ? 0 : 1;
         const bf = b.id.includes("flash") ? 0 : 1;
         return af - bf || b.id.localeCompare(a.id);
       });
+    // 버전 변형(-001, -latest 등)은 대표 1개로 접고 최대 10개
+    const seen = new Set<string>();
+    const models = raw
+      .filter((m) => {
+        const base = m.id.replace(/-(latest|\d{3})$/, "");
+        if (seen.has(base)) return false;
+        seen.add(base);
+        return true;
+      })
+      .slice(0, 10);
     if (models.length === 0) return NextResponse.json({ error: "이 키로 사용할 수 있는 Gemini 대화 모델이 없어요." });
     return NextResponse.json({ models });
   } catch {

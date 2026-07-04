@@ -106,6 +106,49 @@ export interface ChatMsg {
   time: string;
 }
 
+// ── 키워드 병합 — 중복·포함관계를 정리하며 합류 (AI가 중간중간 정리) ──
+// 규칙: 완전 동일(공백·기호 무시) → 스킵 / 기존이 더 구체적 → 새 것 스킵 /
+//       새 것이 더 구체적 → 기존을 흡수(체크 상태 승계) / 상한 초과 시 오래된 미체크부터 제거
+const MAX_KEYWORDS = 14;
+const normKw = (s: string) => s.replace(/[\s/·()\-]+/g, "").toLowerCase();
+
+export function mergeKeywords(
+  existing: Record<string, boolean>,
+  incoming: string[],
+  checked = true
+): { keywords: Record<string, boolean>; added: string[] } {
+  const keywords: Record<string, boolean> = { ...existing };
+  const added: string[] = [];
+  for (const raw of incoming) {
+    const kw = raw.replace(/\s+/g, " ").trim();
+    if (!kw) continue;
+    const n = normKw(kw);
+    if (n.length < 2) continue;
+    let skip = false;
+    let on = checked;
+    for (const ex of Object.keys(keywords)) {
+      const en = normKw(ex);
+      if (en === n || en.includes(n)) {
+        skip = true; // 동일하거나 기존이 더 구체적 — 새 것 버림
+        break;
+      }
+      if (n.includes(en)) {
+        on = on || keywords[ex]; // 새 것이 더 구체적 — 기존 흡수, 체크 상태 승계
+        delete keywords[ex];
+      }
+    }
+    if (skip) continue;
+    keywords[kw] = on;
+    added.push(kw);
+  }
+  // 상한 초과 시 오래된 미체크 키워드부터 정리
+  for (const k of Object.keys(keywords)) {
+    if (Object.keys(keywords).length <= MAX_KEYWORDS) break;
+    if (!keywords[k] && !added.includes(k)) delete keywords[k];
+  }
+  return { keywords, added };
+}
+
 export interface WizardState {
   version: 1;
   step: number; // 현재 스텝
@@ -154,13 +197,7 @@ export function initialWizardState(): WizardState {
         "• 결제 게이트웨이 p95 응답속도를 일정 수준 이하로 유지\n• 결제 인증 모듈 단위테스트 커버리지 향상\n• 야간 배치 장애 알림 자동화 마일스톤 진행",
       collaborators: "",
       krCount: 5,
-      keywords: {
-        "APM p95 응답속도": true,
-        "단위테스트 커버리지": true,
-        "장애 알림 자동화": true,
-        "SRE 협업": true,
-        "결제 안정성": false,
-      },
+      keywords: {}, // 대화에서 추출되기 전에는 비어 있어야 한다
       chat: [],
     },
     refineChat: [],

@@ -5,6 +5,7 @@ import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
+import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
 import type { ChatMsg } from "@/lib/wizard";
 
 interface Topic {
@@ -59,11 +60,20 @@ export default function R1CoachingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const llmGate = useLlmGate();
 
   useEffect(() => {
     const u = getCurrentUser();
     if (u) setUser(u);
   }, []);
+
+  // 목업모드에서 키 정상화 시 자동 복귀 — 현재 주제 대화 초기화
+  useEffect(() => {
+    if (llmGate.recovered) {
+      setTopics((ts) => ts.map((t) => (t.id === activeId ? { ...t, messages: [] } : t)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llmGate.recovered]);
 
   const active = topics.find((t) => t.id === activeId) ?? topics[0];
 
@@ -78,6 +88,7 @@ export default function R1CoachingPage() {
   async function send(raw: string) {
     const t = raw.trim();
     if (!t || loading || !active) return;
+    if (llmGate.gate === "blocked" || llmGate.gate === "checking") return; // 키 점검 전 대화 차단
     setInput("");
     setError(null);
     const userMsg: ChatMsg = { from: "user", time: nowTime(), text: t };
@@ -162,7 +173,12 @@ export default function R1CoachingPage() {
           {/* Composer */}
           <div style={{ padding: "14px 28px 18px", background: "#fff", borderTop: "1px solid #E1E5EF" }}>
             <div style={{ maxWidth: 820, margin: "0 auto" }}>
-              <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+              {llmGate.gate === "blocked" || llmGate.gate === "checking" ? (
+                <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
+              ) : (
+              <>
+              <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <MockBadge gate={llmGate.gate} />
                 {QUICK.map((s) => (
                   <button key={s} onClick={() => send(s.replace(/^[^ ]+ /, ""))} style={{ padding: "6px 12px", background: "var(--page-bg)", color: "#3A4565", border: "1px solid #E1E5EF", borderRadius: 999, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{s}</button>
                 ))}
@@ -181,6 +197,8 @@ export default function R1CoachingPage() {
               <div style={{ fontSize: 11, color: "#A4ADC4", marginTop: 8, textAlign: "center" }}>
                 코칭 내용은 본인만 볼 수 있어요.
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

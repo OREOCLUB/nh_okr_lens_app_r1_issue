@@ -186,17 +186,24 @@ const REFINE_INSTRUCTION = `[구조화 출력 규칙 — refine 단계 전용]
 - 해당 사항이 없으면 이 줄들을 생략하세요.`;
 
 // ── 결정적 목 응답 (키 없음/호출 실패 폴백) ──────────────────
+// basic은 턴 수에 따라 코칭 흐름이 진행되어 같은 답이 반복되지 않는다
 function mockReply(req: CoachRequest): string {
   const last = req.messages.filter((m) => m.role === "user").pop()?.content ?? "";
-  const name = req.context?.userName ?? "";
   const firstKr = req.context?.krs?.[0];
   switch (req.mode) {
-    case "basic":
-      if (/속도|성능|ms/.test(last))
-        return "좋아요! 응답속도는 측정이 명확한 좋은 목표예요. baseline과 goal을 수치로 잡아볼까요? 예: p95 850ms → 500ms. 추가로 새로 도전하고 싶은 일이 있다면 들려주세요.";
-      if (/테스트|커버리지|자동화/.test(last))
-        return "훌륭한 후보예요. 커버리지·자동화는 도구로 자동 측정할 수 있어서 객관성이 높아요. 목표 수치의 근거(예: 회귀 장애가 났던 영역)를 함께 적으면 더 좋아요. 협업이 필요한 팀이 있을까요?";
-      return `${name ? name + " 님, " : ""}말씀해주신 내용에서 핵심 키워드를 정리했어요. 우측 패널에서 KR 초안의 재료로 쓸 키워드를 확인·선택해주세요. 더 도전하고 싶은 일이 있다면 이어서 들려주세요.`;
+    case "basic": {
+      const turn = req.messages.filter((m) => m.role === "user").length;
+      const kws = MOCK_KEYWORD_DICT.filter(([re]) => re.test(last)).map(([, kw]) => kw);
+      const ack = kws.length > 0 ? `키워드 반영: ${kws.join(", ")}.\n` : "";
+      const flow = [
+        `${ack}다음 질문: 새로 도전하고 싶은 일 1가지는요? (작년에 못 했던 것, 미뤄둔 것도 좋아요)`,
+        `${ack}협업이 필요한 부분이 있나요? 있다면 수준도 함께요 — ① 단순 신청·요청(티켓/결재) ② 정기 협조 ③ 공동 구축·신규 도입. 수준에 따라 통제가능성 평가가 달라져요.`,
+        `${ack}목표 수치가 있다면 산출 근거는요? (작년 실적 · 측정 데이터 · 업계 기준)`,
+        `${ack}재료가 충분해요. 우측 키워드의 체크를 조정한 뒤 다음 단계로 넘어가도 좋아요. 더 추가할 내용이 있나요?`,
+        `${ack}추가로 정리했어요. 남은 게 없다면 다음 단계(STEP 3)에서 키워드를 KR 문장으로 만들어봐요.`,
+      ];
+      return flow[Math.min(turn - 1, flow.length - 1)];
+    }
     case "refine":
       if (/평균|p9\d|퍼센타일/.test(last))
         return "완벽해요. 통계 단위를 명시하면 객관성이 크게 올라가요. KR 문장에 측정 도구와 집계 주기까지 넣어 정제해볼게요 — 우측 KR 후보 카드에서 정제 결과를 확인해주세요.";
@@ -301,6 +308,13 @@ async function callClaude(system: string, messages: CoachRequest["messages"], ap
   }
 }
 
+// 서버 환경 변수 키 보유 여부 — 클라이언트 LLM 게이트가 참조 (키 값은 노출하지 않음)
+export async function GET() {
+  return NextResponse.json({
+    serverLlm: Boolean(process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY),
+  });
+}
+
 export async function POST(request: NextRequest) {
   let body: CoachRequest;
   try {
@@ -323,13 +337,16 @@ export async function POST(request: NextRequest) {
 
   const system = buildSystem(body, cfg);
 
+  // 폐기된 맺음 문구 — R3 발행본에 남아 있어도 서버에서 강제 제거
+  const LEGACY_NOTE = /\s*AI 코칭(?:은|이)?\s*참고용[^.\n]*[.…]?/g;
+
   // LLM 응답 → 잘림 fail-safe → 메타 분리 → 공통 응답 포맷
   const respond = (rawText: string, source: string, truncated: boolean, meta?: CoachMeta) => {
     const safeText = ensureComplete(rawText, truncated);
     const parsed = extractMeta(safeText);
     const finalMeta = meta ?? parsed.meta;
     return NextResponse.json({
-      text: applyBannedWords(parsed.text, cfg.bannedWords),
+      text: applyBannedWords(parsed.text, cfg.bannedWords).replace(LEGACY_NOTE, "").trim(),
       source,
       promptVersion: cfg.version,
       keywords: finalMeta.keywords,

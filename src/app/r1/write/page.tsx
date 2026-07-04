@@ -88,6 +88,55 @@ function Hero({ num, title, desc }: { num: number; title: string; desc: string }
   );
 }
 
+// ── 8단계 가이드 모달 — 최초 진입 시 표시, 다시안보기/오늘닫기 지원 ──
+const GUIDE_KEY = "okrlens_wizard_guide_hide";
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+function guideHidden(): boolean {
+  if (typeof window === "undefined") return true;
+  const v = localStorage.getItem(GUIDE_KEY);
+  if (!v) return false;
+  if (v === "never") return true;
+  if (v.startsWith("until:")) return v.slice(6) >= todayStr();
+  return false;
+}
+
+function GuideModal({ onClose }: { onClose: (hide: "never" | "today" | null) => void }) {
+  const ICONS = ["👤", "⚙️", "💬", "✨", "📐", "📏", "🤝", "📥"];
+  return (
+    <div onClick={() => onClose(null)} style={{ position: "fixed", inset: 0, background: "rgba(15,26,54,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxHeight: "82vh", background: "#fff", borderRadius: 16, boxShadow: "0 24px 60px -12px rgba(15,26,54,.35)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ padding: "20px 24px 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>🗺️ OKR 작성, 8단계로 이렇게 진행돼요</div>
+            <button onClick={() => onClose(null)} style={{ marginLeft: "auto", border: "none", background: "transparent", color: "#A6AEC2", cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 4 }}>각 단계에서 무엇을 하는지 한눈에 — 언제든 상단 &ldquo;❔ 단계 안내&rdquo;로 다시 볼 수 있어요.</div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "6px 24px 16px", display: "flex", flexDirection: "column", gap: 7 }}>
+          {STEPS.map((s, i) => (
+            <div key={s.num} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 14px", border: "1px solid #ECEFF5", borderRadius: 11, background: "#F9FAFC" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "#E5EBFB", color: "#3B5BDB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>{ICONS[i]}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}><span className="mono" style={{ color: "#3B5BDB" }}>STEP {s.num}</span> · {s.label}</div>
+                <div style={{ fontSize: 11.5, color: "#5B6685", marginTop: 3, lineHeight: 1.5 }}>{DESC[i]}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: "12px 24px 18px", borderTop: "1px solid #ECEFF5", display: "flex", gap: 8 }}>
+          <button onClick={() => onClose("never")} style={{ padding: "9px 14px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12.5, color: "#7C87A4", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>다시 안 보기</button>
+          <button onClick={() => onClose("today")} style={{ padding: "9px 14px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12.5, color: "#5B6685", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>오늘 하루 닫기</button>
+          <div style={{ flex: 1 }} />
+          <button onClick={() => onClose(null)} style={{ padding: "9px 20px", background: "#3B5BDB", border: "none", borderRadius: 9, fontSize: 12.5, color: "#fff", fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>닫기</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function savedAgo(savedAt: number | null): string {
   if (!savedAt) return "아직 저장 전";
   const sec = Math.floor((Date.now() - savedAt) / 1000);
@@ -106,6 +155,7 @@ export default function R1WritePage() {
   const [submitting, setSubmitting] = useState(false);
   const [recalling, setRecalling] = useState(false);
   const [step6Focus, setStep6Focus] = useState<string | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
   const { showToast, toastNode } = useToast();
   const userIdRef = useRef<string>("");
 
@@ -118,7 +168,15 @@ export default function R1WritePage() {
     setState(loadWizard(u.id));
     // 평가 기준은 DB(criteria_*)가 단일 소스 — 실패 시 lib/criteria 폴백 유지
     getCriteria().then((c) => c && setCriteria(c));
+    // 최초 진입 시 8단계 가이드 (다시안보기/오늘닫기 존중)
+    if (!guideHidden()) setGuideOpen(true);
   }, []);
+
+  function closeGuide(hide: "never" | "today" | null) {
+    if (hide === "never") localStorage.setItem(GUIDE_KEY, "never");
+    if (hide === "today") localStorage.setItem(GUIDE_KEY, `until:${todayStr()}`);
+    setGuideOpen(false);
+  }
 
   // 상태 변경 시 자동 임시 저장 (localStorage)
   const set = useCallback((fn: (s: WizardState) => WizardState) => {
@@ -320,7 +378,12 @@ export default function R1WritePage() {
         <Link href="/r1" style={{ color: "#5B6685", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}><span>←</span> 피평가자 홈</Link>
         <span style={{ color: "#C8CFDF" }}>/</span>
         <span style={{ color: "#0F1A36", fontWeight: 600 }}>OKR 작성</span>
+        <button onClick={() => setGuideOpen(true)} title="8단계 안내 다시 보기" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 11.5, fontWeight: 600, color: "#3B5BDB", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+          ❔ 단계 안내
+        </button>
       </div>
+
+      {guideOpen && <GuideModal onClose={closeGuide} />}
 
       <StepHeader current={step} maxStep={state.maxStep} onJump={goTo} />
       {step !== 5 && <Hero num={step} title={STEPS[step].label} desc={DESC[step]} />}

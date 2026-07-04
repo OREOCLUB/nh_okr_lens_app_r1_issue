@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from "react";
 import { label, input, generateGrades, generateInitiatives, DraftRow } from "./shared";
 import { gradesDirty, type WizardState, type WizardKR, type KRGrades } from "@/lib/wizard";
 import { askCoach, nowTime } from "@/lib/aiCoach";
+import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
 import type { ChatMsg } from "@/lib/wizard";
 
 const GRADE_META: [keyof KRGrades, string][] = [
@@ -22,10 +23,12 @@ function AICoachOverlay({ kr, onAutoFill }: { kr: WizardKR; onAutoFill: () => vo
     { from: "ai", time: nowTime(), text: `[STEP 5 · 등급 기준] S~D 구간을 수치로 확정하는 단계예요.\n기준: A = 목표선(${kr.goal}), S = 목표 대비 +20% 수준, 구간 겹침 금지.\n"자동 생성"으로 초안을 만든 뒤 조정하는 게 빠릅니다.` },
   ]);
   const [loading, setLoading] = useState(false);
+  const llmGate = useLlmGate();
 
   async function send(raw: string) {
     const t = raw.trim();
     if (!t || loading) return;
+    if (llmGate.gate === "blocked" || llmGate.gate === "checking") return; // 키 점검 전 대화 차단
     setText("");
     const userMsg: ChatMsg = { from: "user", time: nowTime(), text: t };
     setChat((c) => [...c, userMsg]);
@@ -78,16 +81,23 @@ function AICoachOverlay({ kr, onAutoFill }: { kr: WizardKR; onAutoFill: () => vo
               ))}
             </div>
           </div>
-          <div style={{ padding: "10px 14px 12px", borderTop: "1px solid #ECEFF5", display: "flex", gap: 8, alignItems: "flex-end", background: "#F9FAFC" }}>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
-              rows={1}
-              placeholder="등급 기준을 물어보세요…"
-              style={{ flex: 1, border: "1px solid #E1E5EF", borderRadius: 9, padding: "8px 11px", outline: "none", background: "#fff", fontFamily: "var(--font-sans)", fontSize: 12.5, resize: "none" }}
-            />
-            <button onClick={() => send(text)} disabled={loading} style={{ width: 32, height: 32, borderRadius: 8, background: "#3B5BDB", border: "none", color: "#fff", fontSize: 13, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+          <div style={{ padding: "10px 14px 12px", borderTop: "1px solid #ECEFF5", background: "#F9FAFC" }}>
+            {llmGate.gate === "blocked" || llmGate.gate === "checking" ? (
+              <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
+            ) : (
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                <MockBadge gate={llmGate.gate} />
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
+                  rows={1}
+                  placeholder="등급 기준을 물어보세요…"
+                  style={{ flex: 1, border: "1px solid #E1E5EF", borderRadius: 9, padding: "8px 11px", outline: "none", background: "#fff", fontFamily: "var(--font-sans)", fontSize: 12.5, resize: "none" }}
+                />
+                <button onClick={() => send(text)} disabled={loading} style={{ width: 32, height: 32, borderRadius: 8, background: "#3B5BDB", border: "none", color: "#fff", fontSize: 13, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+              </div>
+            )}
           </div>
         </div>
       )}
