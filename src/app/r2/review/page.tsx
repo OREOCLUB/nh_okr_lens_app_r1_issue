@@ -208,8 +208,15 @@ function ReviewContent() {
 
   const selected = members.find((m) => m.id === selectedId) ?? null;
 
-  // 승인(approved) 팀원은 열람 전용 — 재처리 금지 (QA REV-02 · Q2 확정). AI 검토 실행은 열람 참고용으로 허용
-  const readOnly = !!selected && selected.status === "approved";
+  // 열람 전용 상태 — 재처리 금지. AI 검토 실행은 열람 참고용으로 허용
+  //   approved: 승인 완료 건 (QA REV-02 · Q2 확정)
+  //   rejected: 반려 건 — R1이 OKR을 수정해 다시 결재요청해야 검토 가능 (조정요청은 처리 가능 유지)
+  const RO_CFG: Partial<Record<Member["status"], { notice: string; btn: string; bg: string; fg: string }>> = {
+    approved: { notice: "이미 승인된 OKR이에요. 열람만 가능해요 🙂", btn: "승인 완료 · 열람 전용", bg: "#ECFAF1", fg: "#1F6E4A" },
+    rejected: { notice: "반려한 OKR이에요. 팀원이 수정해서 다시 결재요청하면 검토할 수 있어요 🙂", btn: "반려 완료 · 열람 전용", bg: "#FFF7EC", fg: "#7A4A14" },
+  };
+  const roCfg = selected ? RO_CFG[selected.status] : undefined;
+  const readOnly = !!roCfg;
 
   // ── 좌측 필터 ──────────────────────────────────────────────
   const [fStatus, setFStatus] = useState("all");
@@ -571,9 +578,9 @@ function ReviewContent() {
                 {notice.text}
               </div>
             )}
-            {readOnly && (
-              <div style={{ padding: "9px 12px", borderRadius: 10, fontSize: 11.5, lineHeight: 1.5, background: "#ECFAF1", color: "#1F6E4A" }}>
-                이미 승인된 OKR이에요. 열람만 가능해요 🙂
+            {roCfg && (
+              <div style={{ padding: "9px 12px", borderRadius: 10, fontSize: 11.5, lineHeight: 1.5, background: roCfg.bg, color: roCfg.fg }}>
+                {roCfg.notice}
               </div>
             )}
             {!items && selected && !readOnly && (
@@ -584,7 +591,7 @@ function ReviewContent() {
           </div>
           <div style={{ padding: "14px 20px", borderTop: "1px solid #ECEFF5", display: "flex", flexDirection: "column", gap: 8 }}>
             <Button variant="primary" fullWidth style={{ padding: 12 }} disabled={readOnly || !selected || !items || !decision || saving !== null} onClick={handleDecision}>
-              {readOnly ? "승인 완료 · 열람 전용" : saving === "decision" ? "처리 중…" : !decision ? "처리 방향을 선택해주세요" : decision === "approved" ? "승인하기 →" : decision === "rejected" ? "반려 보내기 →" : "조정요청 보내기 →"}
+              {roCfg ? roCfg.btn : saving === "decision" ? "처리 중…" : !decision ? "처리 방향을 선택해주세요" : decision === "approved" ? "승인하기 →" : decision === "rejected" ? "반려 보내기 →" : "조정요청 보내기 →"}
             </Button>
             <Button variant="ghost" fullWidth style={{ padding: 9, fontSize: 12 }} disabled={readOnly || !selected || !items || saving !== null} onClick={handleDraft}>
               {saving === "draft" ? "저장 중…" : "임시 저장 (검토 내용만)"}
