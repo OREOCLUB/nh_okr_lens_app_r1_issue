@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { useToast } from "@/components/Toast";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { loadWizard, saveWizard, type WizardState } from "@/lib/wizard";
 
@@ -67,7 +68,7 @@ export default function R1MyPage() {
   const [user, setUser] = useState<Session | null>(null);
   const [wizard, setWizard] = useState<WizardState | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { showToast, toastNode } = useToast();
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -94,7 +95,7 @@ export default function R1MyPage() {
     if (!user || !wizard) return;
     const saved = saveWizard(user.id, wizard);
     setSavedAt(saved.savedAt);
-    setNotice("변경사항을 저장했어요. OKR 작성 위저드에 그대로 반영됩니다 ✅");
+    showToast("변경사항을 저장했어요. OKR 작성 위저드에 그대로 반영됩니다.", "success");
   }
 
   const groupDone = [true, !!p.mainDuty.trim(), true, !!p.workType, p.certs.length > 0, true];
@@ -117,12 +118,7 @@ export default function R1MyPage() {
         <p style={{ margin: "8px 0 0", fontSize: 14.5, color: "#5B6685", lineHeight: 1.55, maxWidth: 720 }}>직무·근속·자격증 정보는 <b>OKR 작성</b>에서 그대로 불러와 활용해요. 변화가 생기면 여기서 먼저 반영해두면 이후 흐름이 매끄러워집니다.</p>
       </div>
 
-      {notice && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#ECFAF1", border: "1px solid #BBE9CC", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#1F6B45" }}>
-          <span>✅</span><div style={{ flex: 1 }}>{notice}</div>
-          <button onClick={() => setNotice(null)} style={{ border: "none", background: "transparent", color: "#6BA98A", cursor: "pointer", fontSize: 15 }}>×</button>
-        </div>
-      )}
+      {toastNode}
 
       {/* 진행률 + 출처 */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18, marginBottom: 22 }}>

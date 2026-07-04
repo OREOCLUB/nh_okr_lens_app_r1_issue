@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AI_VENDORS, VERDICT } from "./shared";
+import { useEffect, useState } from "react";
+import { AI_VENDORS, VERDICT, DragScroll } from "./shared";
 import type { WizardState, WizardKR } from "@/lib/wizard";
 
 // 멀티 AI(Claude·GPT·Gemini) 실 API 교차검증은 P2 — MVP는 목데이터 비교 (빌드스펙 확정 범위)
@@ -50,10 +50,15 @@ function synthReview(kr: WizardKR, vendorIdx: number): Review {
 const reviewFor = (kr: WizardKR, vendorId: string, vendorIdx: number): Review =>
   REVIEW_DATA[kr.id]?.[vendorId] ?? synthReview(kr, vendorIdx);
 
-export function Step6({ state, set }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void }) {
+export function Step6({ state, set, focusKrId }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; focusKrId?: string | null }) {
   const krs = state.krs;
-  const [activeId, setActiveId] = useState(krs[0]?.id ?? "");
+  const [activeId, setActiveId] = useState(focusKrId ?? krs[0]?.id ?? "");
   const cur = krs.find((k) => k.id === activeId) ?? krs[0];
+
+  // STEP 7 "KR 선택하기"로 진입 시 해당 KR 탭을 바로 연다
+  useEffect(() => {
+    if (focusKrId) setActiveId(focusKrId);
+  }, [focusKrId]);
 
   const allReviews = krs.flatMap((k) => AI_VENDORS.map((v, i) => reviewFor(k, v.id, i)));
   const passCt = allReviews.filter((r) => r.verdict === "pass").length;
@@ -126,12 +131,12 @@ export function Step6({ state, set }: { state: WizardState; set: (fn: (s: Wizard
         </div>
       </div>
 
-      {/* KR Tabs */}
-      <div style={{ display: "flex", gap: 10 }}>
+      {/* KR Tabs — 개수가 많아도 영역을 벗어나지 않게, 클릭+드래그로 좌우 이동 */}
+      <DragScroll gap={10}>
         {krs.map((k) => {
           const on = cur.id === k.id;
           return (
-            <button key={k.id} onClick={() => setActiveId(k.id)} style={{ flex: 1, textAlign: "left", padding: "12px 14px", background: on ? "#F1F4FD" : "#fff", border: `1.5px solid ${on ? "#3B5BDB" : "#E1E5EF"}`, borderRadius: 11, cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+            <button key={k.id} onClick={() => setActiveId(k.id)} style={{ width: 250, flexShrink: 0, textAlign: "left", padding: "12px 14px", background: on ? "#F1F4FD" : "#fff", border: `1.5px solid ${on ? "#3B5BDB" : "#E1E5EF"}`, borderRadius: 11, cursor: "pointer", fontFamily: "var(--font-sans)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#213A8C" }}>KR {String(k.num).padStart(2, "0")}</span>
                 <span style={{ padding: "1px 8px", borderRadius: 999, background: "var(--page-bg)", color: "#5B6685", fontSize: 10, fontWeight: 700 }}>가중치 {k.weight}%</span>
@@ -141,7 +146,7 @@ export function Step6({ state, set }: { state: WizardState; set: (fn: (s: Wizard
             </button>
           );
         })}
-      </div>
+      </DragScroll>
 
       {/* Selected KR title */}
       <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0F1A36" }}>KR {String(cur.num).padStart(2, "0")} · {cur.kr}</div>
@@ -153,7 +158,7 @@ export function Step6({ state, set }: { state: WizardState; set: (fn: (s: Wizard
           const ver = VERDICT[r.verdict];
           const isChosen = cur.chosenAI === v.id;
           return (
-            <div key={v.id} style={{ background: "#fff", border: `2px solid ${isChosen ? v.accent : "#E1E5EF"}`, borderRadius: 16, overflow: "hidden", boxShadow: isChosen ? `0 0 0 4px ${v.accent}18` : "var(--shadow-xs)" }}>
+            <div key={v.id} style={{ background: "#fff", border: `2px solid ${isChosen ? v.accent : "#E1E5EF"}`, borderRadius: 16, overflow: "hidden", boxShadow: isChosen ? `0 0 0 4px ${v.accent}18` : "var(--shadow-xs)", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: "14px 16px", background: v.accentBg, borderBottom: `1px solid ${v.accentBorder}`, display: "flex", alignItems: "center", gap: 9 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: v.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>{v.avatar}</div>
                 <div style={{ flex: 1 }}>
@@ -165,8 +170,9 @@ export function Step6({ state, set }: { state: WizardState; set: (fn: (s: Wizard
                   <div style={{ fontSize: 10, color: "#7C87A4", fontWeight: 600 }}>{r.scoreLabel}</div>
                 </div>
               </div>
-              <div style={{ padding: "14px 16px" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 999, background: ver.bg, color: ver.fg, fontSize: 11, fontWeight: 700, marginBottom: 10 }}><span style={{ fontSize: 9 }}>{ver.ico}</span>{ver.label}</span>
+              {/* 본문은 위에서 흐르고, 제안 박스 + 채택 버튼은 카드 하단에 고정 (3개 카드 버튼 높이 통일) */}
+              <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
+                <span style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 999, background: ver.bg, color: ver.fg, fontSize: 11, fontWeight: 700, marginBottom: 10 }}><span style={{ fontSize: 9 }}>{ver.ico}</span>{ver.label}</span>
                 <div style={{ fontSize: 12, color: "#3A4565", lineHeight: 1.6, marginBottom: 12 }}>{r.summary}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 12 }}>
                   {r.items.map((it) => {
@@ -179,7 +185,7 @@ export function Step6({ state, set }: { state: WizardState; set: (fn: (s: Wizard
                     );
                   })}
                 </div>
-                <div style={{ padding: "10px 12px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 9, fontSize: 11.5, color: "#5B6685", lineHeight: 1.55, marginBottom: 12 }}><b style={{ color: "#3A4565" }}>💡 제안</b> · {r.suggestion}</div>
+                <div style={{ marginTop: "auto", padding: "10px 12px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 9, fontSize: 11.5, color: "#5B6685", lineHeight: 1.55, marginBottom: 12 }}><b style={{ color: "#3A4565" }}>💡 제안</b> · {r.suggestion}</div>
                 <button onClick={() => choose(cur.id, v.id, r.suggestion)} style={{ width: "100%", padding: "9px", background: isChosen ? v.accent : "#fff", color: isChosen ? "#fff" : v.accent, border: `1.5px solid ${v.accent}`, borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{isChosen ? "✓ 이 의견 채택됨" : "이 의견 채택하기"}</button>
               </div>
             </div>

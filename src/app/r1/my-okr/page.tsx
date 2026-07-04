@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { useToast } from "@/components/Toast";
 import { r1Okrs, type OKR } from "@/lib/mockData";
 import { getR1Okrs, updateOkrProgress } from "@/lib/dataAccess";
 import { getCurrentUser, type Session } from "@/lib/auth";
@@ -152,7 +153,7 @@ export default function R1MyOKRPage() {
   const [loading, setLoading] = useState(true);
   const [modalIdx, setModalIdx] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { showToast, toastNode } = useToast();
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -169,10 +170,10 @@ export default function R1MyOKRPage() {
     try {
       if (target.dbId != null) {
         const result = await updateOkrProgress(target.dbId, progress);
-        if (result.saved === "local") setNotice(`진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요 (${result.reason}).`);
-        else setNotice("진행률을 저장했어요 ✅");
+        if (result.saved === "local") showToast(`진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요 (${result.reason}).`, "info");
+        else showToast("진행률을 저장했어요", "success");
       } else {
-        setNotice("진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요.");
+        showToast("진행률을 화면에 반영했어요. 서버 연결 후 자동 저장될 예정이에요.", "info");
       }
       setOkrs((list) => list.map((o, i) => (i === idx ? { ...o, progress } : o)));
       setModalIdx(null);
@@ -201,12 +202,7 @@ export default function R1MyOKRPage() {
         <p style={{ margin: "6px 0 0", fontSize: 14, color: "#5B6685" }}>평균 달성률 <b style={{ color: "#0F1A36" }}>{avgProgress}%</b> · KR {okrs.length}개 진행 중</p>
       </div>
 
-      {notice && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#ECFAF1", border: "1px solid #BBE9CC", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#1F6B45" }}>
-          <span>💡</span><div style={{ flex: 1 }}>{notice}</div>
-          <button onClick={() => setNotice(null)} style={{ border: "none", background: "transparent", color: "#6BA98A", cursor: "pointer", fontSize: 15 }}>×</button>
-        </div>
-      )}
+      {toastNode}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20, marginBottom: 20 }}>
         <ProgressChart avg={avgProgress} />

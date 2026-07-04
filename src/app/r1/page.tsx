@@ -19,15 +19,37 @@ const STATUS: Record<OKR["status"], { bg: string; bd: string; fg: string; label:
   rejected: { bg: "#FFF0F0", bd: "#FFD4D4", fg: "#D14343", label: "함께 정제" },
 };
 
+// OKR 카테고리 배지 — 신규 카테고리가 생겨도 폴백 스타일로 자동 표시 (확장형)
+const CATEGORY_META: Record<string, { bg: string; bd: string; fg: string; ico: string }> = {
+  "운영": { bg: "#E5EBFB", bd: "#C5D0F7", fg: "#213A8C", ico: "⚙️" },
+  "전략혁신": { bg: "#F0E9FB", bd: "#DCC9F4", fg: "#7C4DD9", ico: "🚀" },
+  "사후평가": { bg: "#FFEDE2", bd: "#F5CDB2", fg: "#B85C1F", ico: "🔍" },
+};
+const FALLBACK_CATEGORY = { bg: "#F1F3F8", bd: "#E1E5EF", fg: "#5B6685", ico: "🏷️" };
+
+function CategoryBadge({ category }: { category?: string }) {
+  if (!category) return null;
+  const m = CATEGORY_META[category] ?? FALLBACK_CATEGORY;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 999, background: m.bg, border: `1px solid ${m.bd}`, color: m.fg, fontSize: 11.5, fontWeight: 700 }}>
+      <span style={{ fontSize: 10 }}>{m.ico}</span>{category}
+    </span>
+  );
+}
+
 function OKRItem({ okr }: { okr: OKR }) {
   const s = STATUS[okr.status];
   const barColor = okr.progress >= 70 ? "#2F9E5E" : okr.progress >= 40 ? "#3B5BDB" : "#D98023";
   return (
     <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "20px 22px", boxShadow: "var(--shadow-xs)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ padding: "3px 10px", borderRadius: 999, background: s.bg, border: `1px solid ${s.bd}`, color: s.fg, fontSize: 11.5, fontWeight: 600 }}>{s.label}</span>
+        <CategoryBadge category={okr.category} />
         <span className="mono" style={{ padding: "3px 10px", borderRadius: 999, background: "var(--page-bg)", border: "1px solid #E1E5EF", color: "#5B6685", fontSize: 11.5, fontWeight: 600 }}>KR · {okr.format}</span>
-        <span className="mono" style={{ fontSize: 11.5, color: "#7C87A4", marginLeft: "auto" }}>가중치 {okr.weight}%</span>
+        <span style={{ padding: "3px 10px", borderRadius: 999, background: s.bg, border: `1px solid ${s.bd}`, color: s.fg, fontSize: 11.5, fontWeight: 600 }}>{s.label}</span>
+        <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "baseline", gap: 5, padding: "3px 11px", borderRadius: 8, background: "#F4F6FB", border: "1px solid #E8ECF5" }}>
+          <span style={{ fontSize: 10, color: "#7C87A4", fontWeight: 600 }}>가중치</span>
+          <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>{okr.weight}%</span>
+        </span>
       </div>
       <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 3 }}>{okr.obj}</div>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#0F1A36", lineHeight: 1.5, letterSpacing: "-0.01em" }}>{okr.kr}</div>
@@ -115,13 +137,27 @@ export default function R1HomePage() {
 
   return (
     <RoleShell role="R1" title="피평가자 홈" subtitle={user ? `${user.name} · ${user.dept} · ${user.team}` : ""}>
-      {/* Greeting */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase" }}>2026 하반기 · OKR 등록 진행 중</div>
-        <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>안녕하세요, {name} 님 👋</h1>
-        <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#5B6685" }}>
-          마감까지 {dday}일 남았어요. {draftCount > 0 ? `KR ${okrs.length}개 중 ${draftCount}개는 아직 작성 중이네요.` : `KR ${okrs.length}개가 진행 중이에요.`}
-        </p>
+      {/* Greeting + 마감 요약카드 (마감 안내는 이 카드 한 곳으로 통일) */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3B5BDB", letterSpacing: "0.04em", textTransform: "uppercase" }}>2026 하반기 · OKR 등록 진행 중</div>
+          <h1 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.025em", lineHeight: 1.2 }}>안녕하세요, {name} 님 👋</h1>
+          <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#5B6685" }}>
+            {draftCount > 0 ? `KR ${okrs.length}개 중 ${draftCount}개는 아직 작성 중이네요.` : `KR ${okrs.length}개가 진행 중이에요.`}
+          </p>
+        </div>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, boxShadow: "var(--shadow-xs)" }}>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: dday <= 7 ? "#FFF0F0" : "#EFF4FE", color: dday <= 7 ? "#D14343" : "#2B5DD9", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.8 }}>D-</span>
+            <span className="mono" style={{ fontSize: 18, fontWeight: 800 }}>{dday}</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>OKR 등록 마감</div>
+            <div className="mono" style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 2 }}>
+              {DEADLINE.getFullYear()}-{String(DEADLINE.getMonth() + 1).padStart(2, "0")}-{String(DEADLINE.getDate()).padStart(2, "0")} 18:00 까지
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* CTA banner */}
@@ -133,7 +169,6 @@ export default function R1HomePage() {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, opacity: 0.85, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ padding: "3px 9px", background: "rgba(255,255,255,0.2)", borderRadius: 999 }}>지금 할 일</span>
-            <span>D-{dday} · OKR 등록 마감까지</span>
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.3, marginBottom: 4 }}>
             {wizardSubmitted ? "제출 완료! 검토 결과를 기다리는 중이에요" : "이번 반기 OKR을 작성해볼까요?"}

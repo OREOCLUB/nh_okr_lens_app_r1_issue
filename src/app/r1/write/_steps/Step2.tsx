@@ -34,7 +34,7 @@ function ChatMessage({ from, text, time, userInitial }: ChatMsg & { userInitial:
   );
 }
 
-export function Step2({ state, set, user, criteria }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; user: Session; criteria: CriteriaData }) {
+export function Step2({ state, set, user, criteria, onGo }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; user: Session; criteria: CriteriaData; onGo: (n: number) => void }) {
   const b = state.basic;
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -194,7 +194,7 @@ export function Step2({ state, set, user, criteria }: { state: WizardState; set:
           <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "18px 20px" }}>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>나의 정보</span>
-              <button onClick={() => set((s) => ({ ...s, step: 0 }))} style={{ marginLeft: "auto", fontSize: 11.5, color: "#3B5BDB", background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 }}>편집</button>
+              <button onClick={() => onGo(0)} style={{ marginLeft: "auto", fontSize: 11.5, color: "#3B5BDB", background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 }}>편집</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               {[["조직", `${user.dept} · ${user.team}`], ["직급 · 직렬", `${user.grade} · ${state.profile.jobSeries}`], ["업무 분장", state.profile.mainDuty || "—"]].map(([k, v]) => (

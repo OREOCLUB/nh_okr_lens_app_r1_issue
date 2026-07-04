@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { recommendFormat } from "./shared";
+import { recommendFormat, DragScroll } from "./shared";
 import type { WizardState } from "@/lib/wizard";
 
 interface Fmt { key: string; icon: string; title: string; accent: string; badge: string; desc: string; structure: string; example: string; useCases: string[] }
@@ -98,11 +98,12 @@ export function Step4({ state, set }: { state: WizardState; set: (fn: (s: Wizard
           </div>
           <button onClick={applyAll} style={{ marginLeft: "auto", padding: "9px 16px", background: "#00A968", color: "#fff", border: "none", borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✨ 추천대로 일괄 적용</button>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(krs.length, 3)}, 1fr)`, gap: 10 }}>
+        {/* 카드가 많아도 영역을 벗어나지 않게 — 클릭+드래그로 좌우 이동 (스크롤바 없음) */}
+        <DragScroll gap={10}>
           {krs.map((k) => {
             const r = recommendFormat(k);
             return (
-              <div key={k.id} style={{ background: "#fff", border: "1px solid #DFF3E8", borderRadius: 11, padding: "13px 14px" }}>
+              <div key={k.id} style={{ width: 250, flexShrink: 0, background: "#fff", border: "1px solid #DFF3E8", borderRadius: 11, padding: "13px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#213A8C", marginBottom: 3 }}>KR {String(k.num).padStart(2, "0")}</div>
                 <div style={{ fontSize: 12, color: "#3A4565", marginBottom: 8, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.kr}</div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 999, background: "#E6F5F0", color: "#0F1A36", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>추천 · {r.format}</div>
@@ -110,7 +111,7 @@ export function Step4({ state, set }: { state: WizardState; set: (fn: (s: Wizard
               </div>
             );
           })}
-        </div>
+        </DragScroll>
       </div>
 
       {/* Reference table */}

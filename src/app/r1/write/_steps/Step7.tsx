@@ -13,24 +13,58 @@ const AI_BADGE: Record<string, { c: string; bg: string; short: string; ico: stri
   gemini: { c: "#4285F4", bg: "#E8F0FE", short: "Gemini", ico: "✧" },
 };
 
-const dashed: CSSProperties = { padding: "8px 11px", fontSize: 13, background: "#F9FAFC", border: "1px dashed #D5DDF0", borderRadius: 8, cursor: "text", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6, minHeight: 36 };
+// 수정 흐름: ✏️ 수정 버튼 → 편집 → (내용이 바뀌면) 옅은 개나리색 미확정 상태 → ✓ 확정 버튼으로 커밋
+const boxBase: CSSProperties = { padding: "8px 11px", fontSize: 13, borderRadius: 8, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6, minHeight: 36, flex: 1 };
 
 function EditableField({ value, onCommit, multiline, mono, fontSize = 13, fontWeight = 500, color = "#0F1A36" }: { value: string; onCommit: (v: string) => void; multiline?: boolean; mono?: boolean; fontSize?: number; fontWeight?: number; color?: string }) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value);
   useEffect(() => setVal(value), [value]);
   const font = mono ? "var(--font-mono)" : "var(--font-sans)";
-  function commit() {
+  const dirty = val !== value; // 수정했지만 아직 확정(✓) 전
+
+  function confirm() {
     setEditing(false);
-    if (val !== value) onCommit(val);
+    if (dirty) onCommit(val);
   }
+  function cancelEdit() {
+    setVal(value);
+    setEditing(false);
+  }
+
+  const iconBtn: CSSProperties = { width: 28, height: 28, borderRadius: 8, border: "1px solid #E1E5EF", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 };
+
   if (editing) {
-    const common = { width: "100%", padding: "8px 11px", fontSize, fontWeight, color, fontFamily: font, background: "#fff", border: "1.5px solid #3B5BDB", borderRadius: 8, outline: "none", lineHeight: 1.5, boxShadow: "0 0 0 4px rgba(59,91,219,.12)" } as CSSProperties;
-    return multiline
-      ? <textarea autoFocus value={val} rows={2} onChange={(e) => setVal(e.target.value)} onBlur={commit} style={{ ...common, resize: "vertical" }} />
-      : <input autoFocus value={val} onChange={(e) => setVal(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") commit(); }} style={common} />;
+    const common = { width: "100%", padding: "8px 11px", fontSize, fontWeight, color, fontFamily: font, background: dirty ? "#FFFBE6" : "#fff", border: "1.5px solid #3B5BDB", borderRadius: 8, outline: "none", lineHeight: 1.5, boxShadow: "0 0 0 4px rgba(59,91,219,.12)" } as CSSProperties;
+    return (
+      <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+        {multiline
+          ? <textarea autoFocus value={val} rows={2} onChange={(e) => setVal(e.target.value)} onBlur={() => setEditing(false)} onKeyDown={(e) => { if (e.key === "Escape") cancelEdit(); }} style={{ ...common, resize: "vertical" }} />
+          : <input autoFocus value={val} onChange={(e) => setVal(e.target.value)} onBlur={() => setEditing(false)} onKeyDown={(e) => { if (e.key === "Enter") confirm(); if (e.key === "Escape") cancelEdit(); }} style={common} />}
+        <button title="확정" onMouseDown={(e) => e.preventDefault()} onClick={confirm} style={{ ...iconBtn, background: "#2F9E5E", border: "1px solid #2F9E5E", color: "#fff", marginTop: 2 }}>✓</button>
+      </div>
+    );
   }
-  return <div onClick={() => setEditing(true)} style={{ ...dashed, fontSize, fontWeight, color, fontFamily: font }}>{val || <span style={{ color: "#A6AEC2" }}>클릭해서 입력</span>}<span style={{ marginLeft: "auto", fontSize: 11, color: "#A6AEC2" }}>✏️</span></div>;
+
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+      <div
+        style={{
+          ...boxBase,
+          fontSize, fontWeight, color, fontFamily: font,
+          background: dirty ? "#FFFBE6" : "#F9FAFC",
+          border: dirty ? "1.5px solid #F0DFA0" : "1px dashed #D5DDF0",
+        }}
+      >
+        {val || <span style={{ color: "#A6AEC2" }}>내용을 입력해주세요</span>}
+        {dirty && <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#B8860B", flexShrink: 0 }}>확정 전</span>}
+      </div>
+      <button title="수정" onClick={() => setEditing(true)} style={iconBtn}>✏️</button>
+      {dirty && (
+        <button title="확정" onClick={confirm} style={{ ...iconBtn, background: "#2F9E5E", border: "1px solid #2F9E5E", color: "#fff" }}>✓</button>
+      )}
+    </div>
+  );
 }
 
 function AIChipBadge({ vendor }: { vendor: string }) {
@@ -63,7 +97,7 @@ function FinalKRCard({ kr, patch, forceOpen }: { kr: WizardKR; patch: (p: Partia
             <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 5 }}>Key Result</div>
             <EditableField value={kr.kr} onCommit={(v) => patch({ kr: v })} multiline fontSize={14} fontWeight={600} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 120px 120px", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 170px 170px", gap: 12 }}>
             <div><div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", marginBottom: 5 }}>측정 방법</div><EditableField value={[kr.measureTool, kr.measureStat, kr.measureCycle].filter(Boolean).join(" · ")} onCommit={(v) => patch({ measureTool: v, measureStat: "", measureCycle: "" })} fontSize={12.5} /></div>
             <div><div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", marginBottom: 5 }}>Baseline</div><EditableField value={kr.baseline} onCommit={(v) => patch({ baseline: v })} mono fontSize={12.5} /></div>
             <div><div style={{ fontSize: 10.5, fontWeight: 700, color: "#7C87A4", marginBottom: 5 }}>Goal</div><EditableField value={kr.goal} onCommit={(v) => patch({ goal: v })} mono fontSize={12.5} color="#3B5BDB" /></div>
@@ -90,14 +124,14 @@ function FinalKRCard({ kr, patch, forceOpen }: { kr: WizardKR; patch: (p: Partia
   );
 }
 
-export function Step7({ state, set, criteria, evaluatorName, onSubmit, submitting, onGoStep }: {
+export function Step7({ state, set, criteria, evaluatorName, onSubmit, submitting, onPickKr }: {
   state: WizardState;
   set: (fn: (s: WizardState) => WizardState) => void;
   criteria: CriteriaData;
   evaluatorName: string;
   onSubmit: () => void;
   submitting: boolean;
-  onGoStep: (n: number) => void;
+  onPickKr: (krId: string) => void;
 }) {
   const krs = state.krs;
   const [allOpen, setAllOpen] = useState(false);
@@ -141,15 +175,21 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
         {krs.map((kr) => <FinalKRCard key={kr.id} kr={kr} patch={(p) => patchKR(kr.id, p)} forceOpen={allOpen} />)}
       </div>
 
-      {/* 미채택 알림 */}
+      {/* 미채택 알림 — KR별 버튼을 누르면 STEP 6의 해당 KR 탭이 바로 열림 */}
       {unadopted.length > 0 && (
         <div style={{ background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 12 }}>
           <span style={{ fontSize: 20 }}>⚠️</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#7A4A14" }}>KR {unadopted.map((k) => String(k.num).padStart(2, "0")).join(", ")} — AI 의견을 아직 채택하지 않으셨어요</div>
-            <div style={{ fontSize: 12, color: "#9C5E26", marginTop: 3, lineHeight: 1.55 }}>STEP 6으로 돌아가서 의견을 채택하시거나, 위 카드에서 직접 보완해주세요. 채택 없이 제출해도 팀장 코칭 시 함께 정제할 수 있어요.</div>
+            <div style={{ fontSize: 12, color: "#9C5E26", marginTop: 3, lineHeight: 1.55 }}>아래 버튼을 누르면 STEP 6에서 해당 KR의 AI 의견이 바로 열려요. 채택 없이 제출해도 팀장 코칭 시 함께 정제할 수 있어요.</div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              {unadopted.map((k) => (
+                <Button key={k.id} variant="secondary" size="sm" onClick={() => onPickKr(k.id)}>
+                  KR {String(k.num).padStart(2, "0")} 선택하러 가기 →
+                </Button>
+              ))}
+            </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => onGoStep(6)}>STEP 6으로 →</Button>
         </div>
       )}
 

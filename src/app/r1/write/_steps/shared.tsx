@@ -1,5 +1,52 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { WizardKR } from "@/lib/wizard";
+
+// ── 가로 드래그 패닝 컨테이너 — 스크롤바 없이 클릭+드래그로 이동 ──
+export function DragScroll({ children, gap = 10, style }: { children: ReactNode; gap?: number; style?: CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef({ startX: 0, startLeft: 0, moved: false });
+  const [dragging, setDragging] = useState(false);
+
+  function onMouseDown(e: React.MouseEvent) {
+    if (!ref.current) return;
+    drag.current = { startX: e.clientX, startLeft: ref.current.scrollLeft, moved: false };
+    setDragging(true);
+  }
+  function onMouseMove(e: React.MouseEvent) {
+    if (!dragging || !ref.current) return;
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 4) drag.current.moved = true;
+    ref.current.scrollLeft = drag.current.startLeft - dx;
+  }
+  function endDrag() {
+    setDragging(false);
+  }
+  // 드래그 직후 클릭 이벤트가 카드 선택으로 새지 않게 캡처 단계에서 차단
+  function onClickCapture(e: React.MouseEvent) {
+    if (drag.current.moved) {
+      e.stopPropagation();
+      e.preventDefault();
+      drag.current.moved = false;
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`drag-scroll${dragging ? " dragging" : ""}`}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={endDrag}
+      onMouseLeave={endDrag}
+      onClickCapture={onClickCapture}
+      style={{ display: "flex", gap, ...style }}
+    >
+      {children}
+    </div>
+  );
+}
 
 // ── 공용 스타일 ──
 export const label: CSSProperties = { display: "block", fontSize: 12.5, fontWeight: 600, color: "#3A4565", marginBottom: 7 };

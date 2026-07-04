@@ -46,6 +46,7 @@ export const members: Member[] = [
 export interface OKR {
   dbId?: number; // Supabase okrs.id — 더미일 땐 없음
   status: "approved" | "submitted" | "draft" | "rejected";
+  category?: string; // OKR 카테고리 — 운영 | 전략혁신 | (신규 카테고리 확장 가능)
   obj: string;
   kr: string;
   format: string;
@@ -59,6 +60,7 @@ export interface OKR {
 export const r1Okrs: OKR[] = [
   {
     status: "approved",
+    category: "운영",
     obj: "Objective · 핵심 서비스 응답속도 개선",
     kr: "결제 게이트웨이 APM p95 응답속도를 850ms → 500ms로 단축한다.",
     format: "수치", baseline: "850ms", goal: "500ms", weight: 30, progress: 72,
@@ -66,12 +68,14 @@ export const r1Okrs: OKR[] = [
   },
   {
     status: "submitted",
+    category: "운영",
     obj: "Objective · 결제 인증 모듈 안정화",
     kr: "결제 인증모듈 단위테스트 커버리지를 65% → 85%로 끌어올린다.",
     format: "수치", baseline: "65%", goal: "85%", weight: 25, progress: 45,
   },
   {
     status: "draft",
+    category: "전략혁신",
     obj: "Objective · 운영 자동화",
     kr: "장애 알림 룰 자동화 마일스톤 4단계 중 3단계까지 완료한다.",
     format: "마일스톤", baseline: "1/4", goal: "3/4", weight: 20, progress: 25,

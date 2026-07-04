@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
+import { useToast } from "@/components/Toast";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { evalSystem, taxonomy, checklist } from "@/lib/criteria";
 import { getCriteria, submitOkrs, type CriteriaData } from "@/lib/dataAccess";
@@ -98,8 +99,9 @@ export default function R1WritePage() {
   const [user, setUser] = useState<Session | null>(null);
   const [state, setState] = useState<WizardState | null>(null);
   const [criteria, setCriteria] = useState<CriteriaData>({ system: evalSystem, taxonomy, checklist });
-  const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [step6Focus, setStep6Focus] = useState<string | null>(null);
+  const { showToast, toastNode } = useToast();
   const userIdRef = useRef<string>("");
 
   // 세션 사용자 + 저장된 위저드 상태 복원 (RoleShell이 인증·역할 가드)
@@ -123,19 +125,25 @@ export default function R1WritePage() {
 
   const step = state?.step ?? 0;
 
-  const goTo = useCallback(
-    (n: number) => {
-      setNotice(null);
-      set((s) => ({ ...s, step: n, maxStep: Math.max(s.maxStep, n) }));
-    },
-    [set]
-  );
+  // 스텝 이동 — 모든 이동에 안내 토스트 (순차 진행은 "넘어갈게요", 점프·복귀는 "다녀올게요")
+  function goTo(n: number, opts?: { silent?: boolean }) {
+    if (!opts?.silent && n !== step) {
+      const forward = n === step + 1;
+      showToast(
+        forward
+          ? `STEP ${n} · ${STEPS[n].label}(으)로 넘어갈게요!`
+          : `잠시 STEP ${n} · ${STEPS[n].label}(으)로 다녀올게요!`,
+        "info"
+      );
+    }
+    set((s) => ({ ...s, step: n, maxStep: Math.max(s.maxStep, n) }));
+  }
 
   function next() {
     if (!state) return;
     const blocker = stepBlocker(state, step);
     if (blocker) {
-      setNotice(blocker);
+      showToast(blocker, "warn");
       return;
     }
     goTo(Math.min(7, step + 1));
@@ -148,7 +156,15 @@ export default function R1WritePage() {
 
   function saveNow() {
     set((s) => s);
-    setNotice("임시 저장했어요. 언제든 이어서 작성할 수 있어요 🙂");
+    showToast("임시 저장했어요. 언제든 이어서 작성할 수 있어요 🙂", "success");
+  }
+
+  // STEP 7 미채택 KR → STEP 6 해당 KR 탭 바로 열기
+  function pickKrInStep6(krId: string) {
+    setStep6Focus(krId);
+    const num = state?.krs.find((k) => k.id === krId)?.num;
+    set((s) => ({ ...s, step: 6, maxStep: Math.max(s.maxStep, 6) }));
+    showToast(`잠시 STEP 6 · AI 비교 검토로 다녀올게요! KR ${String(num ?? "").padStart(2, "0")}을 열었어요.`, "info");
   }
 
   const evaluatorName = "박정훈"; // 결제플랫폼팀 평가자 (프로토타입 — P2에서 결재라인 연동)
@@ -159,14 +175,14 @@ export default function R1WritePage() {
     for (const n of [0, 2, 4, 5]) {
       const blocker = stepBlocker(state, n);
       if (blocker) {
-        setNotice(`STEP ${n}을 먼저 완성해주세요 — ${blocker}`);
-        goTo(n);
+        showToast(`STEP ${n}을 먼저 완성해주세요 — ${blocker}`, "warn");
+        goTo(n, { silent: true });
         return;
       }
     }
     const sum = weightSum(state.krs);
     if (sum > criteria.system.scoreCap) {
-      setNotice(`KR 가중치 합이 ${sum}%예요. 상한 ${criteria.system.scoreCap}% 이하로 조정해주세요.`);
+      showToast(`KR 가중치 합이 ${sum}%예요. 상한 ${criteria.system.scoreCap}% 이하로 조정해주세요.`, "warn");
       return;
     }
     const { min, max } = criteria.system.krRange;
@@ -174,7 +190,6 @@ export default function R1WritePage() {
     if (!window.confirm(`${evaluatorName} 팀장에게 OKR ${state.krs.length}건을 제출할까요?${countHint}\n제출 후에도 조정 요청 시 수정할 수 있어요.`)) return;
 
     setSubmitting(true);
-    setNotice(null);
     try {
       const result = await submitOkrs(
         user.id,
@@ -195,7 +210,7 @@ export default function R1WritePage() {
       }
       router.push("/r1");
     } catch (e) {
-      setNotice(`제출 중 연결이 원활하지 않았어요. 내용은 임시 저장되어 있으니 잠시 후 다시 시도해주세요. (${e instanceof Error ? e.message : "unknown"})`);
+      showToast(`제출 중 연결이 원활하지 않았어요. 내용은 임시 저장되어 있으니 잠시 후 다시 시도해주세요. (${e instanceof Error ? e.message : "unknown"})`, "warn");
     } finally {
       setSubmitting(false);
     }
@@ -225,22 +240,16 @@ export default function R1WritePage() {
       <StepHeader current={step} maxStep={state.maxStep} onJump={goTo} />
       {step !== 5 && <Hero num={step} title={STEPS[step].label} desc={DESC[step]} />}
 
-      {notice && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: "#7A4A14", lineHeight: 1.55 }}>
-          <span style={{ fontSize: 15 }}>💡</span>
-          <div style={{ flex: 1, whiteSpace: "pre-line" }}>{notice}</div>
-          <button onClick={() => setNotice(null)} style={{ border: "none", background: "transparent", color: "#B98A4E", cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
-        </div>
-      )}
+      {toastNode}
 
       {step === 0 && <Step0 state={state} set={set} user={user} />}
       {step === 1 && <Step1 state={state} set={set} criteria={criteria} />}
-      {step === 2 && <Step2 state={state} set={set} user={user} criteria={criteria} />}
+      {step === 2 && <Step2 state={state} set={set} user={user} criteria={criteria} onGo={goTo} />}
       {step === 3 && <Step3 state={state} set={set} user={user} criteria={criteria} />}
       {step === 4 && <Step4 state={state} set={set} />}
       {step === 5 && <Step5 state={state} set={set} />}
-      {step === 6 && <Step6 state={state} set={set} />}
-      {step === 7 && <Step7 state={state} set={set} criteria={criteria} evaluatorName={evaluatorName} onSubmit={submit} submitting={submitting} onGoStep={goTo} />}
+      {step === 6 && <Step6 state={state} set={set} focusKrId={step6Focus} />}
+      {step === 7 && <Step7 state={state} set={set} criteria={criteria} evaluatorName={evaluatorName} onSubmit={submit} submitting={submitting} onPickKr={pickKrInStep6} />}
 
       {/* Nav */}
       <div style={{ marginTop: 22, padding: "16px 22px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, display: "flex", alignItems: "center", gap: 12, boxShadow: "var(--shadow-xs)" }}>
