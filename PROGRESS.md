@@ -26,14 +26,19 @@
 - **DB 정리 스크립트**: `supabase/reseed_data.sql` — 오염 5개 테이블(employees·okr_submissions·okrs·okr_history·okr_imports) delete 후 원본+최민경 팀 시드 재적재, CR-1의 employees.title 컬럼 drop 포함. **사용자가 SQL Editor에서 실행** (개인 DB 확인됨). 기대값: employees 26 · submissions 14 · okrs 31 · history 18 · imports 3
 - **스키마 문서 정리**: schema.sql(신규 프로젝트용 통합본)에 최민경 팀 시드 반영, schema_R2.sql에 변경 내역 ⑥ 평가 라인 분리·⑦ title 컬럼 롤백 기록
 
+- **후속 수정 2건**: ① 검토 화면 `?member=` 자동 선택을 실데이터 로드 후로 지연 (`47598ea` — 최민경 계정에서 대시보드→검토 이동 시 선택 무효화되던 버그) ② **반려(rejected) 건도 열람 전용** (`c7f600a` — R1이 재결재요청해야 하는 상태라 처리 차단, 상태별 코칭 톤 안내. 조정요청은 처리 가능 유지)
+- **머지·배포**: feature/R2 → main 머지 완료 및 양 브랜치 push (`4bfd742` / main `a17cd94`). **schema.sql은 사용자 지시로 main 머지 제외** — 두 브랜치 차이는 schema.sql +43줄(최민경 시드)뿐
+- **팀 공용 DB 전환 검증**: .env.local을 팀 DB로 전환(URL 오타 `supabase.conpm`→`.co` 수정). 팀 DB 실조회 결과 초기 스키마 상태 → schema_R2.sql ①~⑥ 전부 필요·누락 없음 확인, 팀 DB에 없는 title drop(⑦)은 파일에서 제거
+
 ### 이슈/결정사항
-- CR-1(직급·직책 분리)은 **롤백 확정** — title 컬럼 제거, grade 단일 표기로 복귀. CR-2(결재요청만 수정)는 미적용 상태(§7의 REV-02 승인 건 열람 전용까지만). 재추진 시 stash 참고 가능하나 재구현 권장
+- CR-1(직급·직책 분리)은 **롤백 확정** — title 컬럼 제거, grade 단일 표기로 복귀. CR-2는 일부만 반영된 상태(승인·반려 열람 전용까지. "처리 내용 표시"는 미구현). 재추진 시 stash 참고 가능하나 재구현 권장
 - stash: `stash@{0} "CR-1/CR-2 + 테스트데이터 작업분 보존 (2026-07-04 롤백 전)"`
+- 개인 DB는 reseed_data.sql 실행 완료(사용자). **팀 공용 DB에는 schema_R2.sql 아직 미실행** — 팀에서 SQL Editor로 1회 실행 필요
 
 ### 다음 할 일
-1. reseed_data.sql 실행 후 화면 확인 (박정훈 8명 / 최민경 6명 분리 표시)
-2. §5 수동 확인 체크리스트 재점검
-3. CR-2(결재요청만 수정 가능 + 처리 내용 표시) 재추진 여부 결정
+1. 팀 공용 DB에 schema_R2.sql 실행 (기대값: employees 26 · submissions 14 · okrs 31 · history 18) 후 화면 확인 (박정훈 8명 / 최민경 6명)
+2. §5 수동 확인 체크리스트 재점검 (R1·R3 연쇄 반영 포함)
+3. CR-2 잔여분("처리 내용 표시" — evaluator_msg·decided_at 조회 표시) 재추진 여부 결정
 
 ---
 
