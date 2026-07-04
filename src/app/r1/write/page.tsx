@@ -8,12 +8,13 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { evalSystem, taxonomy, checklist } from "@/lib/criteria";
-import { getCriteria, submitOkrs, type CriteriaData } from "@/lib/dataAccess";
+import { getCriteria, submitOkrs, recallOkrs, type CriteriaData } from "@/lib/dataAccess";
 import {
   loadWizard,
   saveWizard,
   stepBlocker,
-  weightSum,
+  gradesDirty,
+  submitReadiness,
   type WizardState,
 } from "@/lib/wizard";
 import { Step0 } from "./_steps/Step0";
@@ -100,6 +101,7 @@ export default function R1WritePage() {
   const [state, setState] = useState<WizardState | null>(null);
   const [criteria, setCriteria] = useState<CriteriaData>({ system: evalSystem, taxonomy, checklist });
   const [submitting, setSubmitting] = useState(false);
+  const [recalling, setRecalling] = useState(false);
   const [step6Focus, setStep6Focus] = useState<string | null>(null);
   const { showToast, toastNode } = useToast();
   const userIdRef = useRef<string>("");
@@ -125,6 +127,12 @@ export default function R1WritePage() {
 
   const step = state?.step ?? 0;
 
+  // 스텝이 바뀌면 항상 화면 맨 위로 (RoleShell의 main이 스크롤 컨테이너)
+  useEffect(() => {
+    document.querySelector("main")?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  }, [step]);
+
   // 스텝 이동 — 모든 이동에 안내 토스트 (순차 진행은 "넘어갈게요", 점프·복귀는 "다녀올게요")
   function goTo(n: number, opts?: { silent?: boolean }) {
     if (!opts?.silent && n !== step) {
@@ -141,7 +149,25 @@ export default function R1WritePage() {
 
   function next() {
     if (!state) return;
-    const blocker = stepBlocker(state, step);
+    let effective = state;
+
+    // STEP 5: 확정하지 않은 등급 변경이 있으면 일괄 확정 여부 확인 후 진행
+    if (step === 5) {
+      const dirtyKrs = state.krs.filter(gradesDirty);
+      if (dirtyKrs.length > 0) {
+        const names = dirtyKrs.map((k) => `KR ${String(k.num).padStart(2, "0")}`).join(", ");
+        const ok = window.confirm(`${names}의 등급 기준에 확정하지 않은 변경이 있어요.\n전부 확정 처리하고 다음 단계로 넘어갈까요?`);
+        if (!ok) return;
+        effective = {
+          ...state,
+          krs: state.krs.map((k) => (k.gradesDraft ? { ...k, grades: k.gradesDraft, gradesDraft: null } : k)),
+        };
+        set(() => effective);
+        showToast(`${names}의 등급 기준을 확정했어요 ✓`, "success");
+      }
+    }
+
+    const blocker = stepBlocker(effective, step);
     if (blocker) {
       showToast(blocker, "warn");
       return;
@@ -159,6 +185,18 @@ export default function R1WritePage() {
     showToast("임시 저장했어요. 언제든 이어서 작성할 수 있어요 🙂", "success");
   }
 
+  // 확인 다이얼로그를 거치는 스텝 이동 — 현재 위치·목적지·임시저장 안내 후 이동 (STEP 2 편집 등)
+  function confirmGo(n: number) {
+    if (!state) return;
+    const ok = window.confirm(
+      `지금은 STEP ${step} · ${STEPS[step].label} 단계예요.\nSTEP ${n} · ${STEPS[n].label}(으)로 이동할게요.\n현재 입력 내용은 임시저장해둘게요.\n\n이동할까요?`
+    );
+    if (!ok) return;
+    set((s) => s); // 이동 전 임시저장 (saveWizard 경유)
+    showToast(`임시 저장 완료! 잠시 STEP ${n} · ${STEPS[n].label}(으)로 다녀올게요!`, "success");
+    goTo(n, { silent: true });
+  }
+
   // STEP 7 미채택 KR → STEP 6 해당 KR 탭 바로 열기
   function pickKrInStep6(krId: string) {
     setStep6Focus(krId);
@@ -171,8 +209,12 @@ export default function R1WritePage() {
 
   async function submit() {
     if (!state || !user || submitting) return;
-    // 최종 검증 — 전 스텝 블로커 + 가중치 상한 (기준은 criteria에서)
-    for (const n of [0, 2, 4, 5]) {
+    if (state.submitted) {
+      showToast("이미 제출된 OKR이에요. 수정하려면 먼저 회수해주세요.", "warn");
+      return;
+    }
+    // 최종 검증 ① — 프로필·기초정보 블로커
+    for (const n of [0, 2]) {
       const blocker = stepBlocker(state, n);
       if (blocker) {
         showToast(`STEP ${n}을 먼저 완성해주세요 — ${blocker}`, "warn");
@@ -180,9 +222,11 @@ export default function R1WritePage() {
         return;
       }
     }
-    const sum = weightSum(state.krs);
-    if (sum > criteria.system.scoreCap) {
-      showToast(`KR 가중치 합이 ${sum}%예요. 상한 ${criteria.system.scoreCap}% 이하로 조정해주세요.`, "warn");
+    // 최종 검증 ② — 제출 적합성 게이트 (가중치·형태·측정·등급·위험도)
+    const readiness = submitReadiness(state, criteria.system, criteria.checklist);
+    if (!readiness.ok) {
+      const fails = readiness.items.filter((i) => !i.pass);
+      showToast(`제출 전에 보완이 필요해요:\n${fails.map((f) => `· ${f.label} — ${f.detail}`).join("\n")}`, "warn");
       return;
     }
     const { min, max } = criteria.system.krRange;
@@ -216,6 +260,26 @@ export default function R1WritePage() {
     }
   }
 
+  // 제출 회수 — 회수해야 수정·재제출이 가능하다
+  async function recall() {
+    if (!state || !user || recalling) return;
+    const ok = window.confirm("제출한 OKR을 회수할까요?\n회수하면 다시 수정할 수 있고, 수정을 마친 뒤 재제출하면 돼요.\n(평가자 검토가 시작된 경우 회수 사실이 함께 표시돼요)");
+    if (!ok) return;
+    setRecalling(true);
+    try {
+      const result = await recallOkrs(user.id);
+      set((s) => ({ ...s, submitted: false }));
+      showToast(
+        result.saved === "db"
+          ? "OKR을 회수했어요. 수정 후 다시 제출해주세요 🙂"
+          : "OKR을 회수했어요 (서버 연결 후 자동 반영). 수정 후 다시 제출해주세요 🙂",
+        "success"
+      );
+    } finally {
+      setRecalling(false);
+    }
+  }
+
   const subtitle = useMemo(
     () => (user ? `${user.name} · 2026 하반기 · 8단계 위저드` : "2026 하반기 · 8단계 위저드"),
     [user]
@@ -242,14 +306,29 @@ export default function R1WritePage() {
 
       {toastNode}
 
-      {step === 0 && <Step0 state={state} set={set} user={user} />}
-      {step === 1 && <Step1 state={state} set={set} criteria={criteria} />}
-      {step === 2 && <Step2 state={state} set={set} user={user} criteria={criteria} onGo={goTo} />}
-      {step === 3 && <Step3 state={state} set={set} user={user} criteria={criteria} />}
-      {step === 4 && <Step4 state={state} set={set} />}
-      {step === 5 && <Step5 state={state} set={set} />}
-      {step === 6 && <Step6 state={state} set={set} focusKrId={step6Focus} />}
-      {step === 7 && <Step7 state={state} set={set} criteria={criteria} evaluatorName={evaluatorName} onSubmit={submit} submitting={submitting} onPickKr={pickKrInStep6} />}
+      {/* 제출 완료 잠금 배너 — 회수해야 수정 가능 */}
+      {state.submitted && (
+        <div style={{ marginBottom: 16, padding: "16px 20px", background: "linear-gradient(135deg, #ECFAF1, #fff 70%)", border: "1px solid #BBE9CC", borderRadius: 14, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: "#2F9E5E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>✅</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#1F6B45" }}>제출 완료된 OKR이에요 — {evaluatorName} 팀장 검토 대기 중</div>
+            <div style={{ fontSize: 12, color: "#2F6B48", marginTop: 3, lineHeight: 1.5 }}>내용은 열람만 가능해요. 수정하려면 회수한 뒤 수정 → 재제출해주세요.</div>
+          </div>
+          <Button variant="secondary" onClick={recall} disabled={recalling}>{recalling ? "회수 중…" : "↩ 회수하고 수정하기"}</Button>
+        </div>
+      )}
+
+      {/* 제출 후에는 편집 잠금 (열람만) */}
+      <div style={state.submitted ? { pointerEvents: "none", opacity: 0.6 } : undefined}>
+        {step === 0 && <Step0 state={state} set={set} user={user} />}
+        {step === 1 && <Step1 state={state} set={set} criteria={criteria} />}
+        {step === 2 && <Step2 state={state} set={set} user={user} criteria={criteria} onGo={confirmGo} />}
+        {step === 3 && <Step3 state={state} set={set} user={user} criteria={criteria} />}
+        {step === 4 && <Step4 state={state} set={set} />}
+        {step === 5 && <Step5 state={state} set={set} />}
+        {step === 6 && <Step6 state={state} set={set} focusKrId={step6Focus} />}
+        {step === 7 && <Step7 state={state} set={set} criteria={criteria} evaluatorName={evaluatorName} onSubmit={submit} submitting={submitting} onPickKr={pickKrInStep6} />}
+      </div>
 
       {/* Nav */}
       <div style={{ marginTop: 22, padding: "16px 22px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, display: "flex", alignItems: "center", gap: 12, boxShadow: "var(--shadow-xs)" }}>
@@ -259,9 +338,11 @@ export default function R1WritePage() {
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: state.savedAt ? "#2F9E5E" : "#C8CFDF" }} />
           {state.savedAt ? `임시 저장됨 · ${savedAgo(state.savedAt)}` : "아직 저장 전"}
         </div>
-        <Button variant="secondary" onClick={saveNow}>임시 저장</Button>
+        <Button variant="secondary" onClick={saveNow} disabled={state.submitted}>임시 저장</Button>
         {step < 7 ? (
           <Button variant="primary" onClick={next}>다음 (STEP {step + 1}) →</Button>
+        ) : state.submitted ? (
+          <Button variant="secondary" onClick={recall} disabled={recalling}>{recalling ? "회수 중…" : "↩ 회수하고 수정하기"}</Button>
         ) : (
           <Button variant="primary" onClick={submit} disabled={submitting}>{submitting ? "제출 중…" : "제출하기 →"}</Button>
         )}

@@ -85,6 +85,31 @@ export function recommendFormat(kr: WizardKR): { format: string; reason: string 
   return { format: "이산", reason: "달성/미달성 이분법이 자연스러움" };
 }
 
+// ── 참고 실행계획 제안 (STEP 5) — 등급 기준·형태 기반 결정적 생성 ──
+export function generateInitiatives(kr: WizardKR): string[] {
+  const grades = kr.gradesDraft ?? kr.grades;
+  const base: string[] = [];
+  if (kr.format === "수치") {
+    base.push(`현재 수준(${kr.baseline}) 재측정으로 baseline 확정 · ${kr.measureTool || "측정 도구"} 대시보드 셋업`);
+    base.push(`목표(${kr.goal}) 달성을 위한 개선 항목 도출 → 우선순위 백로그화`);
+    base.push(`${kr.measureCycle || "주기"}마다 측정값 기록 · 진행률 업데이트에 증빙 캡처 첨부`);
+    if (grades.S) base.push(`S등급(${grades.S}) 도전을 위한 추가 개선 아이템 1건 준비`);
+  } else if (kr.format === "마일스톤") {
+    base.push("각 단계의 산출물(PR·문서·대시보드)과 완료 정의(DoD) 1줄씩 확정");
+    base.push(`목표 단계(${kr.goal})까지의 일정을 월 단위로 배치`);
+    base.push("단계 완료 시마다 산출물 링크를 진행률 업데이트에 첨부");
+  } else if (kr.format === "루브릭") {
+    base.push("평가자와 등급별 기준 문구 사전 합의 (1on1 안건으로 등록)");
+    base.push("A등급 기준을 충족하는 산출물 예시 1건 먼저 제작");
+    base.push("중간 점검 시점에 평가자 피드백 반영 라운드 1회");
+  } else {
+    base.push(`달성 조건(${kr.goal})의 완료 판정 기준을 평가자와 합의`);
+    base.push("완료 시 증빙(배포 로그·공지·승인 내역) 확보 계획 수립");
+    base.push("완료 전 중간 리스크 점검 1회 (일정·의존성)");
+  }
+  return base;
+}
+
 // ── 결정적 등급 초안 생성 (STEP 5 — AI 자동 생성 폴백과 동일 룰) ──
 export function generateGrades(kr: WizardKR): WizardKR["grades"] {
   const num = (s: string) => {

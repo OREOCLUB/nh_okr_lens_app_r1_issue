@@ -379,6 +379,18 @@ export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise
   return { ok: true };
 }
 
+/** 제출 회수 — 제출한 OKR을 작성중 상태로 되돌려 수정·재제출을 가능하게 한다 */
+export async function recallOkrs(loginId: string): Promise<WriteResult> {
+  if (!supabase) return { saved: "local", reason: "Supabase 미연결 (환경 변수 없음)" };
+  const employeeId = await employeeIdByLogin(loginId);
+  if (!employeeId) return { saved: "local", reason: "사원 정보를 찾지 못했어요" };
+  const okrsUp = await supabase.from("okrs").update({ status: "draft" }).eq("employee_id", employeeId).eq("period", PERIOD);
+  if (okrsUp.error) return { saved: "local", reason: okrsUp.error.message };
+  const subUp = await supabase.from("okr_submissions").update({ status: "draft" }).eq("employee_id", employeeId).eq("period", PERIOD);
+  if (subUp.error) return { saved: "local", reason: subUp.error.message };
+  return { saved: "db" };
+}
+
 /** 나의 OKR 진행률 업데이트 */
 export async function updateOkrProgress(dbId: number, progress: number): Promise<WriteResult> {
   if (!supabase) return { ok: false, error: "NO_DB" };
@@ -469,6 +481,21 @@ export async function getMetrics(): Promise<Metric[] | null> {
     orgs: r.orgs,
     exampleKR: r.example_kr,
     warnings: r.warnings && r.warnings.length > 0 ? r.warnings : undefined,
+  }));
+}
+
+// ── 자격증 검색 DB (R1 STEP 0 · 회사 등급표는 R3가 관리) ─────
+export async function getCertifications(): Promise<import("./certDb").CertItem[] | null> {
+  interface Row { id: string; name: string; issuer: string; category: string; company_grade: string | null; aliases: string[] | null }
+  const data = await rows<Row>("certifications", "id, name, issuer, category, company_grade, aliases", "name");
+  if (!data) return null; // 테이블 미생성·미연결 → 화면은 certDb 시드 폴백
+  return data.map((r) => ({
+    id: r.id,
+    name: r.name,
+    issuer: r.issuer,
+    category: r.category,
+    companyGrade: r.company_grade,
+    aliases: r.aliases ?? [],
   }));
 }
 

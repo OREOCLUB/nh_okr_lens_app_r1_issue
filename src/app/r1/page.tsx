@@ -37,6 +37,33 @@ function CategoryBadge({ category }: { category?: string }) {
   );
 }
 
+// 마감 임박 단계별 색상 — 8일 이상 파랑, 4~7일 주황, 3일 이하 빨강
+function ddayTone(dday: number): { bg: string; fg: string; bd: string; label: string } {
+  if (dday <= 3) return { bg: "#FFF0F0", fg: "#D14343", bd: "#FFD4D4", label: "마감 임박!" };
+  if (dday <= 7) return { bg: "#FFF7EC", fg: "#D98023", bd: "#FFE0BA", label: "마감이 다가와요" };
+  return { bg: "#EFF4FE", fg: "#2B5DD9", bd: "#C5D5F7", label: "여유 있어요" };
+}
+
+function DdayCard({ dday }: { dday: number }) {
+  const t = ddayTone(dday);
+  return (
+    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", background: "#fff", border: `1px solid ${t.bd}`, borderRadius: 14, boxShadow: "var(--shadow-xs)", whiteSpace: "nowrap" }}>
+      {/* D-999까지도 한 줄 유지 — 고정폭 대신 내용 기반 + nowrap */}
+      <div className="mono" style={{ padding: "10px 14px", borderRadius: 12, background: t.bg, color: t.fg, fontSize: 18, fontWeight: 800, lineHeight: 1, whiteSpace: "nowrap" }}>
+        D-{dday}
+      </div>
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36", whiteSpace: "nowrap" }}>
+          OKR 등록 마감 <span style={{ color: t.fg, fontSize: 11, fontWeight: 700 }}>· {t.label}</span>
+        </div>
+        <div className="mono" style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 2, whiteSpace: "nowrap" }}>
+          {DEADLINE.getFullYear()}-{String(DEADLINE.getMonth() + 1).padStart(2, "0")}-{String(DEADLINE.getDate()).padStart(2, "0")} 18:00 까지
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OKRItem({ okr }: { okr: OKR }) {
   const s = STATUS[okr.status];
   const barColor = okr.progress >= 70 ? "#2F9E5E" : okr.progress >= 40 ? "#3B5BDB" : "#D98023";
@@ -146,18 +173,7 @@ export default function R1HomePage() {
             {draftCount > 0 ? `KR ${okrs.length}개 중 ${draftCount}개는 아직 작성 중이네요.` : `KR ${okrs.length}개가 진행 중이에요.`}
           </p>
         </div>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, boxShadow: "var(--shadow-xs)" }}>
-          <div style={{ width: 46, height: 46, borderRadius: 12, background: dday <= 7 ? "#FFF0F0" : "#EFF4FE", color: dday <= 7 ? "#D14343" : "#2B5DD9", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.8 }}>D-</span>
-            <span className="mono" style={{ fontSize: 18, fontWeight: 800 }}>{dday}</span>
-          </div>
-          <div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>OKR 등록 마감</div>
-            <div className="mono" style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 2 }}>
-              {DEADLINE.getFullYear()}-{String(DEADLINE.getMonth() + 1).padStart(2, "0")}-{String(DEADLINE.getDate()).padStart(2, "0")} 18:00 까지
-            </div>
-          </div>
-        </div>
+        <DdayCard dday={dday} />
       </div>
 
       {/* CTA banner */}
@@ -193,12 +209,23 @@ export default function R1HomePage() {
       {/* Two column */}
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>나의 OKR</div>
-            <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 3 }}>
-              2026 하반기 · 총 {okrs.length}개 · 가중치 {totalWeight} / 110{loading && " · 불러오는 중…"}
+          {/* 섹션 헤더 전체가 클릭 영역 — 좌측 메뉴 '나의 OKR'로 이동 */}
+          <button
+            onClick={() => router.push("/r1/my-okr")}
+            title="나의 OKR 화면으로 이동"
+            style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "14px 18px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 12, cursor: "pointer", fontFamily: "var(--font-sans)", boxShadow: "var(--shadow-xs)" }}
+          >
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "#E5EBFB", color: "#3B5BDB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🎯</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#0F1A36", letterSpacing: "-0.015em" }}>나의 OKR</div>
+              <div style={{ fontSize: 12.5, color: "#7C87A4", marginTop: 3 }}>
+                2026 하반기 · 총 {okrs.length}개 · 가중치 {totalWeight} / 110{loading && " · 불러오는 중…"}
+              </div>
             </div>
-          </div>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 9, background: "#F1F4FD", color: "#3B5BDB", fontSize: 12.5, fontWeight: 700, flexShrink: 0 }}>
+              전체 보기 →
+            </span>
+          </button>
           {okrs.map((o, i) => <OKRItem key={o.dbId ?? i} okr={o} />)}
         </div>
         <div><AICoachingCard onOpen={() => router.push("/r1/coaching")} /></div>

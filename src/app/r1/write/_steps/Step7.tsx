@@ -4,7 +4,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { Button } from "@/components/Button";
 import { FORMAT_COLOR } from "./shared";
 import type { WizardState, WizardKR } from "@/lib/wizard";
-import { weightSum } from "@/lib/wizard";
+import { weightSum, submitReadiness } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
 
 const AI_BADGE: Record<string, { c: string; bg: string; short: string; ico: string }> = {
@@ -138,6 +138,7 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
   const sum = weightSum(krs);
   const adopted = krs.filter((k) => k.chosenAI).length;
   const unadopted = krs.filter((k) => !k.chosenAI);
+  const readiness = submitReadiness(state, criteria.system, criteria.checklist);
 
   const patchKR = (id: string, p: Partial<WizardKR>) =>
     set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, ...p } : k)) }));
@@ -193,21 +194,47 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
         </div>
       )}
 
-      {/* 가중치 상한 초과 안내 */}
-      {sum > criteria.system.scoreCap && (
-        <div style={{ background: "#FDECEC", border: "1px solid #F5C6C6", borderRadius: 14, padding: "14px 20px", fontSize: 12.5, color: "#8C3A3A", lineHeight: 1.55 }}>
-          ⚠️ KR 가중치 합이 <b className="mono">{sum}%</b>예요. 상한 <b className="mono">{criteria.system.scoreCap}%</b> 이하로 조정해주세요 (STEP 5에서 가중치를 수정할 수 있어요).
+      {/* 제출 적합성 체크 — 미통과 항목이 있으면 제출 버튼이 비활성화된다 */}
+      <div style={{ background: "#fff", border: `1px solid ${readiness.ok ? "#BBE9CC" : "#FFE0BA"}`, borderRadius: 14, padding: "18px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 16 }}>{readiness.ok ? "✅" : "🧭"}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#0F1A36" }}>제출 적합성 체크</span>
+          <span style={{ marginLeft: "auto", padding: "3px 11px", borderRadius: 999, background: readiness.ok ? "#ECFAF1" : "#FFF7EC", color: readiness.ok ? "#2F9E5E" : "#D98023", fontSize: 11.5, fontWeight: 700 }}>
+            {readiness.items.filter((i) => i.pass).length} / {readiness.items.length} 통과
+          </span>
         </div>
-      )}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {readiness.items.map((it) => (
+            <div key={it.key} style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "10px 12px", background: it.pass ? "#F9FAFC" : "#FFF7EC", border: `1px solid ${it.pass ? "#ECEFF5" : "#FFE0BA"}`, borderRadius: 10 }}>
+              <span style={{ width: 18, height: 18, borderRadius: 6, background: it.pass ? "#2F9E5E" : "#D98023", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{it.pass ? "✓" : "!"}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>{it.label}</div>
+                <div style={{ fontSize: 11.5, color: it.pass ? "#7C87A4" : "#9C5E26", marginTop: 2, lineHeight: 1.5 }}>{it.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {!readiness.ok && (
+          <div style={{ marginTop: 10, fontSize: 12, color: "#9C5E26", lineHeight: 1.55 }}>
+            💡 보완이 필요한 항목을 채우면 제출 버튼이 활성화돼요. 함께 정제하면 검토도 더 빨라져요.
+          </div>
+        )}
+      </div>
 
       {/* Submit panel */}
       <div style={{ background: "linear-gradient(135deg, #0A1F17, #14342B)", color: "#fff", borderRadius: 16, padding: "26px 28px", display: "flex", alignItems: "center", gap: 18 }}>
         <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(0,169,104,0.25)", color: "#7CE9BE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>📥</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{evaluatorName} 팀장에게 제출하시겠어요?</div>
-          <div style={{ fontSize: 12.5, color: "#9DB3A9", lineHeight: 1.5 }}>제출 후에도 팀장이 조정 요청 시 수정할 수 있어요.{unadopted.length > 0 && ` AI 의견을 채택하지 않은 KR ${unadopted.map((k) => String(k.num).padStart(2, "0")).join("·")}은 팀장 코칭 시 함께 정제하실 수 있습니다.`}</div>
+          <div style={{ fontSize: 12.5, color: "#9DB3A9", lineHeight: 1.5 }}>
+            {readiness.ok
+              ? <>제출 후에는 열람만 가능하고, 수정하려면 회수 → 재제출하면 돼요.{unadopted.length > 0 && ` AI 의견을 채택하지 않은 KR ${unadopted.map((k) => String(k.num).padStart(2, "0")).join("·")}은 팀장 코칭 시 함께 정제하실 수 있습니다.`}</>
+              : "위 적합성 체크의 보완 항목을 채우면 제출할 수 있어요."}
+          </div>
         </div>
-        <Button variant="primary" onClick={onSubmit} disabled={submitting} style={{ padding: "12px 22px" }}>{submitting ? "제출 중…" : "제출하기 →"}</Button>
+        <Button variant="primary" onClick={onSubmit} disabled={submitting || !readiness.ok} style={{ padding: "12px 22px" }}>
+          {submitting ? "제출 중…" : readiness.ok ? "제출하기 →" : "보완 후 제출 가능"}
+        </Button>
       </div>
     </div>
   );

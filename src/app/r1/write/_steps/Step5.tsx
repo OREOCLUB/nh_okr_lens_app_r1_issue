@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { label, input, generateGrades } from "./shared";
-import type { WizardState, WizardKR } from "@/lib/wizard";
+import { label, input, generateGrades, generateInitiatives } from "./shared";
+import { gradesDirty, type WizardState, type WizardKR } from "@/lib/wizard";
 import { askCoach, nowTime } from "@/lib/aiCoach";
 import type { ChatMsg } from "@/lib/wizard";
 
@@ -90,12 +90,26 @@ export function Step5({ state, set }: { state: WizardState; set: (fn: (s: Wizard
   const patchKR = (id: string, patch: Partial<WizardKR>) =>
     set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, ...patch } : k)) }));
 
-  const patchGrade = (id: string, g: keyof WizardKR["grades"], v: string) =>
-    set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, grades: { ...k.grades, [g]: v } } : k)) }));
+  // 등급 수정은 draft에 먼저 기록 — ✓ 확정을 눌러야 grades로 커밋된다
+  const patchGradeDraft = (id: string, g: keyof WizardKR["grades"], v: string) =>
+    set((s) => ({
+      ...s,
+      krs: s.krs.map((k) => (k.id === id ? { ...k, gradesDraft: { ...(k.gradesDraft ?? k.grades), [g]: v } } : k)),
+    }));
 
-  const autoFill = () => kr && patchKR(kr.id, { grades: generateGrades(kr) });
+  const confirmGrades = (id: string) =>
+    set((s) => ({
+      ...s,
+      krs: s.krs.map((k) => (k.id === id && k.gradesDraft ? { ...k, grades: k.gradesDraft, gradesDraft: null } : k)),
+    }));
 
-  const isDone = (k: WizardKR) => !!k.measureTool.trim() && !!k.grades.A.trim();
+  const cancelGrades = (id: string) =>
+    set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, gradesDraft: null } : k)) }));
+
+  // AI 자동 생성도 draft로 — 검토 후 확정
+  const autoFill = () => kr && patchKR(kr.id, { gradesDraft: generateGrades(kr) });
+
+  const isDone = (k: WizardKR) => !!k.measureTool.trim() && !!k.grades.A.trim() && !gradesDirty(k);
 
   if (!kr) {
     return <div style={{ padding: 40, background: "#fff", border: "1px solid #E1E5EF", borderRadius: 16, textAlign: "center", color: "#7C87A4", fontSize: 13.5 }}>KR 후보가 아직 없어요. STEP 2~3에서 기초 정보를 먼저 정리해주세요.</div>;
@@ -139,25 +153,55 @@ export function Step5({ state, set }: { state: WizardState; set: (fn: (s: Wizard
           </div>
         </div>
 
-        {/* 2. 등급 기준 */}
-        <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 16, padding: "22px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        {/* 2. 등급 기준 — 수정은 개나리색 미확정 상태로 표시, ✓ 확정을 눌러야 반영 */}
+        <div style={{ background: "#fff", border: `1px solid ${gradesDirty(kr) ? "#F0DFA0" : "#E1E5EF"}`, borderRadius: 16, padding: "22px 24px", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
             <span style={{ width: 24, height: 24, borderRadius: 7, background: "#F5EFFD", color: "#7C4DD9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>2</span>
             <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36" }}>S / A / B / C / D 등급 기준</span>
-            <button onClick={autoFill} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "linear-gradient(135deg, #3B5BDB, #5C7AE6)", color: "#fff", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✨ AI로 자동 생성</button>
+            {gradesDirty(kr) && <span style={{ padding: "2px 10px", borderRadius: 999, background: "#FFFBE6", border: "1px solid #F0DFA0", color: "#B8860B", fontSize: 11, fontWeight: 700 }}>확정 전 변경 있음</span>}
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              {gradesDirty(kr) && (
+                <>
+                  <button onClick={() => cancelGrades(kr.id)} style={{ padding: "7px 13px", background: "#fff", color: "#5B6685", border: "1px solid #E1E5EF", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>↩ 취소 (원복)</button>
+                  <button onClick={() => confirmGrades(kr.id)} style={{ padding: "7px 13px", background: "#2F9E5E", color: "#fff", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✓ 등급 확정</button>
+                </>
+              )}
+              <button onClick={autoFill} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "linear-gradient(135deg, #3B5BDB, #5C7AE6)", color: "#fff", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✨ AI로 자동 생성</button>
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>Baseline {kr.baseline} → Goal {kr.goal} · A등급이 목표선이에요 <span style={{ color: "#D64545" }}>(A등급 필수)</span></div>
+          <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 16 }}>Baseline {kr.baseline} → Goal {kr.goal} · A등급이 목표선이에요 <span style={{ color: "#D64545" }}>(A등급 필수)</span> · 수정 후 ✓ 확정을 눌러야 다음 단계로 넘어갈 수 있어요</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {GRADE_META.map(([g, color]) => {
               const target = g === "A";
+              const shown = kr.gradesDraft?.[g] ?? kr.grades[g];
+              const changed = kr.gradesDraft != null && kr.gradesDraft[g] !== kr.grades[g];
               return (
-                <div key={g} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: target ? "#F1F4FD" : "#F9FAFC", border: `1px solid ${target ? "#C5D0F7" : "#ECEFF5"}`, borderRadius: 11 }}>
+                <div key={g} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: changed ? "#FFFBE6" : target ? "#F1F4FD" : "#F9FAFC", border: `1px solid ${changed ? "#F0DFA0" : target ? "#C5D0F7" : "#ECEFF5"}`, borderRadius: 11 }}>
                   <div style={{ width: 34, height: 34, borderRadius: 9, background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{g}</div>
-                  <input style={{ ...input, flex: 1 }} value={kr.grades[g]} onChange={(e) => patchGrade(kr.id, g, e.target.value)} placeholder={target ? "목표 달성 기준을 적어주세요" : ""} />
+                  <input style={{ ...input, flex: 1, background: changed ? "#FFFBE6" : "#fff" }} value={shown} onChange={(e) => patchGradeDraft(kr.id, g, e.target.value)} placeholder={target ? "목표 달성 기준을 적어주세요" : ""} />
+                  {changed && <span style={{ fontSize: 10.5, fontWeight: 700, color: "#B8860B", flexShrink: 0 }}>확정 전</span>}
                   {target && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 999, background: "#3B5BDB", color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>★ 목표선 (A등급)</span>}
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* 3. 참고 실행계획 — 등급 기준에 맞춰 자동 제안 */}
+        <div style={{ background: "linear-gradient(135deg, #F1FBF6, #fff 55%)", border: "1px solid #B9F1D8", borderRadius: 16, padding: "20px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ width: 24, height: 24, borderRadius: 7, background: "#E0F7EC", color: "#00794B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>3</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36" }}>참고 실행계획 (AI 제안)</span>
+            <span style={{ fontSize: 10.5, color: "#2F9E5E", fontWeight: 700, marginLeft: "auto" }}>등급 기준 기반 자동 제안</span>
+          </div>
+          <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 12 }}>등급 기준에 맞춰 참고용으로 제안하는 실행계획이에요. 그대로 쓰지 않아도 괜찮아요.</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {generateInitiatives(kr).map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "9px 12px", background: "#fff", border: "1px solid #DFF3E8", borderRadius: 9, fontSize: 12.5, color: "#3A4565", lineHeight: 1.55 }}>
+                <span className="mono" style={{ color: "#00A968", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                {it}
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -37,10 +37,17 @@ export interface WizardKR {
   measureStat: string;
   measureCycle: string;
   weight: number;
-  grades: KRGrades;
+  grades: KRGrades; // 확정된 등급 기준
+  gradesDraft?: KRGrades | null; // STEP 5 수정 중(미확정) 등급 — 확정 시 grades로 커밋
   refined: boolean; // STEP 3 정제 완료 여부
   chosenAI: string | null; // STEP 6 채택 AI vendor id
   aiSuggestion: string; // 채택된 의견 요약
+}
+
+/** STEP 5 등급 기준에 확정하지 않은 변경이 있는가 */
+export function gradesDirty(kr: WizardKR): boolean {
+  if (!kr.gradesDraft) return false;
+  return (Object.keys(kr.grades) as (keyof KRGrades)[]).some((g) => kr.gradesDraft![g] !== kr.grades[g]);
 }
 
 export interface ChatMsg {
@@ -247,3 +254,75 @@ export function stepBlocker(state: WizardState, step: number): string | null {
 }
 
 export const weightSum = (krs: WizardKR[]) => krs.reduce((a, k) => a + (k.weight || 0), 0);
+
+// ── 제출 적합성 검사 (STEP 7 게이트) — 미통과 항목이 있으면 제출 불가 ──
+import { deriveChecks, deriveRisk } from "./diagnosticEngine";
+import type { CheckItem, EvalSystem } from "./criteria";
+
+export interface ReadinessItem {
+  key: string;
+  label: string;
+  pass: boolean;
+  detail: string; // 통과/보완 사유 (코칭 톤)
+}
+
+export function submitReadiness(
+  state: WizardState,
+  system: EvalSystem,
+  checklist: CheckItem[]
+): { ok: boolean; items: ReadinessItem[] } {
+  const krs = state.krs;
+  const sum = weightSum(krs);
+  const noFormat = krs.filter((k) => !k.format);
+  const noMeasure = krs.filter((k) => !k.measureTool.trim());
+  const noA = krs.filter((k) => !k.grades.A.trim());
+  const dirty = krs.filter(gradesDirty);
+  const highRisk = krs.filter((k) => {
+    const checks = deriveChecks(
+      { kr: k.kr, baseline: k.baseline, goal: k.goal, measureTool: k.measureTool, format: k.format, grades: { A: k.grades.A } },
+      checklist
+    );
+    return deriveRisk(checks, checklist).level === "상";
+  });
+  const fmtKr = (list: WizardKR[]) => list.map((k) => `KR ${String(k.num).padStart(2, "0")}`).join(", ");
+
+  const items: ReadinessItem[] = [
+    {
+      key: "weight",
+      label: "가중치 합산",
+      pass: sum > 0 && sum <= system.scoreCap,
+      detail: sum > system.scoreCap ? `현재 ${sum}% — 상한 ${system.scoreCap}% 이하로 조정해주세요` : `${sum} / ${system.scoreCap}%`,
+    },
+    {
+      key: "format",
+      label: "KR 측정 형태",
+      pass: noFormat.length === 0,
+      detail: noFormat.length > 0 ? `${fmtKr(noFormat)}의 형태를 STEP 4에서 골라주세요` : "전체 선택 완료",
+    },
+    {
+      key: "measure",
+      label: "측정 도구",
+      pass: noMeasure.length === 0,
+      detail: noMeasure.length > 0 ? `${fmtKr(noMeasure)}의 측정 도구를 STEP 5에서 채워주세요` : "전체 입력 완료",
+    },
+    {
+      key: "gradeA",
+      label: "A등급(목표선) 기준",
+      pass: noA.length === 0,
+      detail: noA.length > 0 ? `${fmtKr(noA)}의 A등급 기준을 STEP 5에서 정해주세요` : "전체 정의 완료",
+    },
+    {
+      key: "gradeConfirm",
+      label: "등급 기준 확정",
+      pass: dirty.length === 0,
+      detail: dirty.length > 0 ? `${fmtKr(dirty)}에 확정하지 않은 등급 변경이 있어요 (STEP 5에서 ✓ 확정)` : "미확정 변경 없음",
+    },
+    {
+      key: "risk",
+      label: `${checklist.length}항목 사전 검토`,
+      pass: highRisk.length === 0,
+      detail: highRisk.length > 0 ? `${fmtKr(highRisk)}는 보완 후보가 많아요 — STEP 3에서 함께 정제 후 제출해주세요` : "위험도 '상' KR 없음",
+    },
+  ];
+  return { ok: items.every((i) => i.pass), items };
+}

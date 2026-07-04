@@ -27,6 +27,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false); // 11항목 신호등 상세 (팝업 대신 카드 내 아코디언)
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const opener = (): ChatMsg => {
@@ -181,20 +182,50 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
           </div>
         </div>
         <div style={{ background: "linear-gradient(135deg, #F1FBF6, #fff 55%)", border: "1px solid #B9F1D8", borderRadius: 14, padding: "16px 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>✨ {checklist.length}항목 사전 검토</span>
-            <span style={{ marginLeft: "auto", fontSize: 10.5, color: "#2F9E5E", fontWeight: 700 }}>실시간</span>
+          {/* 카드를 누르면 항목별 신호등 상세가 카드 안에서 펼쳐진다 (팝업 대신 아코디언 — 문맥 유지) */}
+          <div onClick={() => setDetailOpen((v) => !v)} style={{ cursor: "pointer" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36" }}>✨ {checklist.length}항목 사전 검토</span>
+              <span style={{ marginLeft: "auto", fontSize: 10.5, color: "#2F9E5E", fontWeight: 700 }}>실시간</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span className="mono" style={{ fontSize: 24, fontWeight: 700, color: "#0A6B44" }}>{passCount}</span>
+              <span style={{ fontSize: 13, color: "#7C87A4" }}>/ {checklist.length} 통과</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "#3B5BDB", fontWeight: 700 }}>{detailOpen ? "접기 ▲" : "신호등 보기 ▼"}</span>
+            </div>
+            <div style={{ marginTop: 8, height: 8, background: "#DFF3E8", borderRadius: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${(passCount / Math.max(checklist.length, 1)) * 100}%`, background: "#00A968" }} /></div>
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span className="mono" style={{ fontSize: 24, fontWeight: 700, color: "#0A6B44" }}>{passCount}</span>
-            <span style={{ fontSize: 13, color: "#7C87A4" }}>/ {checklist.length} 통과</span>
-          </div>
-          <div style={{ marginTop: 8, height: 8, background: "#DFF3E8", borderRadius: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${(passCount / Math.max(checklist.length, 1)) * 100}%`, background: "#00A968" }} /></div>
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
-            {checklist.filter((_, i) => !itemPass[i]).slice(0, 4).map((c) => (
-              <div key={c.no} style={{ fontSize: 11, color: "#9C5E26", display: "flex", gap: 5 }}><span>·</span>{c.text}</div>
-            ))}
-          </div>
+
+          {detailOpen && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6, borderTop: "1px dashed #B9F1D8", paddingTop: 12 }}>
+              {checklist.map((c, i) => {
+                const okCount = perKR.filter((checks) => checks[i] === 1).length;
+                const total = perKR.length;
+                const light = okCount === total ? "🟢" : okCount === 0 ? "🔴" : "🟡";
+                const tone = okCount === total ? "#1F6B45" : okCount === 0 ? "#B23B3B" : "#9C5E26";
+                return (
+                  <div key={c.no} style={{ display: "flex", alignItems: "flex-start", gap: 7, padding: "6px 8px", background: "#fff", border: "1px solid #ECEFF5", borderRadius: 8 }}>
+                    <span style={{ fontSize: 11, marginTop: 1 }}>{light}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: "#3A4565", lineHeight: 1.45 }}>{c.no}. {c.text}</div>
+                      <div className="mono" style={{ fontSize: 10, color: tone, marginTop: 2 }}>
+                        KR {okCount}/{total} 통과{okCount < total && ` · ${c.tag} 보완 후보`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 10.5, color: "#2F6B48", lineHeight: 1.5, marginTop: 2 }}>🟢 전 KR 통과 · 🟡 일부 KR 보완 · 🔴 전 KR 보완 후보 — 확정이 아니라 함께 정제할 신호예요.</div>
+            </div>
+          )}
+
+          {!detailOpen && (
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+              {checklist.filter((_, i) => !itemPass[i]).slice(0, 4).map((c) => (
+                <div key={c.no} style={{ fontSize: 11, color: "#9C5E26", display: "flex", gap: 5 }}><span>·</span>{c.text}</div>
+              ))}
+            </div>
+          )}
           <div style={{ marginTop: 10, fontSize: 11, color: "#2F6B48", lineHeight: 1.5 }}>정제를 진행하면 통과 항목이 늘어나요. STEP 6에서 자세히 확인할 수 있어요.</div>
         </div>
       </div>

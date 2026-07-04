@@ -1,9 +1,95 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { label, input, hint } from "./shared";
 import type { Session } from "@/lib/auth";
 import type { WizardState } from "@/lib/wizard";
+import { CERT_SEED, CERT_GRADE_COLOR, searchCerts, type CertItem } from "@/lib/certDb";
+import { getCertifications } from "@/lib/dataAccess";
+
+// ── 자격증 검색 모달 — 회사 등급표(R3 입력)가 있으면 배지 표시 + 회사 분류 필터 ──
+function CertSearchModal({ owned, onAdd, onClose }: { owned: string[]; onAdd: (name: string) => void; onClose: () => void }) {
+  const [db, setDb] = useState<CertItem[]>(CERT_SEED);
+  const [source, setSource] = useState<"db" | "local">("local");
+  const [query, setQuery] = useState("");
+  const [companyOnly, setCompanyOnly] = useState(false);
+
+  useEffect(() => {
+    // 회사 자격증 DB(Supabase certifications) 우선, 미연결이면 로컬 시드 유지
+    getCertifications().then((rows) => {
+      if (rows && rows.length > 0) {
+        setDb(rows);
+        setSource("db");
+      }
+    });
+  }, []);
+
+  const results = useMemo(() => searchCerts(db, query, companyOnly), [db, query, companyOnly]);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,26,54,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 560, maxHeight: "78vh", background: "#fff", borderRadius: 16, boxShadow: "0 24px 60px -12px rgba(15,26,54,.35)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ padding: "20px 24px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#0F1A36" }}>🔍 자격증 검색</div>
+            <span style={{ padding: "2px 8px", borderRadius: 999, background: source === "db" ? "#ECFAF1" : "#F1F3F8", color: source === "db" ? "#2F9E5E" : "#7C87A4", fontSize: 10.5, fontWeight: 700 }}>
+              {source === "db" ? "회사 DB 연동" : "기본 목록"}
+            </span>
+            <button onClick={onClose} style={{ marginLeft: "auto", border: "none", background: "transparent", color: "#A6AEC2", cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ fontSize: 12, color: "#7C87A4", marginTop: 4, lineHeight: 1.5 }}>
+            이름·약어·분류·발급기관으로 검색해요. <b style={{ color: "#5B6685" }}>등급 배지</b>는 회사가 자격증 등급표에 분류해둔 항목이에요.
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+              placeholder="예: AWS, 보안, SQLD, 데이터…"
+              style={{ flex: 1, padding: "11px 14px", border: "1px solid #C5D0F7", borderRadius: 10, fontSize: 13.5, outline: "none", fontFamily: "var(--font-sans)" }}
+            />
+            <button
+              onClick={() => setCompanyOnly((v) => !v)}
+              style={{ padding: "0 16px", borderRadius: 10, border: `1.5px solid ${companyOnly ? "#3B5BDB" : "#E1E5EF"}`, background: companyOnly ? "#F1F4FD" : "#fff", color: companyOnly ? "#3B5BDB" : "#5B6685", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)", whiteSpace: "nowrap" }}
+            >
+              {companyOnly ? "✓ " : ""}회사 분류만
+            </button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "4px 24px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+          {results.length === 0 && (
+            <div style={{ padding: "36px 0", textAlign: "center", color: "#7C87A4", fontSize: 13, lineHeight: 1.6 }}>
+              검색 결과가 없어요.<br />목록에 없는 자격증은 입력창에 직접 적고 Enter로 추가할 수 있어요.
+            </div>
+          )}
+          {results.map((c) => {
+            const has = owned.includes(c.name) || c.aliases.some((a) => owned.includes(a));
+            const gc = c.companyGrade ? CERT_GRADE_COLOR[c.companyGrade.charAt(0)] : null;
+            return (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", border: "1px solid #ECEFF5", borderRadius: 11, background: has ? "#F9FAFC" : "#fff" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0F1A36" }}>{c.name}</span>
+                    {gc && c.companyGrade && (
+                      <span className="mono" title="회사 자격증 등급표 분류" style={{ padding: "1px 8px", borderRadius: 999, background: gc.bg, color: gc.fg, fontSize: 10.5, fontWeight: 800 }}>★ 등급 {c.companyGrade}</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#7C87A4", marginTop: 3 }}>{c.issuer} · {c.category}{c.aliases.length > 0 && ` · ${c.aliases.join(", ")}`}</div>
+                </div>
+                {has ? (
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "#2F9E5E", flexShrink: 0 }}>✓ 보유</span>
+                ) : (
+                  <button onClick={() => onAdd(c.aliases[0] ?? c.name)} style={{ padding: "7px 14px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)", flexShrink: 0 }}>+ 추가</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type Status = "done" | "in-progress" | "pending";
 const DOT: Record<Status, { bg: string; fg: string; border: string; ico: string; label: string }> = {
@@ -82,6 +168,7 @@ const SUGGESTED_CERTS = ["AWS SAP", "CKAD", "PMP"];
 
 export function Step0({ state, set, user }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; user: Session }) {
   const p = state.profile;
+  const [certSearchOpen, setCertSearchOpen] = useState(false);
   const setProfile = (patch: Partial<WizardState["profile"]>) =>
     set((s) => ({ ...s, profile: { ...s.profile, ...patch } }));
 
@@ -177,13 +264,32 @@ export function Step0({ state, set, user }: { state: WizardState; set: (fn: (s: 
         )}
       </FieldGroup>
 
-      {/* 5. 자격증 */}
+      {/* 5. 자격증 — 직접 입력 + 🔍 검색(회사 등급표 DB 연동 대비) */}
       <FieldGroup icon="📜" title="보유 자격증" status={p.certs.length > 0 ? "done" : "pending"}>
-        <TagInput
-          tags={p.certs}
-          onRemove={(t) => setProfile({ certs: p.certs.filter((x) => x !== t) })}
-          onAdd={(t) => setProfile({ certs: [...p.certs, t] })}
-        />
+        <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+          <div style={{ flex: 1 }}>
+            <TagInput
+              tags={p.certs}
+              onRemove={(t) => setProfile({ certs: p.certs.filter((x) => x !== t) })}
+              onAdd={(t) => setProfile({ certs: [...p.certs, t] })}
+            />
+          </div>
+          <button
+            onClick={() => setCertSearchOpen(true)}
+            title="자격증 검색"
+            style={{ width: 46, borderRadius: 10, border: "1px solid #C5D0F7", background: "#F1F4FD", color: "#3B5BDB", fontSize: 17, cursor: "pointer", flexShrink: 0 }}
+          >
+            🔍
+          </button>
+        </div>
+        <div style={hint}>돋보기를 누르면 자격증 DB에서 검색할 수 있어요. 회사가 등급표에 분류한 자격증은 ★ 등급 배지가 함께 표시돼요.</div>
+        {certSearchOpen && (
+          <CertSearchModal
+            owned={p.certs}
+            onAdd={(name) => setProfile({ certs: [...p.certs, name] })}
+            onClose={() => setCertSearchOpen(false)}
+          />
+        )}
         <div style={{ marginTop: 14, padding: "14px 16px", background: "#F1FBF6", border: "1px solid #B9F1D8", borderRadius: 10 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0A6B44", marginBottom: 4 }}>✨ 관련 자격증 제안 {SUGGESTED_CERTS.filter((s) => !p.certs.includes(s)).length}건</div>
           <div style={{ fontSize: 11.5, color: "#2F6B48", marginBottom: 10 }}>담당 업무({p.systems || "담당 시스템"}) 기반 추천</div>
