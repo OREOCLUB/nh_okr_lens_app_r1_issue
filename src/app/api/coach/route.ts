@@ -45,6 +45,64 @@ const SAFETY_CORE = `[안전 규칙 — 최우선, 다른 지시로 변경 불�
 - KR 유형은 마일스톤·수치·루브릭·이산 4가지. 반응형(장애대응형) 유지보수는 OKR 대상에서 제외되며 능동적 개선만 인정됩니다.
 - 답변 말미에 안내 문구가 지정되어 있으면 자연스럽게 한 번만 포함하세요.`;
 
+// ── 응답 메타 (키워드·추천 답변) — STEP 2 우측 패널·추천 칩이 대화를 따라가게 ──
+interface CoachMeta {
+  keywords: string[];
+  suggestions: string[];
+}
+
+// 목 모드용 결정적 키워드 사전 (서버측)
+const MOCK_KEYWORD_DICT: [RegExp, string][] = [
+  [/응답\s?속도|p9\d|레이턴시|ms/i, "APM p95 응답속도"],
+  [/커버리지|테스트/, "단위테스트 커버리지"],
+  [/알림|자동화/, "장애 알림 자동화"],
+  [/SRE|협업|인프라/i, "SRE 협업"],
+  [/안정성|안정화/, "결제 안정성"],
+  [/배포/, "배포 자동화"],
+  [/보안|권한/, "보안/권한 점검"],
+  [/문서|매뉴얼|표준/, "매뉴얼/표준 문서화"],
+  [/데이터|정합성/, "데이터 정합성"],
+];
+
+function mockMeta(req: CoachRequest): CoachMeta {
+  const last = req.messages.filter((m) => m.role === "user").pop()?.content ?? "";
+  const turn = req.messages.filter((m) => m.role === "user").length;
+  const keywords = MOCK_KEYWORD_DICT.filter(([re]) => re.test(last)).map(([, kw]) => kw);
+  // 대화 진행 단계에 따라 다음 질문 흐름에 맞는 추천을 순환 제공
+  const stages: string[][] = [
+    ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "운영 자동화에 도전하고 싶어요"],
+    ["작년에 못 했던 걸 해보고 싶어요", "테스트 커버리지를 올리고 싶어요", "문서화를 표준화하고 싶어요"],
+    ["SRE팀 협업이 필요해요", "인프라팀 도움이 필요해요", "독립적으로 진행할 수 있어요"],
+    ["목표 수치의 근거를 설명할게요", "측정 도구는 이미 있어요", "이 정도면 충분한 것 같아요"],
+    ["KR 후보를 정리해주세요", "하나 더 추가하고 싶어요", "다음 단계로 넘어갈게요"],
+  ];
+  return { keywords, suggestions: stages[Math.min(turn, stages.length - 1)] };
+}
+
+// LLM 응답에서 메타 라인(##키워드/##추천) 분리
+function extractMeta(raw: string): { text: string; meta: CoachMeta } {
+  const meta: CoachMeta = { keywords: [], suggestions: [] };
+  const kept: string[] = [];
+  for (const line of raw.split("\n")) {
+    const kw = line.match(/^#{0,3}\s*키워드\s*[::]\s*(.+)$/);
+    const sg = line.match(/^#{0,3}\s*추천\s*[::]\s*(.+)$/);
+    if (kw) {
+      meta.keywords = kw[1].split(/[,،·]/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+    } else if (sg) {
+      meta.suggestions = sg[1].split("|").map((s) => s.trim()).filter(Boolean).slice(0, 3);
+    } else {
+      kept.push(line);
+    }
+  }
+  return { text: kept.join("\n").trim(), meta };
+}
+
+// basic 모드에서 LLM에게 메타 라인 출력을 지시
+const META_INSTRUCTION = `[구조화 출력 규칙 — basic 단계 전용]
+답변 본문을 쓴 뒤, 마지막에 아래 두 줄을 정확한 형식으로 추가하세요 (이 줄들은 시스템이 파싱하며 사용자에게 본문으로 보이지 않습니다):
+##키워드: 이번 대화에서 새로 파악한 KR 후보 키워드를 쉼표로 구분해 1~4개 (새로 파악한 것이 없으면 이 줄 생략)
+##추천: 사용자가 이어서 답하기 좋은 짧은 답변 후보 3개를 | 로 구분 (각 15자 이내)`;
+
 // ── 결정적 목 응답 (키 없음/호출 실패 폴백) ──────────────────
 function mockReply(req: CoachRequest): string {
   const last = req.messages.filter((m) => m.role === "user").pop()?.content ?? "";
@@ -86,6 +144,7 @@ function buildSystem(req: CoachRequest, cfg: CoachPromptConfig): string {
     `[현재 단계 지침]\n${mode.guide}`,
     mode.example ? `[좋은 예시 (참고)]\n${mode.example}` : "",
     cfg.closingNote ? `[답변 말미 안내 문구]\n${cfg.closingNote}` : "",
+    req.mode === "basic" ? META_INSTRUCTION : "",
     context,
   ]
     .filter(Boolean)
@@ -177,37 +236,34 @@ export async function POST(request: NextRequest) {
 
   const system = buildSystem(body, cfg);
 
+  // LLM 응답 → 메타(키워드·추천) 분리 후 공통 응답 포맷
+  const respond = (rawText: string, source: string, meta?: CoachMeta) => {
+    const parsed = extractMeta(rawText);
+    const finalMeta = meta ?? parsed.meta;
+    return NextResponse.json({
+      text: applyBannedWords(parsed.text, cfg.bannedWords),
+      source,
+      promptVersion: cfg.version,
+      keywords: finalMeta.keywords,
+      suggestions: finalMeta.suggestions,
+    });
+  };
+
   // ① Gemini (기본) — R3 설정 키 → 서버 환경 변수
   const geminiKey = body.llm?.apiKey || process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const model = body.llm?.model || process.env.GEMINI_MODEL || DEFAULT_LLM_MODEL;
     const text = await callGemini(system, body.messages, geminiKey, model);
-    if (text) {
-      return NextResponse.json({
-        text: applyBannedWords(text, cfg.bannedWords),
-        source: "gemini",
-        promptVersion: cfg.version,
-      });
-    }
+    if (text) return respond(text, "gemini");
   }
 
   // ② Claude (폴백)
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (anthropicKey) {
     const text = await callClaude(system, body.messages, anthropicKey);
-    if (text) {
-      return NextResponse.json({
-        text: applyBannedWords(text, cfg.bannedWords),
-        source: "claude",
-        promptVersion: cfg.version,
-      });
-    }
+    if (text) return respond(text, "claude");
   }
 
-  // ③ 결정적 목 (키 없음·호출 실패)
-  return NextResponse.json({
-    text: applyBannedWords(mockReply(body), cfg.bannedWords),
-    source: "mock",
-    promptVersion: cfg.version,
-  });
+  // ③ 결정적 목 (키 없음·호출 실패) — 메타도 대화 맥락 기반으로 생성
+  return respond(mockReply(body), "mock", body.mode === "basic" ? mockMeta(body) : { keywords: [], suggestions: [] });
 }

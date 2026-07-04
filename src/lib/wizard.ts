@@ -121,6 +121,7 @@ export interface WizardState {
     krCount: number;
     keywords: Record<string, boolean>;
     chat: ChatMsg[];
+    suggestions?: string[]; // AI가 제안한 다음 답변 칩 (대화 맥락 따라 갱신)
   };
   refineChat: ChatMsg[]; // STEP 3 정제 대화
   krs: WizardKR[];

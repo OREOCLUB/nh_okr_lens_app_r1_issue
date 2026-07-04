@@ -83,7 +83,20 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
         okrType: state.okrType === "ops" ? "운영" : "전략혁신",
         duty: state.profile.mainDuty,
       });
-      set((s) => ({ ...s, basic: { ...s.basic, chat: [...s.basic.chat, { from: "ai", time: nowTime(), text: reply.text }] } }));
+      // AI가 뽑은 키워드는 우측 패널에 체크 상태로 합류, 추천 답변 칩은 대화 맥락 따라 갱신
+      set((s) => {
+        const keywords = { ...s.basic.keywords };
+        for (const kw of reply.keywords ?? []) if (!(kw in keywords)) keywords[kw] = true;
+        return {
+          ...s,
+          basic: {
+            ...s.basic,
+            chat: [...s.basic.chat, { from: "ai", time: nowTime(), text: reply.text }],
+            keywords,
+            suggestions: reply.suggestions && reply.suggestions.length > 0 ? reply.suggestions : s.basic.suggestions,
+          },
+        };
+      });
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {
@@ -142,8 +155,9 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
               {error && <div style={{ padding: "10px 14px", background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 10, fontSize: 12.5, color: "#7A4A14" }}>{error}</div>}
             </div>
             <div style={{ padding: "12px 20px 16px", borderTop: "1px solid #ECEFF5" }}>
+              {/* 추천 답변 칩 — AI 응답마다 대화 맥락에 맞게 갱신 */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                {["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "SRE팀 협업이 필요해요", "독립적으로 진행할 수 있어요"].map((s) => (
+                {(b.suggestions ?? ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "SRE팀 협업이 필요해요"]).map((s) => (
                   <button key={s} onClick={() => send(s)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{s}</button>
                 ))}
               </div>

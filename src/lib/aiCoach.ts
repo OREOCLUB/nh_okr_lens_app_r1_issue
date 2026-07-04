@@ -21,6 +21,10 @@ export interface CoachReply {
   text: string;
   source: "gemini" | "claude" | "mock";
   promptVersion?: string;
+  /** basic 모드: 대화에서 새로 추출된 KR 후보 키워드 */
+  keywords?: string[];
+  /** basic 모드: 다음 답변 추천 칩 (대화 맥락 기반) */
+  suggestions?: string[];
 }
 
 export async function askCoach(
