@@ -27,6 +27,11 @@ export interface CoachReply {
   suggestions?: string[];
 }
 
+// LLM에 보내는 대화 이력 상한 — 오래된 턴은 토큰만 쓰고 코칭 품질에 기여가 적다
+const MAX_TURNS_TO_LLM = 12;
+// 화면·localStorage에 보관하는 대화 상한 (스텝별 채팅 저장 시 사용)
+export const MAX_CHAT_STORE = 30;
+
 export async function askCoach(
   mode: CoachMode,
   messages: CoachTurn[],
@@ -36,10 +41,11 @@ export async function askCoach(
   // (같은 브라우저 데모 반영 — 서버 환경 변수 설정 시 서버 값이 기본)
   const promptConfig = loadPublishedPrompts() ?? undefined;
   const llm = loadLlmSettings() ?? undefined;
+  const recent = messages.slice(-MAX_TURNS_TO_LLM); // 최근 12개 메시지만 전송
   const res = await fetch("/api/coach", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ mode, messages, context, promptConfig, llm }),
+    body: JSON.stringify({ mode, messages: recent, context, promptConfig, llm }),
   });
   if (!res.ok) throw new Error(`코치 응답을 받지 못했어요 (${res.status})`);
   return (await res.json()) as CoachReply;

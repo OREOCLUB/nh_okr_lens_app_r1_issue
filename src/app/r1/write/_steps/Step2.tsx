@@ -5,7 +5,7 @@ import { label, input, hint } from "./shared";
 import type { Session } from "@/lib/auth";
 import type { WizardState, ChatMsg } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
-import { askCoach, nowTime } from "@/lib/aiCoach";
+import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
 
 // 대화에서 키워드 자동 추출용 사전 (결정적)
 const KEYWORD_DICT: [RegExp, string][] = [
@@ -40,6 +40,16 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 키워드 반영 순간 표시 — 새로 추가된 칩이 잠깐 펄스 + 패널에 +N 배지
+  const [flashKeys, setFlashKeys] = useState<string[]>([]);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function flash(keys: string[]) {
+    if (keys.length === 0) return;
+    setFlashKeys(keys);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlashKeys([]), 2600);
+  }
 
   const setBasic = (patch: Partial<WizardState["basic"]>) =>
     set((s) => ({ ...s, basic: { ...s.basic, ...patch } }));
@@ -47,7 +57,7 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   const greeting = (): ChatMsg => ({
     from: "ai",
     time: nowTime(),
-    text: `안녕하세요 ${user.name} 님 :) ${state.okrType === "ops" ? "운영" : "전략 혁신"} OKR을 선택하셨네요. 먼저, 올해 본업에서 반드시 지킬 것은 무엇인가요? 가장 중요하게 생각하시는 부분부터 들려주세요.`,
+    text: `[STEP 2 · 기초 정보] 올해 목표의 재료(키워드)를 모으는 단계예요. 대화에서 나온 키워드가 우측 패널에 쌓이고, 다음 단계 KR 초안이 됩니다.\n\n첫 질문: 올해 본업에서 반드시 지킬 것 1가지는 무엇인가요?`,
   });
 
   // 첫 진입 시 인사말 시드
@@ -69,11 +79,13 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
 
     // 키워드 자동 추출 (결정적 사전 매칭)
     const found = KEYWORD_DICT.filter(([re]) => re.test(t)).map(([, kw]) => kw);
+    const foundNew = found.filter((kw) => !(kw in b.keywords));
     set((s) => {
       const keywords = { ...s.basic.keywords };
       for (const kw of found) if (!(kw in keywords)) keywords[kw] = true;
-      return { ...s, basic: { ...s.basic, chat: [...s.basic.chat, userMsg], keywords } };
+      return { ...s, basic: { ...s.basic, chat: [...s.basic.chat, userMsg].slice(-MAX_CHAT_STORE), keywords } };
     });
+    flash(foundNew);
 
     setLoading(true);
     try {
@@ -84,6 +96,7 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
         duty: state.profile.mainDuty,
       });
       // AI가 뽑은 키워드는 우측 패널에 체크 상태로 합류, 추천 답변 칩은 대화 맥락 따라 갱신
+      const replyNew = (reply.keywords ?? []).filter((kw) => !(kw in b.keywords) && !found.includes(kw));
       set((s) => {
         const keywords = { ...s.basic.keywords };
         for (const kw of reply.keywords ?? []) if (!(kw in keywords)) keywords[kw] = true;
@@ -91,12 +104,13 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
           ...s,
           basic: {
             ...s.basic,
-            chat: [...s.basic.chat, { from: "ai", time: nowTime(), text: reply.text }],
+            chat: [...s.basic.chat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE),
             keywords,
             suggestions: reply.suggestions && reply.suggestions.length > 0 ? reply.suggestions : s.basic.suggestions,
           },
         };
       });
+      flash([...foundNew, ...replyNew]);
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {
@@ -220,11 +234,18 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
           </div>
 
           <div style={{ background: "linear-gradient(135deg, #F1FBF6, #fff 50%)", border: "1px solid #B9F1D8", borderRadius: 14, padding: "18px 20px" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36", display: "flex", alignItems: "center", gap: 6 }}>✨ AI가 정리한 핵심 키워드</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36", display: "flex", alignItems: "center", gap: 6 }}>
+              ✨ AI가 정리한 핵심 키워드
+              {flashKeys.length > 0 && (
+                <span style={{ marginLeft: "auto", padding: "2px 9px", borderRadius: 999, background: "#00A968", color: "#fff", fontSize: 10.5, fontWeight: 800, animation: "kw-flash 1.3s ease-out 2" }}>
+                  +{flashKeys.length} 반영됨
+                </span>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: "#7C87A4", margin: "3px 0 12px" }}>대화에서 자동 추출</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
               {Object.entries(b.keywords).map(([k, on]) => (
-                <button key={k} onClick={() => setBasic({ keywords: { ...b.keywords, [k]: !on } })} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 11px", background: on ? "#00A968" : "#fff", color: on ? "#fff" : "#5B6685", border: `1px solid ${on ? "#00A968" : "#E1E5EF"}`, borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{on ? "✓" : "+"} {k}</button>
+                <button key={k} onClick={() => setBasic({ keywords: { ...b.keywords, [k]: !on } })} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 11px", background: on ? "#00A968" : "#fff", color: on ? "#fff" : "#5B6685", border: `1px solid ${on ? "#00A968" : "#E1E5EF"}`, borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)", animation: flashKeys.includes(k) ? "kw-flash 1.3s ease-out 2" : undefined }}>{on ? "✓" : "+"} {k}</button>
               ))}
             </div>
             <div style={{ marginTop: 12, fontSize: 11, color: "#2F6B48", lineHeight: 1.5 }}>체크된 키워드들이 다음 단계 KR 초안의 기반이 됩니다.</div>

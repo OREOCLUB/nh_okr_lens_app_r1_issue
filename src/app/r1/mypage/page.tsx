@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
+import { CertField } from "@/components/CertField";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { loadWizard, saveWizard, type WizardState } from "@/lib/wizard";
 
@@ -33,32 +34,6 @@ function FieldGroup({ icon, title, desc, status, children }: { icon: string; tit
         </div>
       </div>
       {children}
-    </div>
-  );
-}
-
-function Tags({ tags, onAdd, onRemove }: { tags: string[]; onAdd: (t: string) => void; onRemove: (t: string) => void }) {
-  const [draft, setDraft] = useState("");
-  function commit() {
-    const t = draft.trim();
-    if (t && !tags.includes(t)) onAdd(t);
-    setDraft("");
-  }
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, minHeight: 46, alignItems: "center" }}>
-      {tags.map((t) => (
-        <span key={t} className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", background: "#F1F4FD", color: "#213A8C", border: "1px solid #C5D0F7", borderRadius: 999, fontSize: 12, fontWeight: 600 }}>
-          {t}
-          <button onClick={() => onRemove(t)} style={{ border: "none", background: "transparent", color: "#7C87A4", cursor: "pointer", fontSize: 13, lineHeight: 1 }}>×</button>
-        </span>
-      ))}
-      <input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }}
-        placeholder="입력 후 Enter"
-        style={{ flex: 1, minWidth: 120, border: "none", outline: "none", fontSize: 13, fontFamily: "var(--font-sans)", color: "#0F1A36" }}
-      />
     </div>
   );
 }
@@ -209,11 +184,8 @@ export default function R1MyPage() {
         </FieldGroup>
 
         <FieldGroup icon="📜" title="자격증 목록" desc="보유 자격증을 등록하면 관련 KR 작성 시 AI 코치가 활용 가이드를 제안해요." status={p.certs.length > 0 ? "done" : "in-progress"}>
-          <Tags
-            tags={p.certs}
-            onAdd={(t) => setProfile({ certs: [...p.certs, t] })}
-            onRemove={(t) => setProfile({ certs: p.certs.filter((x) => x !== t) })}
-          />
+          {/* OKR 작성 STEP 0과 동일한 공용 CertField — 🔍 검색 모달·회사 등급 배지·추천 포함 */}
+          <CertField certs={p.certs} onChange={(next) => setProfile({ certs: next })} suggestBasis={p.systems} />
         </FieldGroup>
       </div>
 

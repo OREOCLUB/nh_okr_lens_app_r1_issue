@@ -306,6 +306,11 @@ export function stepBlocker(state: WizardState, step: number): string | null {
 
 export const weightSum = (krs: WizardKR[]) => krs.reduce((a, k) => a + (k.weight || 0), 0);
 
+// ── OKR 수립 기간 (eval_phases 'lock' 시드 기준 — 일정 테이블 실연동은 P2) ──
+// 기간 경과 후에는 작성·제출·회수 전부 잠긴다 (조회만 가능).
+export const WRITE_DEADLINE = new Date(2026, 6, 15, 18, 0, 0); // 2026-07-15 18:00 KST
+export const writePeriodOver = (now: Date = new Date()) => now.getTime() > WRITE_DEADLINE.getTime();
+
 // ── 제출 적합성 검사 (STEP 7 게이트) — 미통과 항목이 있으면 제출 불가 ──
 import { deriveChecks, deriveRisk } from "./diagnosticEngine";
 import type { CheckItem, EvalSystem } from "./criteria";

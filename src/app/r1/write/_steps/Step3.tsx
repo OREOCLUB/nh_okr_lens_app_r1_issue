@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@/lib/auth";
 import type { WizardState, ChatMsg } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
-import { askCoach, nowTime } from "@/lib/aiCoach";
+import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
 import { deriveChecks } from "@/lib/diagnosticEngine";
 
 function ChatBubble({ from, text, time, userInitial }: ChatMsg & { userInitial: string }) {
@@ -36,8 +36,8 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
       from: "ai",
       time: nowTime(),
       text: target
-        ? `이제 KR 후보를 하나씩 정제해볼게요. "${target.kr}" — 측정 단위(평균/p95/p99), 측정 도구, 집계 주기가 명확한지 함께 볼까요? 목표 수치를 그렇게 정한 근거도 들려주시면 문장에 녹여드릴게요.`
-        : "정제할 KR 후보가 준비되면 여기서 함께 다듬어요. STEP 2에서 기초 정보를 먼저 입력해주세요.",
+        ? `[STEP 3 · 정제] KR 문장을 측정 가능하게 다듬는 단계예요. 통계 단위·측정 도구·집계 주기가 빠지면 평가 때 해석이 갈립니다.\n\n대상: "${target.kr}"\n질문: 측정 단위는 무엇으로 할까요? (평균 / p95 / p99)`
+        : "[STEP 3 · 정제] KR 문장을 측정 가능하게 다듬는 단계예요. 정제할 KR 후보가 아직 없으니 STEP 2에서 기초 정보를 먼저 입력해주세요.",
     };
   };
 
@@ -56,7 +56,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
     setText("");
     setError(null);
     const userMsg: ChatMsg = { from: "user", time: nowTime(), text: t };
-    set((s) => ({ ...s, refineChat: [...s.refineChat, userMsg] }));
+    set((s) => ({ ...s, refineChat: [...s.refineChat, userMsg].slice(-MAX_CHAT_STORE) }));
     setLoading(true);
     try {
       const history = [...state.refineChat, userMsg].map((m) => ({ role: m.from === "ai" ? ("assistant" as const) : ("user" as const), content: m.text }));
@@ -66,7 +66,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
         duty: state.profile.mainDuty,
         krs: state.krs.map((k) => ({ num: k.num, kr: k.kr, baseline: k.baseline, goal: k.goal })),
       });
-      set((s) => ({ ...s, refineChat: [...s.refineChat, { from: "ai", time: nowTime(), text: reply.text }] }));
+      set((s) => ({ ...s, refineChat: [...s.refineChat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE) }));
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {

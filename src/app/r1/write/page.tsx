@@ -16,6 +16,8 @@ import {
   anyDirty,
   commitDrafts,
   submitReadiness,
+  writePeriodOver,
+  WRITE_DEADLINE,
   type WizardState,
 } from "@/lib/wizard";
 import { Step0 } from "./_steps/Step0";
@@ -204,9 +206,15 @@ export default function R1WritePage() {
   }
 
   const evaluatorName = "박정훈"; // 결제플랫폼팀 평가자 (프로토타입 — P2에서 결재라인 연동)
+  const periodOver = writePeriodOver(); // 수립 기간 경과 시 작성·제출·회수 전부 잠금
+  const locked = (state?.submitted ?? false) || periodOver;
 
   async function submit() {
     if (!state || !user || submitting) return;
+    if (periodOver) {
+      showToast("OKR 수립 기간이 종료되어 제출할 수 없어요. 인사담당자에게 문의해주세요.", "warn");
+      return;
+    }
     if (state.submitted) {
       showToast("이미 제출된 OKR이에요. 수정하려면 먼저 회수해주세요.", "warn");
       return;
@@ -269,9 +277,13 @@ export default function R1WritePage() {
     }
   }
 
-  // 제출 회수 — 회수해야 수정·재제출이 가능하다
+  // 제출 회수 — 회수해야 수정·재제출이 가능하다 (수립 기간 내에만)
   async function recall() {
     if (!state || !user || recalling) return;
+    if (periodOver) {
+      showToast("OKR 수립 기간이 종료되어 회수할 수 없어요. 조정이 필요하면 인사담당자에게 문의해주세요.", "warn");
+      return;
+    }
     const ok = window.confirm("제출한 OKR을 회수할까요?\n회수하면 다시 수정할 수 있고, 수정을 마친 뒤 재제출하면 돼요.\n(평가자 검토가 시작된 경우 회수 사실이 함께 표시돼요)");
     if (!ok) return;
     setRecalling(true);
@@ -315,8 +327,19 @@ export default function R1WritePage() {
 
       {toastNode}
 
-      {/* 제출 완료 잠금 배너 — 회수해야 수정 가능 */}
-      {state.submitted && (
+      {/* 수립 기간 종료 배너 — 작성·제출·회수 전부 잠금 (조회만) */}
+      {periodOver && (
+        <div style={{ marginBottom: 16, padding: "16px 20px", background: "linear-gradient(135deg, #F1F3F8, #fff 70%)", border: "1px solid #C8CFDF", borderRadius: 14, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: "#5B6685", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🔒</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#3A4565" }}>OKR 수립 기간이 종료되었어요 (마감 {WRITE_DEADLINE.getFullYear()}-{String(WRITE_DEADLINE.getMonth() + 1).padStart(2, "0")}-{String(WRITE_DEADLINE.getDate()).padStart(2, "0")} 18:00)</div>
+            <div style={{ fontSize: 12, color: "#5B6685", marginTop: 3, lineHeight: 1.5 }}>지금은 열람만 가능하고 수정·제출·회수가 잠겨 있어요. 조정이 필요하면 인사담당자에게 문의해주세요.</div>
+          </div>
+        </div>
+      )}
+
+      {/* 제출 완료 잠금 배너 — 회수해야 수정 가능 (수립 기간 내에만) */}
+      {!periodOver && state.submitted && (
         <div style={{ marginBottom: 16, padding: "16px 20px", background: "linear-gradient(135deg, #ECFAF1, #fff 70%)", border: "1px solid #BBE9CC", borderRadius: 14, display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 11, background: "#2F9E5E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>✅</div>
           <div style={{ flex: 1 }}>
@@ -327,8 +350,8 @@ export default function R1WritePage() {
         </div>
       )}
 
-      {/* 제출 후에는 편집 잠금 (열람만) */}
-      <div style={state.submitted ? { pointerEvents: "none", opacity: 0.6 } : undefined}>
+      {/* 제출 후·기간 종료 후에는 편집 잠금 (열람만) */}
+      <div style={locked ? { pointerEvents: "none", opacity: 0.6 } : undefined}>
         {step === 0 && <Step0 state={state} set={set} user={user} />}
         {step === 1 && <Step1 state={state} set={set} criteria={criteria} />}
         {step === 2 && <Step2 state={state} set={set} user={user} criteria={criteria} onGo={confirmGo} />}
@@ -347,20 +370,15 @@ export default function R1WritePage() {
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: state.savedAt ? "#2F9E5E" : "#C8CFDF" }} />
           {state.savedAt ? `임시 저장됨 · ${savedAgo(state.savedAt)}` : "아직 저장 전"}
         </div>
-        <Button variant="secondary" onClick={saveNow} disabled={state.submitted}>임시 저장</Button>
+        <Button variant="secondary" onClick={saveNow} disabled={locked}>임시 저장</Button>
         {step < 7 ? (
           <Button variant="primary" onClick={next}>다음 (STEP {step + 1}) →</Button>
-        ) : state.submitted ? (
-          <Button variant="secondary" onClick={recall} disabled={recalling}>{recalling ? "회수 중…" : "↩ 회수하고 수정하기"}</Button>
         ) : (
-          <Button variant="primary" onClick={submit} disabled={submitting}>{submitting ? "제출 중…" : "제출하기 →"}</Button>
+          /* 제출 버튼은 STEP 7 제출 패널 하나로 통합 — 여기서는 안내만 */
+          <span style={{ fontSize: 12.5, color: "#7C87A4", padding: "0 6px" }}>제출은 위 <b style={{ color: "#3A4565" }}>제출 패널</b>에서 진행해주세요 ↑</span>
         )}
       </div>
 
-      <div style={{ marginTop: 18, padding: "12px 16px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#5B6685" }}>
-        <span style={{ fontSize: 14 }}>💡</span>
-        AI 코칭은 참고용 신호입니다. 평가에 직접 반영되지 않으며, 더 좋은 KR을 함께 만들기 위한 제안이에요.
-      </div>
     </RoleShell>
   );
 }

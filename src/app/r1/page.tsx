@@ -7,10 +7,10 @@ import { StatCard } from "@/components/StatCard";
 import { r1Okrs, type OKR } from "@/lib/mockData";
 import { getR1Okrs } from "@/lib/dataAccess";
 import { getCurrentUser, type Session } from "@/lib/auth";
-import { loadWizard, type WizardState } from "@/lib/wizard";
+import { loadWizard, WRITE_DEADLINE, type WizardState } from "@/lib/wizard";
 
-// OKR 등록 마감일 (eval_phases 'lock' 시드 기준 — P2에서 일정 테이블 연동)
-const DEADLINE = new Date("2026-07-15");
+// OKR 등록 마감일 — 위저드 기간 잠금과 같은 소스 사용
+const DEADLINE = WRITE_DEADLINE;
 
 const STATUS: Record<OKR["status"], { bg: string; bd: string; fg: string; label: string }> = {
   submitted: { bg: "#EFF4FE", bd: "#C5D5F7", fg: "#2B5DD9", label: "제출 · 검토 대기" },

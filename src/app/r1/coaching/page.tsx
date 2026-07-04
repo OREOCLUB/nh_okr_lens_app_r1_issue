@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { RoleShell } from "@/components/RoleShell";
 import { Button } from "@/components/Button";
 import { getCurrentUser, type Session } from "@/lib/auth";
-import { askCoach, nowTime } from "@/lib/aiCoach";
+import { askCoach, nowTime, MAX_CHAT_STORE } from "@/lib/aiCoach";
 import type { ChatMsg } from "@/lib/wizard";
 
 interface Topic {
@@ -72,7 +72,7 @@ export default function R1CoachingPage() {
   }, [active?.messages.length, loading]);
 
   function pushMsg(topicId: string, msg: ChatMsg) {
-    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, messages: [...t.messages, msg], desc: msg.from === "user" ? msg.text.slice(0, 24) + "…" : t.desc } : t)));
+    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, messages: [...t.messages, msg].slice(-MAX_CHAT_STORE), desc: msg.from === "user" ? msg.text.slice(0, 24) + "…" : t.desc } : t)));
   }
 
   async function send(raw: string) {
@@ -98,7 +98,7 @@ export default function R1CoachingPage() {
     const title = window.prompt("어떤 주제로 코칭을 받고 싶으세요?");
     if (!title?.trim()) return;
     const id = `t${Date.now()}`;
-    setTopics((ts) => [{ id, ...NEW_TOPIC_STYLE, title: title.trim(), desc: "새 코칭 대화", messages: [{ from: "ai", time: nowTime(), text: `"${title.trim()}"에 대해 함께 살펴봐요. 현재 상황을 편하게 들려주세요 :)` }] }, ...ts]);
+    setTopics((ts) => [{ id, ...NEW_TOPIC_STYLE, title: title.trim(), desc: "새 코칭 대화", messages: [{ from: "ai", time: nowTime(), text: `[상시 코칭] "${title.trim()}" — 현재 상황을 한 줄로 알려주세요. 관련 수치(현재값·목표값)가 있으면 함께요.` }] }, ...ts]);
     setActiveId(id);
   }
 
@@ -179,7 +179,7 @@ export default function R1CoachingPage() {
                 <button onClick={() => send(input)} disabled={loading} style={{ width: 36, height: 36, borderRadius: 10, background: "#00A968", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, color: "#fff", fontSize: 14, flexShrink: 0 }}>↑</button>
               </div>
               <div style={{ fontSize: 11, color: "#A4ADC4", marginTop: 8, textAlign: "center" }}>
-                AI 코칭 응답은 참고용이에요. 평가에 직접 반영되지 않으며, 코칭 내용은 본인만 볼 수 있어요.
+                코칭 내용은 본인만 볼 수 있어요.
               </div>
             </div>
           </div>

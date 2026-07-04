@@ -19,7 +19,7 @@ function AICoachOverlay({ kr, onAutoFill }: { kr: WizardKR; onAutoFill: () => vo
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [chat, setChat] = useState<ChatMsg[]>([
-    { from: "ai", time: nowTime(), text: `A등급은 목표선(${kr.goal})이에요. S등급은 보통 목표보다 20% 더 좋은 값을 잡아요. "자동 생성"을 누르면 등급 초안을 채워드릴게요.` },
+    { from: "ai", time: nowTime(), text: `[STEP 5 · 등급 기준] S~D 구간을 수치로 확정하는 단계예요.\n기준: A = 목표선(${kr.goal}), S = 목표 대비 +20% 수준, 구간 겹침 금지.\n"자동 생성"으로 초안을 만든 뒤 조정하는 게 빠릅니다.` },
   ]);
   const [loading, setLoading] = useState(false);
 
