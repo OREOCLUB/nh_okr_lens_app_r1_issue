@@ -31,6 +31,8 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const [error, setError] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false); // 11항목 신호등 상세 (팝업 대신 카드 내 아코디언)
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [refineTargetId, setRefineTargetId] = useState<string | null>(null); // 대화 정제 대상 KR
   const llmGate = useLlmGate();
 
   // 구조화 출력 대기분 — 위저드 상태에 보관 (스텝을 오가도 유지)
@@ -67,6 +69,23 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [state.refineChat.length, loading, pendingRefinement, pendingNewKrs.length]);
+
+  // 응답이 끝나면 자동 포커스 — 연속 대화
+  useEffect(() => {
+    if (!loading) inputRef.current?.focus();
+  }, [loading]);
+
+  // KR 카드 클릭 → 대화 정제 대상으로 지정 (코치가 그 KR 기준으로 이어감)
+  function selectRefineTarget(k: WizardKR) {
+    setRefineTargetId(k.id);
+    const msg: ChatMsg = {
+      from: "ai",
+      time: nowTime(),
+      text: `[정제 대상 변경] KR ${String(k.num).padStart(2, "0")} — "${k.kr}"\n이 KR을 다듬어볼게요. 측정 단위·측정 도구·집계 주기 중 빠진 것부터 알려주세요. 목표 수치의 근거(작년 실적·측정 데이터)가 있으면 함께요.`,
+    };
+    set((s) => ({ ...s, refineChat: [...s.refineChat, msg].slice(-MAX_CHAT_STORE) }));
+    inputRef.current?.focus();
+  }
 
   async function send(raw: string) {
     const t = raw.trim();
@@ -229,6 +248,10 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
             <span style={{ fontSize: 11, fontWeight: 700, color: "#7C87A4", padding: "3px 12px", background: "#F1F4FD", borderRadius: 999 }}>AI 정제 대화</span>
             <div style={{ flex: 1, height: 1, background: "#ECEFF5" }} />
           </div>
+          {/* 이 화면 사용법 — 무엇을 하는 대화인지 명시 */}
+          <div style={{ padding: "10px 14px", background: "#F9FAFC", border: "1px solid #ECEFF5", borderRadius: 10, fontSize: 11.5, color: "#5B6685", lineHeight: 1.6 }}>
+            📌 <b>이렇게 진행해요</b> — ① 우측 <b>KR 카드를 클릭</b>해 정제할 KR을 고르고 ② 코치의 질문(측정 단위·도구·근거)에 답하면 ③ 코치가 <b>정제 제안 카드</b>를 띄워요 → &ldquo;이대로 적용&rdquo;을 눌러야 KR 문장이 바뀝니다. 키워드가 남아 있으면 상단 배너에서 KR 초안을 먼저 만들어주세요.
+          </div>
           {state.refineChat.map((m, i) => <ChatBubble key={i} {...m} userInitial={user.name.charAt(0)} />)}
           {loading && (
             <div style={{ display: "flex", gap: 10 }}>
@@ -298,6 +321,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
               </div>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
                 <textarea
+                  ref={inputRef}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
@@ -318,13 +342,14 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "18px 18px" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>현재 KR 후보</div>
-          <div style={{ fontSize: 11, color: "#7C87A4", margin: "3px 0 12px" }}>대화로 정제 · <b>현재값→목표값은 여기서 확정</b>하고 넘어가요 (STEP 4 형태 추천의 기반값)</div>
+          <div style={{ fontSize: 11, color: "#7C87A4", margin: "3px 0 12px", lineHeight: 1.5 }}><b>카드를 클릭하면 그 KR이 대화 정제 대상</b>이 돼요 · 현재값→목표값도 여기서 확정하고 넘어가요</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {state.krs.map((k) => {
               const st = k.refined
                 ? { label: "정제 완료", ico: "✓", c: "#2F9E5E", bg: "#ECFAF1" }
                 : { label: "정제 중", ico: "●", c: "#3B5BDB", bg: "#F1F4FD" };
               const missing = !k.baseline.trim() || !k.goal.trim();
+              const targeted = refineTargetId === k.id;
               const valInput = (field: "baseline" | "goal", val: string, ph: string) => (
                 <input
                   className="mono"
@@ -335,16 +360,21 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
                 />
               );
               return (
-                <div key={k.id} style={{ border: `1px solid ${missing ? "#F0DFA0" : "#ECEFF5"}`, borderRadius: 11, padding: "12px 13px" }}>
+                <div
+                  key={k.id}
+                  onClick={() => selectRefineTarget(k)}
+                  style={{ border: targeted ? "1.5px solid #00A968" : `1px solid ${missing ? "#F0DFA0" : "#ECEFF5"}`, borderRadius: 11, padding: "12px 13px", cursor: "pointer", boxShadow: targeted ? "0 0 0 3px rgba(0,169,104,.12)" : "none" }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
                     <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#213A8C" }}>KR {String(k.num).padStart(2, "0")}</span>
-                    <button onClick={() => toggleRefined(k.id)} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 999, background: st.bg, color: st.c, fontSize: 10.5, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "var(--font-sans)" }}><span style={{ fontSize: 9 }}>{st.ico}</span>{st.label}</button>
-                    <button onClick={() => deleteKr(k.id)} title="이 KR 삭제" style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid #F5C6C6", background: "#fff", color: "#D14343", cursor: "pointer", fontSize: 12, lineHeight: 1, flexShrink: 0 }}>×</button>
+                    {targeted && <span style={{ padding: "1px 8px", borderRadius: 999, background: "#E0F7EC", color: "#00794B", fontSize: 10, fontWeight: 700 }}>💬 정제 중</span>}
+                    <button onClick={(e) => { e.stopPropagation(); toggleRefined(k.id); }} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 999, background: st.bg, color: st.c, fontSize: 10.5, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "var(--font-sans)" }}><span style={{ fontSize: 9 }}>{st.ico}</span>{st.label}</button>
+                    <button onClick={(e) => { e.stopPropagation(); deleteKr(k.id); }} title="이 KR 삭제" style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid #F5C6C6", background: "#fff", color: "#D14343", cursor: "pointer", fontSize: 12, lineHeight: 1, flexShrink: 0 }}>×</button>
                   </div>
                   <div style={{ fontSize: 11.5, color: "#3A4565", lineHeight: 1.5 }}>{k.kr}</div>
                   {k.before && <div style={{ fontSize: 10.5, color: "#A6AEC2", marginTop: 5, textDecoration: "line-through" }}>{k.before}</div>}
-                  {/* 현재값 → 목표값 확정 입력 */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 4, alignItems: "center", marginTop: 8 }}>
+                  {/* 현재값 → 목표값 확정 입력 (클릭이 정제 대상 선택으로 새지 않게) */}
+                  <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 4, alignItems: "center", marginTop: 8 }}>
                     {valInput("baseline", k.baseline, "현재값")}
                     <span style={{ textAlign: "center", color: "#A6AEC2", fontSize: 10 }}>→</span>
                     {valInput("goal", k.goal, "목표값")}

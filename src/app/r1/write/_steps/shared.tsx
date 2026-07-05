@@ -205,6 +205,7 @@ export function generateInitiatives(kr: WizardKR): string[] {
 }
 
 // ── 결정적 등급 초안 생성 (STEP 5 — AI 자동 생성 폴백과 동일 룰) ──
+// 양식 통일: "조건 (설명)" — 모호한 표현("직전 단계", "개선 추세") 없이 판정 가능한 기준만 쓴다
 export function generateGrades(kr: WizardKR): WizardKR["grades"] {
   const num = (s: string) => {
     const m = s.match(/[\d.]+/);
@@ -213,41 +214,59 @@ export function generateGrades(kr: WizardKR): WizardKR["grades"] {
   const unit = kr.goal.replace(/[\d.,\s/]+/g, "") || "";
   const b = num(kr.baseline);
   const g = num(kr.goal);
+
+  // 수치형 — 구간이 겹치지 않는 수치 경계로만 정의
   if (kr.format === "수치" && b !== null && g !== null && b !== g) {
-    const better = (ratio: number) => Math.round(g + (g - b) * ratio);
-    const mid = (ratio: number) => Math.round(g + (b - g) * ratio);
     const lower = g < b; // 낮을수록 좋은 지표 (예: 응답속도)
+    const point = (ratio: number) => Math.round(g + (b - g) * ratio); // 목표→baseline 사이 지점
+    const over = Math.round(g + (g - b) * 0.2); // 목표 대비 +20% 지점
     if (lower) {
       return {
-        S: `≤${better(0.2)}${unit} — 목표 초과 20% 달성`,
-        A: `≤${g}${unit} — 목표 달성`,
-        B: `${g}~${mid(0.5)}${unit} — 목표의 70~99%`,
-        C: `${mid(0.5)}~${mid(0.85)}${unit} — 개선 추세 확인`,
-        D: `≥${mid(0.85)}${unit} — baseline 수준`,
+        S: `≤${over}${unit} (목표 대비 20% 초과 달성)`,
+        A: `≤${g}${unit} (목표 달성)`,
+        B: `${g + 1}~${point(0.5)}${unit} (목표의 50% 이상 개선)`,
+        C: `${point(0.5) + 1}~${point(0.85)}${unit} (목표의 15% 이상 개선)`,
+        D: `≥${point(0.85) + 1}${unit} (baseline 수준)`,
       };
     }
     return {
-      S: `≥${better(0.2)}${unit} — 목표 초과 20% 달성`,
-      A: `≥${g}${unit} — 목표 달성`,
-      B: `${mid(0.3)}~${g}${unit} — 목표의 70~99%`,
-      C: `${mid(0.7)}~${mid(0.3)}${unit} — 개선 추세 확인`,
-      D: `≤${mid(0.7)}${unit} — baseline 수준`,
+      S: `≥${over}${unit} (목표 대비 20% 초과 달성)`,
+      A: `≥${g}${unit} (목표 달성)`,
+      B: `${point(0.5)}~${g - 1}${unit} (목표의 50% 이상 개선)`,
+      C: `${point(0.85)}~${point(0.5) - 1}${unit} (목표의 15% 이상 개선)`,
+      D: `≤${point(0.85) - 1}${unit} (baseline 수준)`,
     };
   }
+
+  // 마일스톤 — goal의 "M/N" 표기를 파싱해 단계 수 기준으로 정의
   if (kr.format === "마일스톤") {
+    const m = kr.goal.match(/(\d+)\s*\/\s*(\d+)/);
+    if (m) {
+      const target = parseInt(m[1], 10);
+      const total = parseInt(m[2], 10);
+      return {
+        S: `${total}/${total} 단계 완료 (전체 완료)`,
+        A: `${target}/${total} 단계 완료 (목표 달성)`,
+        B: `${Math.max(target - 1, 1)}/${total} 단계 완료`,
+        C: `${Math.max(target - 2, 1)}/${total} 단계 완료`,
+        D: `0/${total} 단계 (착수 전)`,
+      };
+    }
     return {
-      S: "전체 단계 완료 + 확장 산출물",
-      A: `${kr.goal} 완료 — 목표 달성`,
-      B: "목표 직전 단계까지 완료",
-      C: "초기 단계 완료 (산출물 확인)",
-      D: "미착수",
+      S: "전체 단계 완료 + 산출물 배포",
+      A: `${kr.goal} 완료 (목표 달성)`,
+      B: "목표 단계 -1 완료 (산출물 검수 통과)",
+      C: "1단계 완료 (산출물 제출)",
+      D: "0단계 (착수 전)",
     };
   }
+
+  // 루브릭·이산 — 판정 가능한 조건으로 통일
   return {
-    S: "목표 초과 — 추가 성과 포함",
-    A: `${kr.goal} — 목표 달성`,
-    B: "목표의 70~99% 수준",
-    C: "부분 달성 — 개선 추세 확인",
-    D: "baseline 수준",
+    S: `${kr.goal} 달성 + 추가 성과 1건 (증빙 포함)`,
+    A: `${kr.goal} 달성 (증빙 포함)`,
+    B: `${kr.goal}의 핵심 요건 충족 (일부 항목 보완 필요)`,
+    C: `${kr.goal}의 절반 이하 충족 (증빙 자료 필수)`,
+    D: `미달성 (착수 기록만 존재)`,
   };
 }

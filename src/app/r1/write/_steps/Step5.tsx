@@ -250,22 +250,52 @@ export function Step5({ state, set }: { state: WizardState; set: (fn: (s: Wizard
         </div>
       </div>
 
-      {/* 3. 참고 실행계획 */}
+      {/* 3. 실행계획 — AI 제안을 반영하면 KR 데이터가 되어 STEP 7 확정·제출 저장까지 이어진다 */}
       <div style={{ background: "linear-gradient(135deg, #F1FBF6, #fff 55%)", border: "1px solid #B9F1D8", borderRadius: 16, padding: "20px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ width: 24, height: 24, borderRadius: 7, background: "#E0F7EC", color: "#00794B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>3</span>
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36" }}>참고 실행계획 (AI 제안)</span>
-          <span style={{ fontSize: 10.5, color: "#2F9E5E", fontWeight: 700, marginLeft: "auto" }}>등급 기준 기반 자동 제안</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36" }}>실행계획</span>
+          {kr.plan ? (
+            <span style={{ padding: "2px 9px", borderRadius: 999, background: "#ECFAF1", color: "#2F9E5E", fontSize: 10.5, fontWeight: 700 }}>✓ 반영됨 — 아래에서 수정 가능</span>
+          ) : (
+            <span style={{ padding: "2px 9px", borderRadius: 999, background: "#F1F3F8", color: "#7C87A4", fontSize: 10.5, fontWeight: 700 }}>AI 제안 — 반영 전</span>
+          )}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            {kr.plan ? (
+              <button
+                onClick={() => { if (window.confirm("현재 실행계획을 AI 제안으로 다시 덮어쓸까요?")) patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") }); }}
+                style={{ padding: "7px 13px", background: "#fff", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+              >↻ AI 제안으로 재생성</button>
+            ) : (
+              <button
+                onClick={() => patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") })}
+                style={{ padding: "7px 13px", background: "#00A968", color: "#fff", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+              >📋 이 계획을 실행계획으로 반영</button>
+            )}
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 12 }}>등급 기준에 맞춰 참고용으로 제안하는 실행계획이에요. 그대로 쓰지 않아도 괜찮아요.</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {generateInitiatives(kr).map((it, i) => (
-            <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "9px 12px", background: "#fff", border: "1px solid #DFF3E8", borderRadius: 9, fontSize: 12.5, color: "#3A4565", lineHeight: 1.55 }}>
-              <span className="mono" style={{ color: "#00A968", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-              {it}
-            </div>
-          ))}
+        <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 12 }}>
+          {kr.plan
+            ? "반영된 실행계획은 STEP 7에서 최종 확정하고 제출 시 함께 저장돼요. 여기서 바로 수정할 수 있어요."
+            : "등급 기준에 맞춘 AI 제안이에요. \"반영\"을 누르면 이 KR의 실행계획이 되고, STEP 7에서 최종 확정·제출 저장까지 이어져요."}
         </div>
+        {kr.plan ? (
+          <textarea
+            value={kr.plan}
+            onChange={(e) => patchKR(kr.id, { plan: e.target.value })}
+            rows={5}
+            style={{ ...input, minHeight: 110, resize: "vertical", lineHeight: 1.6, fontSize: 12.5 }}
+          />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {generateInitiatives(kr).map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "9px 12px", background: "#fff", border: "1px solid #DFF3E8", borderRadius: 9, fontSize: 12.5, color: "#3A4565", lineHeight: 1.55 }}>
+                <span className="mono" style={{ color: "#00A968", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                {it}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <AICoachOverlay kr={kr} onAutoFill={autoFill} />

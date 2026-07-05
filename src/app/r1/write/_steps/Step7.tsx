@@ -21,7 +21,7 @@ const GRADE_META: [keyof KRGrades, string][] = [
   ["D", "#D64545"],
 ];
 
-const TEXT_FIELDS: (keyof KRTextDraft)[] = ["objective", "kr", "baseline", "goal", "measure"];
+const TEXT_FIELDS: (keyof KRTextDraft)[] = ["objective", "kr", "baseline", "goal", "measure", "plan"];
 
 function AIChipBadge({ vendor }: { vendor: string }) {
   const v = AI_BADGE[vendor];
@@ -77,7 +77,7 @@ function FinalKRCard({
   const dirty = anyDirty(kr);
 
   const committedOf = (f: keyof KRTextDraft): string =>
-    f === "measure" ? measureText(kr) : (kr[f as "objective" | "kr" | "baseline" | "goal"] ?? "");
+    f === "measure" ? measureText(kr) : f === "plan" ? (kr.plan ?? "") : (kr[f as "objective" | "kr" | "baseline" | "goal"] ?? "");
   const shownOf = (f: keyof KRTextDraft): string => kr.textDraft?.[f] ?? committedOf(f);
 
   const textRow = (f: keyof KRTextDraft, opts?: { multiline?: boolean; mono?: boolean; fontSize?: number; fontWeight?: number; color?: string }) => (
@@ -120,6 +120,10 @@ function FinalKRCard({
             <div><div style={sectionLabel}>측정 방법</div>{textRow("measure", { fontSize: 12.5 })}</div>
             <div><div style={sectionLabel}>Baseline</div>{textRow("baseline", { mono: true, fontSize: 12.5 })}</div>
             <div><div style={sectionLabel}>Goal</div>{textRow("goal", { mono: true, fontSize: 12.5, color: "#3B5BDB" })}</div>
+          </div>
+          <div>
+            <div style={sectionLabel}>실행 계획 <span style={{ fontWeight: 500, textTransform: "none", letterSpacing: 0 }}>— STEP 5에서 반영한 계획을 여기서 최종 확정해요 (제출 시 저장)</span></div>
+            {textRow("plan", { multiline: true, fontSize: 12.5, color: "#3A4565" })}
           </div>
           <div>
             <div style={sectionLabel}>등급 기준 (S/A/B/C/D)</div>
@@ -175,7 +179,7 @@ export function Step7({ state, set, criteria, evaluatorName, onSubmit, submittin
 
   // ── 텍스트 필드 draft ──
   const committedOf = (k: WizardKR, f: keyof KRTextDraft): string =>
-    f === "measure" ? measureText(k) : (k[f as "objective" | "kr" | "baseline" | "goal"] ?? "");
+    f === "measure" ? measureText(k) : f === "plan" ? (k.plan ?? "") : (k[f as "objective" | "kr" | "baseline" | "goal"] ?? "");
 
   const patchText = (id: string, f: keyof KRTextDraft, v: string) =>
     patchKR(id, (k) => ({ ...k, textDraft: { ...(k.textDraft ?? {}), [f]: v } }));

@@ -82,18 +82,22 @@ const MOCK_KEYWORD_DICT: [RegExp, string][] = [
 ];
 
 function mockMeta(req: CoachRequest): CoachMeta {
-  const last = req.messages.filter((m) => m.role === "user").pop()?.content ?? "";
-  const turn = req.messages.filter((m) => m.role === "user").length;
-  const keywords = MOCK_KEYWORD_DICT.filter(([re]) => re.test(last)).map(([, kw]) => kw);
-  // 대화 진행 단계에 따라 다음 질문 흐름에 맞는 추천을 순환 제공
+  // 최근 사용자 발화 2개에서 추출 — 대화에서도 키워드 산출이 이어지게
+  const userMsgs = req.messages.filter((m) => m.role === "user").map((m) => m.content);
+  const recentText = userMsgs.slice(-2).join(" ");
+  const turn = userMsgs.length;
+  const keywords = MOCK_KEYWORD_DICT.filter(([re]) => re.test(recentText)).map(([, kw]) => kw);
+  // 대화 진행 단계에 따라 다음 질문 흐름에 맞는 추천을 순환 제공 (이후엔 무한 순환)
   const stages: string[][] = [
     ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "운영 자동화에 도전하고 싶어요"],
     ["작년에 못 했던 걸 해보고 싶어요", "테스트 커버리지를 올리고 싶어요", "문서화를 표준화하고 싶어요"],
     ["SRE팀 협업이 필요해요", "인프라팀 도움이 필요해요", "독립적으로 진행할 수 있어요"],
     ["목표 수치의 근거를 설명할게요", "측정 도구는 이미 있어요", "이 정도면 충분한 것 같아요"],
-    ["KR 후보를 정리해주세요", "하나 더 추가하고 싶어요", "다음 단계로 넘어갈게요"],
+    ["다른 업무 얘기도 할게요", "하나 더 추가하고 싶어요", "다음 단계로 넘어갈게요"],
+    ["데이터 정합성도 챙기고 싶어요", "보안 점검 업무가 있어요", "문서화 얘기를 해볼게요"],
   ];
-  return { keywords, suggestions: stages[Math.min(turn, stages.length - 1)] };
+  const idx = turn < stages.length ? turn : stages.length - 2 + (turn % 2); // 이후 마지막 2개 순환
+  return { keywords, suggestions: stages[Math.min(idx, stages.length - 1)] };
 }
 
 // LLM 응답에서 메타 라인(##키워드/##추천/##정제/##신규KR) 분리
@@ -106,7 +110,11 @@ function extractMeta(raw: string): { text: string; meta: CoachMeta } {
     const rf = line.match(/^#{0,3}\s*정제\s*[::]\s*(.+)$/);
     const nk = line.match(/^#{0,3}\s*신규KR\s*[::]\s*(.+)$/);
     if (kw) {
-      meta.keywords = kw[1].split(/[,،·]/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+      meta.keywords = kw[1]
+        .split(/[,،·]/)
+        .map((s) => s.trim())
+        .filter((s) => s && s !== "없음")
+        .slice(0, 4);
     } else if (sg) {
       meta.suggestions = sg[1].split("|").map((s) => s.trim()).filter(Boolean).slice(0, 3);
     } else if (rf) {
@@ -193,11 +201,11 @@ function mockRefineMeta(req: CoachRequest): Pick<CoachMeta, "refinement" | "newK
   return {};
 }
 
-// basic 모드에서 LLM에게 메타 라인 출력을 지시
-const META_INSTRUCTION = `[구조화 출력 규칙 — basic 단계 전용]
-답변 본문을 쓴 뒤, 마지막에 아래 두 줄을 정확한 형식으로 추가하세요 (이 줄들은 시스템이 파싱하며 사용자에게 본문으로 보이지 않습니다):
-##키워드: 이번 대화에서 새로 파악한 KR 후보 키워드를 쉼표로 구분해 1~4개 (새로 파악한 것이 없으면 이 줄 생략)
-##추천: 사용자가 이어서 답하기 좋은 짧은 답변 후보 3개를 | 로 구분 (각 15자 이내)`;
+// basic 모드에서 LLM에게 메타 라인 출력을 지시 (매 응답 필수 — 누락 방지 강제)
+const META_INSTRUCTION = `[구조화 출력 규칙 — basic 단계 전용 · 매 응답 반드시 포함]
+답변 본문을 쓴 뒤, 마지막에 아래 두 줄을 정확한 형식으로 **반드시** 추가하세요 (시스템이 파싱하며 사용자 화면 본문에는 보이지 않습니다):
+##키워드: 사용자의 직전 발화에서 KR 재료가 될 명사구 키워드 1~4개를 쉼표로 구분 (예: 정산 배치 안정화, 응답속도). 정말 없으면 "없음"이라고 쓰세요. 이 줄을 절대 생략하지 마세요.
+##추천: 사용자가 이어서 답하기 좋은 짧은 답변 후보 3개를 | 로 구분 (각 15자 이내). 이 줄도 절대 생략하지 마세요.`;
 
 // refine 모드 구조화 출력 — 정제안·신규 KR 초안을 파싱 가능한 형식으로
 const REFINE_INSTRUCTION = `[구조화 출력 규칙 — refine 단계 전용]
@@ -224,9 +232,16 @@ function mockReply(req: CoachRequest): string {
         `${ack}협업이 필요한 부분이 있나요? 있다면 수준도 함께요 — ① 단순 신청·요청(티켓/결재) ② 정기 협조 ③ 공동 구축·신규 도입. 수준에 따라 통제가능성 평가가 달라져요.`,
         `${ack}목표 수치가 있다면 산출 근거는요? (작년 실적 · 측정 데이터 · 업계 기준)`,
         `${ack}재료가 충분해요. 우측 키워드의 체크를 조정한 뒤 다음 단계로 넘어가도 좋아요. 더 추가할 내용이 있나요?`,
-        `${ack}추가로 정리했어요. 남은 게 없다면 다음 단계(STEP 3)에서 키워드를 KR 문장으로 만들어봐요.`,
       ];
-      return flow[Math.min(turn - 1, flow.length - 1)];
+      if (turn <= flow.length) return flow[turn - 1];
+      // 이후엔 무한 순환 — 같은 문구 반복 없이 대화를 계속 이어간다
+      const loop = [
+        `${ack}이 업무에서 측정 가능한 지표(수치·건수·시간)가 있다면 무엇인가요?`,
+        `${ack}그 일의 현재 수준과 올해 도달하고 싶은 수준을 숫자로 말해볼까요?`,
+        `${ack}이 업무가 기존 업무 분장과 어떻게 다른가요? 기존 수준을 넘어서는 변화 1가지를 짚어주세요.`,
+        `${ack}좋아요, 정리했어요. 다른 업무 영역 이야기도 있나요? 없으면 다음 단계로 넘어가도 됩니다.`,
+      ];
+      return loop[(turn - flow.length - 1) % loop.length];
     }
     case "refine":
       if (/평균|p9\d|퍼센타일/.test(last))

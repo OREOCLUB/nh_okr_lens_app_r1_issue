@@ -42,6 +42,7 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   // 키워드 반영 순간 표시 — 새로 추가된 칩이 잠깐 펄스 + 패널에 +N 배지
   const [flashKeys, setFlashKeys] = useState<string[]>([]);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -137,6 +138,11 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [b.chat.length, loading]);
+
+  // 응답이 끝나면(입력창 재활성화) 자동으로 포커스 — 매번 클릭할 필요 없이 연속 대화
+  useEffect(() => {
+    if (!loading && b.mode === "chat") inputRef.current?.focus();
+  }, [loading, b.mode]);
 
   async function send(raw: string) {
     const t = raw.trim();
@@ -245,6 +251,7 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
                   </div>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#F9FAFC", border: "1px solid #E1E5EF", borderRadius: 12, padding: "8px 12px" }}>
                     <textarea
+                      ref={inputRef}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}

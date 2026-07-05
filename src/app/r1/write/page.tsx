@@ -359,7 +359,8 @@ export default function R1WritePage() {
           goal: k.goal,
           weight: k.weight,
           measure: measureText(k),
-          plan: generateInitiatives(k).map((s, i) => `${i + 1}. ${s}`).join("\n"),
+          // STEP 5·7에서 확정한 실행계획 우선, 없으면 AI 제안으로 채움
+          plan: k.plan?.trim() ? k.plan : generateInitiatives(k).map((s, i) => `${i + 1}. ${s}`).join("\n"),
           difficulty: deriveDifficulty(k),
           gradeCriteria: { ...k.grades },
         })),

@@ -37,6 +37,7 @@ export interface WizardKR {
   measureStat: string;
   measureCycle: string;
   weight: number;
+  plan?: string; // 실행 계획 (STEP 5에서 반영·편집 → STEP 7 확정 → 제출 저장)
   grades: KRGrades; // 확정된 등급 기준
   gradesDraft?: KRGrades | null; // STEP 5·7 수정 중(미확정) 등급 — 확정 시 grades로 커밋
   textDraft?: KRTextDraft | null; // STEP 7 텍스트 필드 미확정 변경 — 확정 시 본 필드로 커밋
@@ -52,6 +53,7 @@ export interface KRTextDraft {
   baseline?: string;
   goal?: string;
   measure?: string;
+  plan?: string; // 실행 계획
 }
 
 /** measure 3필드의 표시용 결합 문자열 (STEP 7 편집 단위) */
@@ -73,7 +75,8 @@ export function textDirty(kr: WizardKR): boolean {
     (d.kr !== undefined && d.kr !== kr.kr) ||
     (d.baseline !== undefined && d.baseline !== kr.baseline) ||
     (d.goal !== undefined && d.goal !== kr.goal) ||
-    (d.measure !== undefined && d.measure !== measureText(kr))
+    (d.measure !== undefined && d.measure !== measureText(kr)) ||
+    (d.plan !== undefined && d.plan !== (kr.plan ?? ""))
   );
 }
 
@@ -93,6 +96,7 @@ export function commitDrafts(kr: WizardKR): WizardKR {
       kr: d.kr ?? next.kr,
       baseline: d.baseline ?? next.baseline,
       goal: d.goal ?? next.goal,
+      plan: d.plan ?? next.plan,
       ...(measureChanged ? { measureTool: d.measure as string, measureStat: "", measureCycle: "" } : {}),
       textDraft: null,
     };
