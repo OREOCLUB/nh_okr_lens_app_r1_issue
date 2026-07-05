@@ -188,11 +188,14 @@ export default function R1CoachingPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-                  placeholder="궁금한 점이나 코칭받고 싶은 주제를 입력해주세요…"
+                  placeholder={loading ? "코치가 답변을 작성하는 중이에요…" : "궁금한 점이나 코칭받고 싶은 주제를 입력해주세요…"}
                   rows={2}
-                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 14, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
+                  disabled={loading}
+                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 14, color: loading ? "#A4ADC4" : "#0F1A36", resize: "none", lineHeight: 1.5 }}
                 />
-                <button onClick={() => send(input)} disabled={loading} style={{ width: 36, height: 36, borderRadius: 10, background: "#00A968", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, color: "#fff", fontSize: 14, flexShrink: 0 }}>↑</button>
+                <button onClick={() => send(input)} disabled={loading} style={{ width: 36, height: 36, borderRadius: 10, background: "#00A968", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "default" : "pointer", color: "#fff", fontSize: 14, flexShrink: 0 }}>
+                  {loading ? <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,.35)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin .8s linear infinite" }} /> : "↑"}
+                </button>
               </div>
               <div style={{ fontSize: 11, color: "#A4ADC4", marginTop: 8, textAlign: "center" }}>
                 코칭 내용은 본인만 볼 수 있어요.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { label, input, hint } from "./shared";
+import { label, input, hint, Spinner } from "./shared";
 import type { Session } from "@/lib/auth";
 import type { WizardState, ChatMsg } from "@/lib/wizard";
 import type { CriteriaData } from "@/lib/dataAccess";
@@ -47,6 +47,44 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // API 키 게이트 — 무효 시 대화 차단, 목업모드 선택 가능, 정상화 시 자동 복귀+초기화
   const llmGate = useLlmGate();
+  // 직접 작성 모드 → 키워드 도출
+  const [extracting, setExtracting] = useState(false);
+  const [extractResult, setExtractResult] = useState<string[] | null>(null);
+
+  async function extractFromForm() {
+    if (extracting) return;
+    if (llmGate.gate === "blocked" || llmGate.gate === "checking") return;
+    const content = [
+      b.objective && `Objective: ${b.objective}`,
+      b.duty && `업무 분장: ${b.duty}`,
+      b.freeText && `작성 내용:\n${b.freeText}`,
+      b.collaborators && `협업 대상: ${b.collaborators}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    if (!content.trim()) {
+      setExtractResult([]);
+      return;
+    }
+    setExtracting(true);
+    setExtractResult(null);
+    try {
+      const reply = await askCoach(
+        "basic",
+        [{ role: "user", content: `다음 직접 작성 내용에서 KR 재료 키워드를 도출해주세요:\n${content}` }],
+        { userName: user.name, okrType: state.okrType === "ops" ? "운영" : "전략혁신", duty: state.profile.mainDuty }
+      );
+      const merged = mergeKeywords(b.keywords, reply.keywords ?? []);
+      set((s) => ({ ...s, basic: { ...s.basic, keywords: mergeKeywords(s.basic.keywords, reply.keywords ?? []).keywords } }));
+      flash(merged.added);
+      setExtractResult(merged.added);
+    } catch {
+      setExtractResult(null);
+      setError("키워드 도출 중 연결이 원활하지 않았어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setExtracting(false);
+    }
+  }
 
   function flash(keys: string[]) {
     if (keys.length === 0) return;
@@ -59,11 +97,28 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
     set((s) => ({ ...s, basic: { ...s.basic, ...patch } }));
 
   const okrTypeLabel = state.okrType === "ops" ? "운영" : "전략혁신";
+
+  // 오프너 질문 — 다양한 각도로 랜덤 제시 (처음부터를 누를 때마다 바뀜)
+  const OPENING_QUESTIONS = [
+    "올해 본업에서 반드시 지킬 것 1가지는 무엇인가요?",
+    "올해 꼭 해야 할 일 1가지를 꼽는다면요?",
+    "'해야 할 것 같은데' 하고 미뤄둔 일 1가지가 있다면요?",
+    "아직 확정되지 않았지만 맡게 될 것 같은 업무가 있나요?",
+    "작년에 아쉬웠던 것 중 올해 바로잡고 싶은 1가지는요?",
+  ];
   const greeting = (): ChatMsg => ({
     from: "ai",
     time: nowTime(),
-    text: `[STEP 2 · 기초 정보 — ${okrTypeLabel} OKR]\n이 단계는 KR을 만드는 단계가 아니라, KR의 재료가 될 키워드를 도출하는 단계예요. 업무 이야기를 편하게 들려주시면 키워드 정리는 제가 할게요 (우측 패널에 쌓입니다).\n\n첫 질문: 올해 본업에서 반드시 지킬 것 1가지는 무엇인가요?`,
+    text: `[STEP 2 · 기초 정보 — ${okrTypeLabel} OKR]\n이 단계는 KR을 만드는 단계가 아니라, KR의 재료가 될 키워드를 도출하는 단계예요. 업무 이야기를 편하게 들려주시면 키워드 정리는 제가 할게요 (우측 패널에 쌓입니다).\n\n첫 질문: ${OPENING_QUESTIONS[Math.floor(Math.random() * OPENING_QUESTIONS.length)]}`,
   });
+
+  // 대화 시작용 추천 칩 — 첫 응답 전에는 이걸로 대화를 열 수 있게
+  const STARTER_CHIPS = [
+    "반드시 지킬 것부터 말할게요",
+    "새로 도전하고 싶은 일이 있어요",
+    "아직 미확정인 업무가 있어요",
+    "뭘 말해야 할지 모르겠어요",
+  ];
 
   // 첫 진입 시 인사말 시드
   useEffect(() => {
@@ -182,9 +237,9 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
                 <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
               ) : (
                 <>
-                  {/* 추천 답변 칩 — AI 응답마다 대화 맥락에 맞게 갱신 */}
+                  {/* 추천 답변 칩 — 시작 전엔 대화 시작용, 이후엔 AI가 맥락에 맞게 갱신 */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                    {(b.suggestions ?? ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "SRE팀 협업이 필요해요"]).map((s) => (
+                    {(b.suggestions ?? STARTER_CHIPS).map((s) => (
                       <button key={s} onClick={() => send(s)} style={{ padding: "6px 12px", background: "#F1FBF6", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>{s}</button>
                     ))}
                   </div>
@@ -194,10 +249,11 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
                       onChange={(e) => setText(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
                       rows={1}
-                      placeholder="답변을 입력하세요… (Enter로 전송)"
-                      style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
+                      disabled={loading}
+                      placeholder={loading ? "코치가 답변을 작성하는 중이에요…" : "답변을 입력하세요… (Enter로 전송)"}
+                      style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: loading ? "#A6AEC2" : "#0F1A36", resize: "none", lineHeight: 1.5 }}
                     />
-                    <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+                    <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{loading ? <Spinner /> : "↑"}</button>
                   </div>
                 </>
               )}
@@ -228,6 +284,30 @@ export function Step2({ state, set, user, criteria, onGo }: { state: WizardState
                 </div>
                 <div style={hint}>운영안 권장: {min}~{max}개</div>
               </div>
+            </div>
+
+            {/* 작성 내용 → 키워드 도출 (대화형과 동일하게 우측 패널로 연결) */}
+            <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px dashed #E1E5EF" }}>
+              {llmGate.gate === "blocked" || llmGate.gate === "checking" ? (
+                <LlmGateNotice gate={llmGate.gate} reason={llmGate.reason} onMock={llmGate.optInMock} />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <button
+                    onClick={extractFromForm}
+                    disabled={extracting}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", background: "linear-gradient(135deg, #00A968, #14342B)", color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: extracting ? "default" : "pointer", fontFamily: "var(--font-sans)" }}
+                  >
+                    {extracting ? <Spinner /> : "✨"} {extracting ? "키워드 도출 중…" : "작성 내용에서 키워드 도출"}
+                  </button>
+                  <div style={{ flex: 1, minWidth: 200, fontSize: 12, color: "#5B6685", lineHeight: 1.5 }}>
+                    {extractResult === null
+                      ? "작성을 마쳤으면 눌러주세요 — AI가 KR 재료 키워드를 뽑아 우측 패널에 반영해요."
+                      : extractResult.length > 0
+                        ? <span style={{ color: "#1F6B45", fontWeight: 600 }}>✓ 새 키워드 {extractResult.length}개를 우측 패널에 반영했어요: {extractResult.join(", ")}</span>
+                        : "새로 뽑을 키워드를 찾지 못했어요. 내용을 조금 더 구체적으로 적어보세요 (지표·시스템 이름·수치가 좋아요)."}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

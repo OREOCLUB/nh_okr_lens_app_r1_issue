@@ -125,6 +125,23 @@ export function DraftRow({
   );
 }
 
+// ── 로딩 스피너 (채팅 전송 버튼용 — 응답 대기 중 입력 잠금과 함께 사용) ──
+export function Spinner({ size = 14 }: { size?: number }) {
+  return (
+    <span
+      style={{
+        width: size,
+        height: size,
+        border: "2px solid rgba(255,255,255,.35)",
+        borderTopColor: "#fff",
+        borderRadius: "50%",
+        display: "inline-block",
+        animation: "spin .8s linear infinite",
+      }}
+    />
+  );
+}
+
 // ── 공용 스타일 ──
 export const label: CSSProperties = { display: "block", fontSize: 12.5, fontWeight: 600, color: "#3A4565", marginBottom: 7 };
 export const input: CSSProperties = { width: "100%", padding: "11px 14px", background: "#fff", border: "1px solid #E1E5EF", borderRadius: 10, fontSize: 14, color: "#0F1A36", fontFamily: "var(--font-sans)", outline: "none" };

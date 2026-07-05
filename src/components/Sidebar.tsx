@@ -7,6 +7,9 @@ import { Logo } from "./Logo";
 import { ROLE_LABEL, ROLE_HOME, logout, type Role } from "@/lib/auth";
 
 const COLLAPSE_KEY = "okrlens_sidebar_collapsed";
+// 라우트 이동 시 컴포넌트가 재마운트되어도 접힘 상태를 즉시 알 수 있게 모듈 캐시 유지
+// (localStorage는 effect 이후에만 읽을 수 있어 첫 프레임 플래시의 원인이 됨)
+let collapsedCache: boolean | null = null;
 
 interface NavItem {
   label: string;
@@ -76,16 +79,19 @@ export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   const router = useRouter();
   const chip = ROLE_CHIP[role];
-  const [collapsed, setCollapsed] = useState(false);
+  // 재마운트 시 캐시로 즉시 올바른 폭 렌더 (모든 라우트에서 플래시 없음)
+  const [collapsed, setCollapsed] = useState(() => collapsedCache ?? false);
   const [mounted, setMounted] = useState(false);
 
-  // 페이지 이동 시 사이드바가 "펼쳐졌다 접히는" 플래시 방지:
-  // 페인트 전에 저장값을 적용하고(useLayoutEffect), 트랜지션은 마운트 후에만 켠다
+  // 최초 로드 1회: 페인트 전에 localStorage 값을 적용하고 캐시에 채운다
   useLayoutEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
-    } catch {
-      /* noop */
+    if (collapsedCache === null) {
+      try {
+        collapsedCache = localStorage.getItem(COLLAPSE_KEY) === "1";
+      } catch {
+        collapsedCache = false;
+      }
+      setCollapsed(collapsedCache);
     }
     setMounted(true);
   }, []);
@@ -93,6 +99,7 @@ export function Sidebar({ role }: { role: Role }) {
   function toggleCollapse() {
     setCollapsed((c) => {
       const next = !c;
+      collapsedCache = next;
       try {
         localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
       } catch {

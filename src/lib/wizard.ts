@@ -167,6 +167,11 @@ export interface WizardState {
     suggestions?: string[]; // AI가 제안한 다음 답변 칩 (대화 맥락 따라 갱신)
   };
   refineChat: ChatMsg[]; // STEP 3 정제 대화
+  /** STEP 3 코치 제안 대기분 — 스텝을 오가도 유지되도록 상태에 보관 */
+  step3?: {
+    pendingRefinement: { num: number; after: string; reason: string } | null;
+    pendingNewKrs: { kr: string; baseline: string; goal: string }[];
+  };
   krs: WizardKR[];
   submitted: boolean;
   savedAt: number | null;
@@ -322,6 +327,13 @@ export function stepBlocker(state: WizardState, step: number): string | null {
       const hasKeyword = Object.values(state.basic.keywords).some(Boolean);
       if (!hasKeyword && !state.basic.freeText.trim())
         return "핵심 키워드를 1개 이상 선택하거나 기초 정보를 입력해주세요. 다음 단계 KR 초안의 재료가 돼요.";
+      return null;
+    }
+    case 3: {
+      // STEP 4 형태 추천·STEP 5 등급 산정이 현재값·목표값 기반이라 여기서 확정해야 한다
+      const noValues = state.krs.filter((k) => !k.baseline.trim() || !k.goal.trim());
+      if (noValues.length > 0)
+        return `KR ${noValues.map((k) => k.num).join(", ")}의 현재값(baseline)·목표값(goal)을 채워주세요. 우측 KR 후보 카드에서 바로 입력할 수 있어요.`;
       return null;
     }
     case 4: {

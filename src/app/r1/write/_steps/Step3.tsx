@@ -7,6 +7,7 @@ import type { CriteriaData } from "@/lib/dataAccess";
 import { askCoach, nowTime, MAX_CHAT_STORE, type CoachReply } from "@/lib/aiCoach";
 import { deriveChecks } from "@/lib/diagnosticEngine";
 import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
+import { Spinner } from "./shared";
 
 function ChatBubble({ from, text, time, userInitial }: ChatMsg & { userInitial: string }) {
   const isAI = from === "ai";
@@ -29,11 +30,15 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false); // 11항목 신호등 상세 (팝업 대신 카드 내 아코디언)
-  // 구조화 출력 — 코치가 제안한 정제안·신규 KR 초안 (사용자가 버튼으로 확정해야 반영)
-  const [pendingRefinement, setPendingRefinement] = useState<CoachReply["refinement"] | null>(null);
-  const [pendingNewKrs, setPendingNewKrs] = useState<NonNullable<CoachReply["newKrs"]>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const llmGate = useLlmGate();
+
+  // 구조화 출력 대기분 — 위저드 상태에 보관 (스텝을 오가도 유지)
+  const p3 = state.step3 ?? { pendingRefinement: null, pendingNewKrs: [] };
+  const pendingRefinement = p3.pendingRefinement;
+  const pendingNewKrs = p3.pendingNewKrs;
+  const setP3 = (patch: Partial<NonNullable<WizardState["step3"]>>) =>
+    set((s) => ({ ...s, step3: { pendingRefinement: null, pendingNewKrs: [], ...(s.step3 ?? {}), ...patch } }));
 
   const opener = (): ChatMsg => {
     const target = state.krs.find((k) => !k.refined) ?? state.krs[0];
@@ -54,9 +59,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   // 목업모드에서 키 정상화 시 자동 복귀 — 대화 초기화
   useEffect(() => {
     if (llmGate.recovered) {
-      set((s) => ({ ...s, refineChat: [opener()] }));
-      setPendingRefinement(null);
-      setPendingNewKrs([]);
+      set((s) => ({ ...s, refineChat: [opener()], step3: { pendingRefinement: null, pendingNewKrs: [] } }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [llmGate.recovered]);
@@ -83,9 +86,9 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
         krs: state.krs.map((k) => ({ num: k.num, kr: k.kr, baseline: k.baseline, goal: k.goal })),
       });
       set((s) => ({ ...s, refineChat: [...s.refineChat, { from: "ai" as const, time: nowTime(), text: reply.text }].slice(-MAX_CHAT_STORE) }));
-      // 구조화 출력 — 정제안·신규 KR 초안은 카드로 띄우고 사용자가 버튼으로 확정
-      if (reply.refinement) setPendingRefinement(reply.refinement);
-      if (reply.newKrs && reply.newKrs.length > 0) setPendingNewKrs(reply.newKrs);
+      // 구조화 출력 — 정제안·신규 KR 초안은 카드로 띄우고 사용자가 버튼으로 확정 (상태에 보관)
+      if (reply.refinement) setP3({ pendingRefinement: reply.refinement });
+      if (reply.newKrs && reply.newKrs.length > 0) setP3({ pendingNewKrs: reply.newKrs });
     } catch {
       setError("AI 코치 연결이 잠시 원활하지 않았어요. 다시 보내주시면 이어서 도와드릴게요 🙂");
     } finally {
@@ -97,8 +100,15 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   function applyRefinement() {
     if (!pendingRefinement) return;
     const r = pendingRefinement;
-    set((s) => ({ ...s, krs: s.krs.map((k) => (k.num === r.num ? { ...k, before: k.kr, kr: r.after, refined: true } : k)) }));
-    setPendingRefinement(null);
+    set((s) => ({
+      ...s,
+      krs: s.krs.map((k) => (k.num === r.num ? { ...k, before: k.kr, kr: r.after, refined: true } : k)),
+      step3: { pendingRefinement: null, pendingNewKrs: s.step3?.pendingNewKrs ?? [] },
+    }));
+  }
+
+  function dismissRefinement() {
+    setP3({ pendingRefinement: null });
   }
 
   function addNewKr(draft: { kr: string; baseline: string; goal: string }) {
@@ -121,10 +131,29 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
         chosenAI: null,
         aiSuggestion: "",
       };
-      return { ...s, krs: [...s.krs, newKr] };
+      return {
+        ...s,
+        krs: [...s.krs, newKr],
+        step3: { pendingRefinement: s.step3?.pendingRefinement ?? null, pendingNewKrs: (s.step3?.pendingNewKrs ?? []).filter((d) => d.kr !== draft.kr) },
+      };
     });
-    setPendingNewKrs((list) => list.filter((d) => d.kr !== draft.kr));
   }
+
+  function dismissNewKr(kr: string) {
+    setP3({ pendingNewKrs: pendingNewKrs.filter((x) => x.kr !== kr) });
+  }
+
+  // KR 후보 삭제 — confirm 필수 (MASTER_RULE)
+  function deleteKr(id: string) {
+    const target = state.krs.find((k) => k.id === id);
+    if (!target) return;
+    if (!window.confirm(`KR ${String(target.num).padStart(2, "0")}을 삭제할까요?\n"${target.kr}"\n삭제하면 형태·등급 설정도 함께 사라져요.`)) return;
+    set((s) => ({ ...s, krs: s.krs.filter((k) => k.id !== id) }));
+  }
+
+  // KR 현재값·목표값 인라인 수정 (STEP 4 형태 추천·STEP 5 등급 산정의 기반값)
+  const patchKrValue = (id: string, field: "baseline" | "goal", v: string) =>
+    set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, [field]: v } : k)) }));
 
   // 체크된 키워드 중 아직 KR 후보에 반영되지 않은 것 (토큰 매칭)
   const uncoveredKeywords = Object.entries(state.basic.keywords)
@@ -237,7 +266,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
                 {pendingRefinement.reason && <div style={{ fontSize: 11.5, color: "#5B6685", lineHeight: 1.5 }}><b>이유:</b> {pendingRefinement.reason}</div>}
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                   <button onClick={applyRefinement} style={{ padding: "7px 14px", background: "#00A968", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>✓ 이대로 적용</button>
-                  <button onClick={() => setPendingRefinement(null)} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
+                  <button onClick={dismissRefinement} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
                 </div>
               </div>
             </div>
@@ -251,7 +280,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
               <div className="mono" style={{ fontSize: 11, color: "#7C87A4", marginTop: 4 }}>Baseline: {d.baseline || "미정"} · Goal: {d.goal || "미정"}</div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button onClick={() => addNewKr(d)} style={{ padding: "7px 14px", background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}>+ KR 후보로 추가</button>
-                <button onClick={() => setPendingNewKrs((list) => list.filter((x) => x.kr !== d.kr))} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
+                <button onClick={() => dismissNewKr(d.kr)} style={{ padding: "7px 14px", background: "transparent", color: "#7C87A4", border: "1px solid #E1E5EF", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>건너뛰기</button>
               </div>
             </div>
           ))}
@@ -273,10 +302,11 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
                   rows={1}
-                  placeholder="KR에 대해 답변하거나 질문하세요… (Enter로 전송)"
-                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: "#0F1A36", resize: "none", lineHeight: 1.5 }}
+                  disabled={loading}
+                  placeholder={loading ? "코치가 답변을 작성하는 중이에요…" : "KR에 대해 답변하거나 질문하세요… (Enter로 전송)"}
+                  style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: 13.5, color: loading ? "#A6AEC2" : "#0F1A36", resize: "none", lineHeight: 1.5 }}
                 />
-                <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+                <button onClick={() => send(text)} disabled={loading} style={{ width: 34, height: 34, borderRadius: 9, background: "#00A968", border: "none", color: "#fff", fontSize: 14, cursor: loading ? "default" : "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{loading ? <Spinner /> : "↑"}</button>
               </div>
             </>
           )}
@@ -288,20 +318,38 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ background: "#fff", border: "1px solid #E1E5EF", borderRadius: 14, padding: "18px 18px" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>현재 KR 후보</div>
-          <div style={{ fontSize: 11, color: "#7C87A4", margin: "3px 0 12px" }}>대화를 거치며 정제됩니다 · 카드의 배지를 눌러 정제 완료로 표시할 수 있어요</div>
+          <div style={{ fontSize: 11, color: "#7C87A4", margin: "3px 0 12px" }}>대화로 정제 · <b>현재값→목표값은 여기서 확정</b>하고 넘어가요 (STEP 4 형태 추천의 기반값)</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {state.krs.map((k) => {
               const st = k.refined
                 ? { label: "정제 완료", ico: "✓", c: "#2F9E5E", bg: "#ECFAF1" }
                 : { label: "정제 중", ico: "●", c: "#3B5BDB", bg: "#F1F4FD" };
+              const missing = !k.baseline.trim() || !k.goal.trim();
+              const valInput = (field: "baseline" | "goal", val: string, ph: string) => (
+                <input
+                  className="mono"
+                  value={val}
+                  onChange={(e) => patchKrValue(k.id, field, e.target.value)}
+                  placeholder={ph}
+                  style={{ width: "100%", padding: "5px 8px", fontSize: 11, border: `1px solid ${val.trim() ? "#E1E5EF" : "#F0DFA0"}`, background: val.trim() ? "#fff" : "#FFFBE6", borderRadius: 7, outline: "none" }}
+                />
+              );
               return (
-                <div key={k.id} style={{ border: "1px solid #ECEFF5", borderRadius: 11, padding: "12px 13px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                <div key={k.id} style={{ border: `1px solid ${missing ? "#F0DFA0" : "#ECEFF5"}`, borderRadius: 11, padding: "12px 13px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
                     <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#213A8C" }}>KR {String(k.num).padStart(2, "0")}</span>
                     <button onClick={() => toggleRefined(k.id)} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 999, background: st.bg, color: st.c, fontSize: 10.5, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "var(--font-sans)" }}><span style={{ fontSize: 9 }}>{st.ico}</span>{st.label}</button>
+                    <button onClick={() => deleteKr(k.id)} title="이 KR 삭제" style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid #F5C6C6", background: "#fff", color: "#D14343", cursor: "pointer", fontSize: 12, lineHeight: 1, flexShrink: 0 }}>×</button>
                   </div>
                   <div style={{ fontSize: 11.5, color: "#3A4565", lineHeight: 1.5 }}>{k.kr}</div>
                   {k.before && <div style={{ fontSize: 10.5, color: "#A6AEC2", marginTop: 5, textDecoration: "line-through" }}>{k.before}</div>}
+                  {/* 현재값 → 목표값 확정 입력 */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 4, alignItems: "center", marginTop: 8 }}>
+                    {valInput("baseline", k.baseline, "현재값")}
+                    <span style={{ textAlign: "center", color: "#A6AEC2", fontSize: 10 }}>→</span>
+                    {valInput("goal", k.goal, "목표값")}
+                  </div>
+                  {missing && <div style={{ fontSize: 10, color: "#B8860B", marginTop: 4 }}>현재값·목표값을 채워야 다음 단계로 넘어갈 수 있어요</div>}
                 </div>
               );
             })}

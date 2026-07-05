@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { label, input, generateGrades, generateInitiatives, DraftRow } from "./shared";
+import { label, input, generateGrades, generateInitiatives, DraftRow, Spinner } from "./shared";
 import { gradesDirty, type WizardState, type WizardKR, type KRGrades } from "@/lib/wizard";
 import { askCoach, nowTime } from "@/lib/aiCoach";
 import { useLlmGate, LlmGateNotice, MockBadge } from "@/components/LlmGate";
@@ -92,10 +92,11 @@ function AICoachOverlay({ kr, onAutoFill }: { kr: WizardKR; onAutoFill: () => vo
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }}
                   rows={1}
-                  placeholder="등급 기준을 물어보세요…"
-                  style={{ flex: 1, border: "1px solid #E1E5EF", borderRadius: 9, padding: "8px 11px", outline: "none", background: "#fff", fontFamily: "var(--font-sans)", fontSize: 12.5, resize: "none" }}
+                  disabled={loading}
+                  placeholder={loading ? "답변 작성 중…" : "등급 기준을 물어보세요…"}
+                  style={{ flex: 1, border: "1px solid #E1E5EF", borderRadius: 9, padding: "8px 11px", outline: "none", background: "#fff", fontFamily: "var(--font-sans)", fontSize: 12.5, resize: "none", color: loading ? "#A6AEC2" : "#0F1A36" }}
                 />
-                <button onClick={() => send(text)} disabled={loading} style={{ width: 32, height: 32, borderRadius: 8, background: "#3B5BDB", border: "none", color: "#fff", fontSize: 13, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, flexShrink: 0 }}>↑</button>
+                <button onClick={() => send(text)} disabled={loading} style={{ width: 32, height: 32, borderRadius: 8, background: "#3B5BDB", border: "none", color: "#fff", fontSize: 13, cursor: loading ? "default" : "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{loading ? <Spinner size={12} /> : "↑"}</button>
               </div>
             )}
           </div>

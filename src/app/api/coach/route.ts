@@ -125,7 +125,9 @@ function extractMeta(raw: string): { text: string; meta: CoachMeta } {
   return { text: kept.join("\n").trim(), meta };
 }
 
-// ── 응답 잘림 fail-safe — 마지막 완결 문장까지 트림 + "계속" 안내 ──
+// ── 응답 잘림 fail-safe ──────────────────────────────────────
+// 1차: 잘리면 서버가 자동으로 이어받기 호출(최대 2회)로 완성본을 만든 뒤에야 반환 (사용자 개입 불필요)
+// 2차: 그래도 잘려 있으면 마지막 완결 문장까지 조용히 트림 (어색한 끊김만 제거)
 const SENTENCE_ENDINGS = [". ", ".\n", "。", "!", "?", "…", "요.", "다.", "죠.", "니다."];
 function ensureComplete(text: string, truncated: boolean): string {
   if (!truncated) return text;
@@ -134,8 +136,30 @@ function ensureComplete(text: string, truncated: boolean): string {
     const idx = text.lastIndexOf(end);
     if (idx > cut) cut = idx + end.length;
   }
-  const trimmed = cut > 0 ? text.slice(0, cut).trimEnd() : text.trimEnd();
-  return `${trimmed}\n\n(응답이 길어 여기까지 정리했어요 — "계속"이라고 보내면 이어서 답할게요.)`;
+  return cut > 0 ? text.slice(0, cut).trimEnd() : text.trimEnd();
+}
+
+type LlmCall = (messages: CoachRequest["messages"]) => Promise<{ text: string; truncated: boolean } | null>;
+
+/** 잘린 응답을 자동으로 이어받아 완성본을 만든다 (추가 호출 최대 2회) */
+async function completeWithContinuation(call: LlmCall, messages: CoachRequest["messages"]): Promise<{ text: string; truncated: boolean } | null> {
+  const first = await call(messages);
+  if (!first) return null;
+  let acc = first.text;
+  let truncated = first.truncated;
+  let convo = messages;
+  for (let i = 0; i < 2 && truncated; i++) {
+    convo = [
+      ...convo,
+      { role: "assistant" as const, content: acc },
+      { role: "user" as const, content: "끊긴 부분부터 이어서 완결해주세요. 이미 작성한 내용은 반복하지 마세요." },
+    ];
+    const next = await call(convo);
+    if (!next) break;
+    acc += next.text;
+    truncated = next.truncated;
+  }
+  return { text: acc, truncated };
 }
 
 // refine 모드 목 메타 — 키워드→KR 초안 요청·정제안을 결정적으로 생성
@@ -356,18 +380,18 @@ export async function POST(request: NextRequest) {
     });
   };
 
-  // ① Gemini (기본) — R3 설정 키 → 서버 환경 변수
+  // ① Gemini (기본) — R3 설정 키 → 서버 환경 변수 · 잘리면 자동 이어받기 후 완성본 반환
   const geminiKey = body.llm?.apiKey || process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const model = body.llm?.model || process.env.GEMINI_MODEL || DEFAULT_LLM_MODEL;
-    const r = await callGemini(system, body.messages, geminiKey, model);
+    const r = await completeWithContinuation((msgs) => callGemini(system, msgs, geminiKey, model), body.messages);
     if (r) return respond(r.text, "gemini", r.truncated);
   }
 
   // ② Claude (폴백)
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (anthropicKey) {
-    const r = await callClaude(system, body.messages, anthropicKey);
+    const r = await completeWithContinuation((msgs) => callClaude(system, msgs, anthropicKey), body.messages);
     if (r) return respond(r.text, "claude", r.truncated);
   }
 
