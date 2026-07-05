@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
-  <rect width="40" height="40" rx="9" fill="#0A1F17"/>
-  <!-- Wordmark 'OL' condensed as favicon: O + green dot + L -->
-  <text x="7" y="27" font-family="Pretendard, -apple-system, sans-serif"
-        font-size="18" font-weight="800" fill="#FFFFFF" letter-spacing="-0.04em">O</text>
-  <circle cx="21" cy="24" r="2" fill="#00A968"/>
-  <text x="25" y="27" font-family="Pretendard, -apple-system, sans-serif"
-        font-size="18" font-weight="300" fill="#FFFFFF" letter-spacing="-0.02em">L</text>
-</svg>
