@@ -8,7 +8,9 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { getCurrentUser, type Session } from "@/lib/auth";
 import { evalSystem, taxonomy, checklist } from "@/lib/criteria";
-import { getCriteria, submitOkrs, recallOkrs, type CriteriaData } from "@/lib/dataAccess";
+import { getCriteria, submitOkrs, recallOkrs, getR1Okrs, type CriteriaData, type RiskAnalysis } from "@/lib/dataAccess";
+import { deriveChecks } from "@/lib/diagnosticEngine";
+import { generateInitiatives } from "./_steps/shared";
 import {
   loadWizard,
   saveWizard,
@@ -18,6 +20,8 @@ import {
   submitReadiness,
   writePeriodOver,
   WRITE_DEADLINE,
+  measureText,
+  deriveDifficulty,
   type WizardState,
 } from "@/lib/wizard";
 import { Step0 } from "./_steps/Step0";
@@ -156,6 +160,8 @@ export default function R1WritePage() {
   const [recalling, setRecalling] = useState(false);
   const [step6Focus, setStep6Focus] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  // R2 반려(함께 정제 요청) 감지 — 수정·재제출 안내
+  const [rejectedNotice, setRejectedNotice] = useState<{ from?: string; msg?: string } | null>(null);
   const { showToast, toastNode } = useToast();
   const userIdRef = useRef<string>("");
 
@@ -170,6 +176,14 @@ export default function R1WritePage() {
     getCriteria().then((c) => c && setCriteria(c));
     // 최초 진입 시 8단계 가이드 (다시안보기/오늘닫기 존중)
     if (!guideHidden()) setGuideOpen(true);
+    // R2가 반려(함께 정제)했으면 잠금을 풀고 재제출 흐름으로 전환
+    getR1Okrs(u.id).then((rows) => {
+      const rejected = rows?.find((r) => r.status === "rejected");
+      if (rejected) {
+        setRejectedNotice({ from: rejected.evaluator?.from, msg: rejected.evaluator?.msg });
+        setState((prev) => (prev && prev.submitted ? saveWizard(u.id, { ...prev, submitted: false }) : prev));
+      }
+    });
   }, []);
 
   function closeGuide(hide: "never" | "today" | null) {
@@ -309,6 +323,32 @@ export default function R1WritePage() {
 
     setSubmitting(true);
     try {
+      // R1 사전진단 (11항목 룰 판정) — R2 AI Validation의 시작점으로 제출과 함께 저장 (스펙 D6)
+      const perKR = effective.krs.map((k) =>
+        deriveChecks(
+          { kr: k.kr, baseline: k.baseline, goal: k.goal, measureTool: k.measureTool, format: k.format, grades: { A: k.grades.A } },
+          criteria.checklist
+        )
+      );
+      const now = new Date();
+      const p2 = (n: number) => String(n).padStart(2, "0");
+      const analysisItems = criteria.checklist.map((c, i) => {
+        const failNums = effective.krs.filter((_, idx) => perKR[idx][i] === 0).map((k) => `KR ${String(k.num).padStart(2, "0")}`);
+        return {
+          no: c.no,
+          text: c.text,
+          tag: c.tag,
+          verdict: (failNums.length === 0 ? "pass" : "warn") as "pass" | "warn" | "fail",
+          reason: failNums.length > 0 ? `${failNums.join(", ")} — ${c.tag} 보완 후보 (R1 제출 사전진단)` : undefined,
+        };
+      });
+      const warnCount = analysisItems.filter((i) => i.verdict !== "pass").length;
+      const riskAnalysis: RiskAnalysis = {
+        risk: warnCount >= 4 ? "high" : warnCount >= 2 ? "mid" : "low",
+        items: analysisItems,
+        savedAt: `${p2(now.getMonth() + 1)}/${p2(now.getDate())} ${p2(now.getHours())}:${p2(now.getMinutes())} · R1 제출 사전진단`,
+      };
+
       const result = await submitOkrs(
         user.id,
         effective.krs.map((k) => ({
@@ -318,11 +358,17 @@ export default function R1WritePage() {
           baseline: k.baseline,
           goal: k.goal,
           weight: k.weight,
-        }))
+          measure: measureText(k),
+          plan: generateInitiatives(k).map((s, i) => `${i + 1}. ${s}`).join("\n"),
+          difficulty: deriveDifficulty(k),
+          gradeCriteria: { ...k.grades },
+        })),
+        riskAnalysis
       );
       set((s) => ({ ...s, submitted: true }));
+      setRejectedNotice(null);
       if (result.ok) {
-        window.alert(`OKR이 ${evaluatorName} 팀장에게 제출되었어요! 🎉`);
+        window.alert(`OKR이 ${evaluatorName} 팀장에게 ${result.resubmitted ? "재" : ""}제출되었어요! 🎉`);
       } else {
         const reason = result.error === "NO_DB" ? "Supabase 미연결" : result.error;
         window.alert(`제출 내용을 이 브라우저에 안전하게 보관했어요 🙂\n(서버 연결 후 자동 반영 예정 — ${reason})`);
@@ -401,6 +447,24 @@ export default function R1WritePage() {
         </div>
       )}
 
+      {/* 반려(함께 정제 요청) 배너 — 잠금이 풀리고 수정·재제출 가능 */}
+      {!periodOver && !state.submitted && rejectedNotice && (
+        <div style={{ marginBottom: 16, padding: "16px 20px", background: "linear-gradient(135deg, #FFF7EC, #fff 70%)", border: "1px solid #FFE0BA", borderRadius: 14, display: "flex", alignItems: "flex-start", gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: "#D98023", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>💬</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#7A4A14" }}>
+              {rejectedNotice.from ? `${rejectedNotice.from} 팀장의 ` : ""}함께 정제 요청이 도착했어요
+            </div>
+            {rejectedNotice.msg && (
+              <div style={{ fontSize: 12.5, color: "#9C5E26", marginTop: 5, padding: "9px 12px", background: "#fff", border: "1px solid #FFE0BA", borderRadius: 9, lineHeight: 1.55 }}>
+                &ldquo;{rejectedNotice.msg}&rdquo;
+              </div>
+            )}
+            <div style={{ fontSize: 12, color: "#9C5E26", marginTop: 5, lineHeight: 1.5 }}>코멘트를 반영해 수정한 뒤 STEP 7에서 재제출해주세요. 재제출 이력은 평가자 화면 타임라인에 함께 기록돼요.</div>
+          </div>
+        </div>
+      )}
+
       {/* 제출 완료 잠금 배너 — 회수해야 수정 가능 (수립 기간 내에만) */}
       {!periodOver && state.submitted && (
         <div style={{ marginBottom: 16, padding: "16px 20px", background: "linear-gradient(135deg, #ECFAF1, #fff 70%)", border: "1px solid #BBE9CC", borderRadius: 14, display: "flex", alignItems: "center", gap: 14 }}>
@@ -421,7 +485,7 @@ export default function R1WritePage() {
         {step === 3 && <Step3 state={state} set={set} user={user} criteria={criteria} />}
         {step === 4 && <Step4 state={state} set={set} />}
         {step === 5 && <Step5 state={state} set={set} />}
-        {step === 6 && <Step6 state={state} set={set} focusKrId={step6Focus} />}
+        {step === 6 && <Step6 state={state} set={set} focusKrId={step6Focus} criteria={criteria} />}
         {step === 7 && <Step7 state={state} set={set} criteria={criteria} evaluatorName={evaluatorName} onSubmit={submit} submitting={submitting} onPickKr={pickKrInStep6} />}
       </div>
 

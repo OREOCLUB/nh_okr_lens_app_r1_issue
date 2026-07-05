@@ -328,6 +328,10 @@ export interface SubmitOkrRow {
   baseline: string;
   goal: string;
   weight: number;
+  measure: string; // 측정 방법 (도구·단위·주기 결합 표기) — R2 검토 상세가 읽음
+  plan: string; // 실행 계획 요약 — R2 검토 상세가 읽음
+  difficulty: string; // 상·중·하 (R1 결정적 산정 → R2 조정 가능)
+  gradeCriteria: Record<string, string>; // S~D 등급 기준 (grade_criteria jsonb)
 }
 
 async function employeeIdByLogin(loginId: string): Promise<string | null> {
@@ -337,11 +341,25 @@ async function employeeIdByLogin(loginId: string): Promise<string | null> {
   return (data[0] as { id: string }).id;
 }
 
-/** 위저드 제출 — 기존 반기 OKR을 교체하고 제출 현황을 갱신한다 */
-export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise<WriteResult> {
+/** 위저드 제출 — 기존 반기 OKR 교체 + 제출 현황·사전진단 저장 + 이력 이벤트 기록 (D6 연결) */
+export async function submitOkrs(
+  loginId: string,
+  rows: SubmitOkrRow[],
+  riskAnalysis?: RiskAnalysis
+): Promise<WriteResult & { resubmitted?: boolean }> {
   if (!supabase) return { ok: false, error: "NO_DB" };
   const employeeId = await employeeIdByLogin(loginId);
   if (!employeeId) return { ok: false, error: "사원 정보를 찾지 못했어요" };
+
+  // 재제출 여부 판단 — 반려/조정요청 상태였으면 resubmit 이벤트
+  const { data: prev } = await supabase
+    .from("okr_submissions")
+    .select("status")
+    .eq("employee_id", employeeId)
+    .eq("period", PERIOD)
+    .maybeSingle();
+  const prevStatus = (prev as { status?: string } | null)?.status;
+  const isResubmit = prevStatus === "rejected" || prevStatus === "adjustment";
 
   const del = await supabase.from("okrs").delete().eq("employee_id", employeeId).eq("period", PERIOD);
   if (del.error) return { ok: false, error: del.error.message };
@@ -358,13 +376,18 @@ export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise
       goal: r.goal,
       weight: r.weight,
       progress: 0,
+      measure: r.measure || null,
+      plan: r.plan || null,
+      difficulty: r.difficulty || null,
+      grade_criteria: r.gradeCriteria, // supabase/okrs_grade_criteria.sql 실행 필요
       sort_order: i + 1,
     }))
   );
   if (ins.error) return { ok: false, error: ins.error.message };
 
   const now = new Date();
-  const mmdd = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+  const p = (n: number) => String(n).padStart(2, "0");
+  const mmdd = `${p(now.getMonth() + 1)}/${p(now.getDate())}`;
   const up = await supabase.from("okr_submissions").upsert(
     {
       employee_id: employeeId,
@@ -372,11 +395,24 @@ export async function submitOkrs(loginId: string, rows: SubmitOkrRow[]): Promise
       submit_date: mmdd,
       status: "pending", // R2 화면 기준: 제출·미검토
       obj: rows[0]?.obj ?? "",
+      risk: riskAnalysis?.risk ?? null,
+      risk_analysis: riskAnalysis ?? null, // R2 AI Validation의 시작점 (R1 사전진단)
     },
     { onConflict: "employee_id,period" }
   );
   if (up.error) return { ok: false, error: up.error.message };
-  return { ok: true };
+
+  // 제출/재제출 이벤트 → okr_history (R2 반려 이력 타임라인이 읽음)
+  await supabase.from("okr_history").insert({
+    year: now.getFullYear(),
+    emp_no: employeeId,
+    period: PERIOD,
+    event: isResubmit ? "resubmit" : "submit",
+    event_at: `${mmdd} ${p(now.getHours())}:${p(now.getMinutes())}`,
+    note: `OKR ${rows.length}건 ${isResubmit ? "재" : ""}제출 (R1 위저드)`,
+  }); // 이벤트 기록 실패는 제출 성공을 막지 않는다
+
+  return { ok: true, resubmitted: isResubmit };
 }
 
 /** 제출 회수 — 제출한 OKR을 작성중 상태로 되돌려 수정·재제출을 가능하게 한다 */

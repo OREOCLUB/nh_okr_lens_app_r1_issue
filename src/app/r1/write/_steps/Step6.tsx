@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AI_VENDORS, VERDICT, DragScroll } from "./shared";
-import type { WizardState, WizardKR } from "@/lib/wizard";
+import { AI_VENDORS, VERDICT, DragScroll, Spinner } from "./shared";
+import { measureText, type WizardState, type WizardKR, type StoredReview } from "@/lib/wizard";
+import { loadLlmSettings } from "@/lib/coachPrompts";
+import type { CriteriaData } from "@/lib/dataAccess";
 
 // 멀티 AI(Claude·GPT·Gemini) 실 API 교차검증은 P2 — MVP는 목데이터 비교 (빌드스펙 확정 범위)
 interface Review { score: number; scoreLabel: string; verdict: string; summary: string; items: { c: string; v: string; note: string }[]; suggestion: string }
@@ -47,18 +49,57 @@ function synthReview(kr: WizardKR, vendorIdx: number): Review {
   };
 }
 
-const reviewFor = (kr: WizardKR, vendorId: string, vendorIdx: number): Review =>
-  REVIEW_DATA[kr.id]?.[vendorId] ?? synthReview(kr, vendorIdx);
-
-export function Step6({ state, set, focusKrId }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; focusKrId?: string | null }) {
+export function Step6({ state, set, focusKrId, criteria }: { state: WizardState; set: (fn: (s: WizardState) => WizardState) => void; focusKrId?: string | null; criteria: CriteriaData }) {
   const krs = state.krs;
   const [activeId, setActiveId] = useState(focusKrId ?? krs[0]?.id ?? "");
+  const [reviewing, setReviewing] = useState<number | null>(null); // 실검토 진행 중인 KR num
   const cur = krs.find((k) => k.id === activeId) ?? krs[0];
 
   // STEP 7 "KR 선택하기"로 진입 시 해당 KR 탭을 바로 연다
   useEffect(() => {
     if (focusKrId) setActiveId(focusKrId);
   }, [focusKrId]);
+
+  // gemini 열은 실검토 결과가 있으면 그것을, 없으면 목데이터를 쓴다 (MVP: 단일 모델 실검토)
+  const reviewFor = (kr: WizardKR, vendorId: string, vendorIdx: number): Review => {
+    if (vendorId === "gemini") {
+      const stored = state.aiReviews?.[kr.id];
+      if (stored) return stored;
+    }
+    return REVIEW_DATA[kr.id]?.[vendorId] ?? synthReview(kr, vendorIdx);
+  };
+
+  // ── 실 AI 검토 실행 — KR별 순차 검토, 결과는 위저드 상태에 저장(재방문 유지) ──
+  async function runReview() {
+    if (reviewing !== null || krs.length === 0) return;
+    const llm = loadLlmSettings() ?? undefined;
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    const nowLabel = `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    for (const k of krs) {
+      setReviewing(k.num);
+      let stored: StoredReview;
+      try {
+        const res = await fetch("/api/coach/review", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            kr: { num: k.num, kr: k.kr, format: k.format, baseline: k.baseline, goal: k.goal, measure: measureText(k), weight: k.weight, grades: k.grades },
+            checklist: criteria.checklist.map((c) => ({ no: c.no, text: c.text, tag: c.tag })),
+            llm,
+          }),
+        });
+        const data = (await res.json()) as { review?: Omit<StoredReview, "at" | "source">; error?: string };
+        stored = data.review
+          ? { ...data.review, verdict: data.review.verdict as StoredReview["verdict"], at: nowLabel, source: "gemini" }
+          : { ...(synthReview(k, 2) as Omit<StoredReview, "at" | "source">), at: nowLabel, source: "mock" };
+      } catch {
+        stored = { ...(synthReview(k, 2) as Omit<StoredReview, "at" | "source">), at: nowLabel, source: "mock" };
+      }
+      set((s) => ({ ...s, aiReviews: { ...(s.aiReviews ?? {}), [k.id]: stored } }));
+    }
+    setReviewing(null);
+  }
 
   const allReviews = krs.flatMap((k) => AI_VENDORS.map((v, i) => reviewFor(k, v.id, i)));
   const passCt = allReviews.filter((r) => r.verdict === "pass").length;
@@ -131,6 +172,22 @@ export function Step6({ state, set, focusKrId }: { state: WizardState; set: (fn:
         </div>
       </div>
 
+      {/* 실 AI 검토 실행 (MVP: 단일 Gemini — 멀티 교차검증은 P2) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "linear-gradient(135deg, #E8F0FE, #fff 60%)", border: "1px solid #A4C2F4", borderRadius: 14, flexWrap: "wrap" }}>
+        <button
+          onClick={runReview}
+          disabled={reviewing !== null}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", background: "#4285F4", color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: reviewing !== null ? "default" : "pointer", fontFamily: "var(--font-sans)", flexShrink: 0 }}
+        >
+          {reviewing !== null ? <><Spinner size={13} /> KR {String(reviewing).padStart(2, "0")} 검토 중…</> : "🤖 AI 검토 실행 (Gemini)"}
+        </button>
+        <div style={{ flex: 1, minWidth: 240, fontSize: 12, color: "#3A4565", lineHeight: 1.5 }}>
+          {state.aiReviews && Object.keys(state.aiReviews).length > 0
+            ? <>✓ 검토 {Object.keys(state.aiReviews).length}건 반영됨 — <b>Gemini 열이 실제 검토 결과</b>예요. Claude·GPT 열은 P2 예정(목데이터 참고용). 재실행하면 최신 KR 내용으로 다시 검토해요.</>
+            : <>실행하면 Gemini가 KR별로 실제 검토를 수행해 <b>Gemini 열을 교체</b>해요. Claude·GPT 열은 P2 예정(목데이터 참고용)이에요.</>}
+        </div>
+      </div>
+
       {/* KR Tabs — 개수가 많아도 영역을 벗어나지 않게, 클릭+드래그로 좌우 이동 */}
       <DragScroll gap={10}>
         {krs.map((k) => {
@@ -163,7 +220,15 @@ export function Step6({ state, set, focusKrId }: { state: WizardState; set: (fn:
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: v.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>{v.avatar}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1A36" }}>{v.short}</div>
-                  <div style={{ fontSize: 10.5, color: "#7C87A4" }}>{v.vendor}</div>
+                  <div style={{ fontSize: 10.5, color: "#7C87A4" }}>
+                    {v.id === "gemini" && state.aiReviews?.[cur.id]
+                      ? state.aiReviews[cur.id].source === "gemini"
+                        ? <span style={{ color: "#2F9E5E", fontWeight: 700 }}>✓ 실검토 · {state.aiReviews[cur.id].at}</span>
+                        : <span style={{ color: "#D98023", fontWeight: 700 }}>목 검토 · {state.aiReviews[cur.id].at}</span>
+                      : v.id === "gemini"
+                        ? `${v.vendor} · 실검토 대기`
+                        : `${v.vendor} · 목데이터 (P2)`}
+                  </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div className="mono" style={{ fontSize: 18, fontWeight: 700, color: v.accent }}>{r.score}</div>

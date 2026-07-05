@@ -106,6 +106,35 @@ export interface ChatMsg {
   time: string;
 }
 
+/** STEP 6 실 AI 검토 결과 저장형 */
+export interface StoredReview {
+  score: number;
+  scoreLabel: string;
+  verdict: "pass" | "warn" | "fail";
+  summary: string;
+  items: { c: string; v: "pass" | "warn" | "fail"; note: string }[];
+  suggestion: string;
+  at: string; // 검토 시각 표기
+  source: "gemini" | "mock"; // 실검토 여부 (키 없으면 결정적 목 폴백)
+}
+
+/** 난이도 결정적 산정 — 개선폭 기반 (LLM 판정은 R2 AI Validation에서 조정) */
+export function deriveDifficulty(kr: WizardKR): "상" | "중" | "하" {
+  const num = (s: string) => {
+    const m = s.match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : null;
+  };
+  const b = num(kr.baseline);
+  const g = num(kr.goal);
+  if (b !== null && g !== null && b !== 0) {
+    const ratio = Math.abs(g - b) / Math.abs(b);
+    if (ratio >= 0.3) return "상";
+    if (ratio >= 0.1) return "중";
+    return "하";
+  }
+  return "중"; // 마일스톤·루브릭·이산 기본값 — R2 검토에서 조정
+}
+
 // ── 키워드 병합 — 중복·포함관계를 정리하며 합류 (AI가 중간중간 정리) ──
 // 규칙: 완전 동일(공백·기호 무시) → 스킵 / 기존이 더 구체적 → 새 것 스킵 /
 //       새 것이 더 구체적 → 기존을 흡수(체크 상태 승계) / 상한 초과 시 오래된 미체크부터 제거
@@ -172,6 +201,8 @@ export interface WizardState {
     pendingRefinement: { num: number; after: string; reason: string } | null;
     pendingNewKrs: { kr: string; baseline: string; goal: string }[];
   };
+  /** STEP 6 실 AI 검토 결과 (kr.id → 검토) — 재실행 전까지 유지 */
+  aiReviews?: Record<string, StoredReview>;
   krs: WizardKR[];
   submitted: boolean;
   savedAt: number | null;
