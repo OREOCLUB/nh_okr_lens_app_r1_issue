@@ -106,12 +106,21 @@ export function LlmGateNotice({ gate, reason, onMock }: { gate: LlmGateState; re
   );
 }
 
-/** mock 상태 표시용 미니 배지 */
+/** mock 상태 표시 — 시연자만 알아볼 수 있는 은은한 앰버 불빛 점 (툴팁으로만 설명) */
 export function MockBadge({ gate }: { gate: LlmGateState }) {
   if (gate !== "mock") return null;
   return (
-    <span style={{ padding: "2px 9px", borderRadius: 999, background: "#F1F3F8", color: "#5B6685", fontSize: 10.5, fontWeight: 700 }}>
-      🧪 목업모드 — 키 정상화 시 자동 복귀
-    </span>
+    <span
+      title="목업모드 — 키 정상화 시 자동 복귀"
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: "#F59E0B",
+        display: "inline-block",
+        flexShrink: 0,
+        animation: "mock-glow 2.4s ease-in-out infinite",
+      }}
+    />
   );
 }

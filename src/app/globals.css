@@ -171,6 +171,19 @@ button {
   }
 }
 
+/* ── 목업모드 은은한 불빛 (시연자용) ── */
+@keyframes mock-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 2px rgba(245, 158, 11, 0.4);
+    opacity: 0.55;
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.85);
+    opacity: 1;
+  }
+}
+
 /* ── 드래그 패닝 컨테이너 (스크롤바 숨김) ── */
 .drag-scroll {
   overflow-x: auto;

@@ -48,7 +48,7 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
       from: "ai",
       time: nowTime(),
       text: target
-        ? `[STEP 3 · 정제 — 키워드를 KR 문장으로]\n이 단계는 STEP 2의 키워드를 KR 문장으로 만들고, 측정 가능하게 다듬는 단계예요. 편하게 답하시면 문장은 제가 정리합니다.\n\n대상: "${target.kr}"\n질문: 측정 단위는 무엇으로 할까요? (평균 / p95 / p99)`
+        ? `[STEP 3 · 정제 — 키워드를 KR 문장으로]\n이 단계는 STEP 2의 키워드를 KR 문장으로 만들고, 측정 가능하게 다듬는 단계예요. 편하게 답하시면 문장은 제가 정리합니다.\n\n시작하려면 우측 KR 카드를 클릭해주세요 — 그 KR을 바로 점검하고 보완할 부분부터 같이 봐요.`
         : "[STEP 3 · 정제 — 키워드를 KR 문장으로]\n이 단계는 STEP 2의 키워드를 KR 문장으로 만들고 다듬는 단계예요. 정제할 재료가 아직 없으니 STEP 2에서 키워드를 먼저 모아주세요.",
     };
   };
@@ -75,13 +75,27 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
     if (!loading) inputRef.current?.focus();
   }, [loading]);
 
-  // KR 카드 클릭 → 대화 정제 대상으로 지정 (코치가 그 KR 기준으로 이어감)
+  // KR 카드 클릭 → 그 KR을 즉시 점검하고 결과를 대화에 표시 → 대화로 보완 진행
   function selectRefineTarget(k: WizardKR) {
     setRefineTargetId(k.id);
+    const checks = deriveChecks(
+      { kr: k.kr, baseline: k.baseline, goal: k.goal, measureTool: k.measureTool, format: k.format, grades: { A: k.grades.A } },
+      criteria.checklist
+    );
+    const fails = criteria.checklist.filter((_, i) => checks[i] === 0);
+    const passN = checks.filter((c) => c === 1).length;
+    const resultLine =
+      fails.length > 0
+        ? `점검 결과: ${passN}/${criteria.checklist.length} 통과 · 보완 후보 ${fails.length}건 — ${fails.map((f) => f.tag).join(", ")}`
+        : `점검 결과: ${passN}/${criteria.checklist.length} 통과 · 보완 후보 없음`;
+    const nextLine =
+      fails.length > 0
+        ? `"${fails[0].text}" 부분부터 같이 볼까요? 편하게 답해주시면 문장은 제가 다듬을게요.`
+        : `문장 완성도가 좋아요. 측정 단위·집계 주기까지 명확하면 카드의 배지를 눌러 정제 완료로 표시해도 됩니다.`;
     const msg: ChatMsg = {
       from: "ai",
       time: nowTime(),
-      text: `[정제 대상 변경] KR ${String(k.num).padStart(2, "0")} — "${k.kr}"\n이 KR을 다듬어볼게요. 측정 단위·측정 도구·집계 주기 중 빠진 것부터 알려주세요. 목표 수치의 근거(작년 실적·측정 데이터)가 있으면 함께요.`,
+      text: `[KR ${String(k.num).padStart(2, "0")} 점검] "${k.kr}"\n${resultLine}\n\n${nextLine}`,
     };
     set((s) => ({ ...s, refineChat: [...s.refineChat, msg].slice(-MAX_CHAT_STORE) }));
     inputRef.current?.focus();
@@ -205,18 +219,6 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
   const itemPass = checklist.map((_, i) => perKR.every((checks) => checks[i] === 1));
   const passCount = itemPass.filter(Boolean).length;
 
-  const tagPassRatio = (tag: string) => {
-    const idx = checklist.findIndex((c) => c.tag === tag);
-    if (idx < 0) return null;
-    const ok = perKR.filter((checks) => checks[idx] === 1).length;
-    return `${ok}/${perKR.length}`;
-  };
-  const summary = [
-    { l: "측정 명확성", v: tagPassRatio("측정모호") ?? "—", full: tagPassRatio("측정모호")?.split("/")[0] === String(perKR.length) },
-    { l: "외부 의존도", v: tagPassRatio("통제불가") ?? "—", full: tagPassRatio("통제불가")?.split("/")[0] === String(perKR.length) },
-    { l: "표현 명료성", v: tagPassRatio("표현모호") ?? "—", full: tagPassRatio("표현모호")?.split("/")[0] === String(perKR.length) },
-  ];
-
   const toggleRefined = (id: string) =>
     set((s) => ({ ...s, krs: s.krs.map((k) => (k.id === id ? { ...k, refined: !k.refined } : k)) }));
 
@@ -260,20 +262,6 @@ export function Step3({ state, set, user, criteria }: { state: WizardState; set:
             </div>
           )}
           {error && <div style={{ padding: "10px 14px", background: "#FFF7EC", border: "1px solid #FFE0BA", borderRadius: 10, fontSize: 12.5, color: "#7A4A14" }}>{error}</div>}
-
-          {/* 현재까지의 점검 결과 — 실시간 계산 */}
-          <div style={{ border: "1px solid #B9F1D8", borderRadius: 12, background: "linear-gradient(135deg, #F1FBF6, #fff 55%)", padding: "16px 18px" }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F1A36", marginBottom: 12 }}>✨ 현재까지의 점검 결과 <span style={{ fontWeight: 500, color: "#7C87A4" }}>(실시간)</span></div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              {summary.map((s) => (
-                <div key={s.l} style={{ padding: "10px 12px", background: "#fff", border: "1px solid #ECEFF5", borderRadius: 10 }}>
-                  <div style={{ fontSize: 11, color: "#7C87A4", fontWeight: 600 }}>{s.l}</div>
-                  <div className="mono" style={{ fontSize: 15, fontWeight: 700, color: s.full ? "#2F9E5E" : "#D98023", marginTop: 3 }}>{s.v}</div>
-                  {!s.full && <div style={{ fontSize: 10.5, color: "#9C5E26", marginTop: 2 }}>함께 보완해요</div>}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* 코치 정제안 카드 — 적용해야 KR에 반영 */}
           {pendingRefinement && (

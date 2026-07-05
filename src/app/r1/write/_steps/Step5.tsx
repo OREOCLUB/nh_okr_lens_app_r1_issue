@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { label, input, generateGrades, generateInitiatives, DraftRow, Spinner } from "./shared";
 import { gradesDirty, type WizardState, type WizardKR, type KRGrades } from "@/lib/wizard";
 import { askCoach, nowTime } from "@/lib/aiCoach";
@@ -168,6 +168,33 @@ export function Step5({ state, set }: { state: WizardState; set: (fn: (s: Wizard
 
   const isDone = (k: WizardKR) => !!k.measureTool.trim() && !!k.grades.A.trim() && !gradesDirty(k);
 
+  // ── 실행계획 — 항목(줄) 단위 편집. 저장 형식은 "N. 내용" 줄바꿈 텍스트 (STEP 7·제출과 공유) ──
+  const planLines = (kr?.plan ?? "")
+    .split("\n")
+    .map((l) => l.replace(/^\d+\.\s*/, ""))
+    .filter((l, i, arr) => l.trim() !== "" || i === arr.length - 1); // 마지막 빈 줄(새 항목)은 유지
+
+  const savePlanLines = (lines: string[]) =>
+    kr && patchKR(kr.id, { plan: lines.filter((l) => l.trim() !== "").map((l, i) => `${i + 1}. ${l.trim()}`).join("\n") });
+
+  const setPlanLine = (i: number, v: string) => {
+    const next = [...planLines];
+    next[i] = v;
+    // 입력 중엔 빈 값도 유지해야 타이핑이 가능 — trim 정리는 저장 형식에서만
+    kr && patchKR(kr.id, { plan: next.map((l, idx) => `${idx + 1}. ${l}`).join("\n") });
+  };
+
+  const removePlanLine = (i: number) => savePlanLines(planLines.filter((_, idx) => idx !== i));
+  const addPlanLine = () => kr && patchKR(kr.id, { plan: [...planLines, ""].map((l, idx) => `${idx + 1}. ${l}`).join("\n") });
+
+  // KR 진입 시 실행계획이 비어 있으면 AI 제안을 자동 반영
+  useEffect(() => {
+    if (kr && !kr.plan?.trim()) {
+      patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kr?.id]);
+
   if (!kr) {
     return <div style={{ padding: 40, background: "#fff", border: "1px solid #E1E5EF", borderRadius: 16, textAlign: "center", color: "#7C87A4", fontSize: 13.5 }}>KR 후보가 아직 없어요. STEP 2~3에서 기초 정보를 먼저 정리해주세요.</div>;
   }
@@ -250,52 +277,42 @@ export function Step5({ state, set }: { state: WizardState; set: (fn: (s: Wizard
         </div>
       </div>
 
-      {/* 3. 실행계획 — AI 제안을 반영하면 KR 데이터가 되어 STEP 7 확정·제출 저장까지 이어진다 */}
+      {/* 3. 실행계획 — AI 제안이 자동 반영되고, 등급 기준처럼 항목별로 수정·추가·삭제한다 */}
       <div style={{ background: "linear-gradient(135deg, #F1FBF6, #fff 55%)", border: "1px solid #B9F1D8", borderRadius: 16, padding: "20px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ width: 24, height: 24, borderRadius: 7, background: "#E0F7EC", color: "#00794B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>3</span>
           <span style={{ fontSize: 15, fontWeight: 700, color: "#0F1A36" }}>실행계획</span>
-          {kr.plan ? (
-            <span style={{ padding: "2px 9px", borderRadius: 999, background: "#ECFAF1", color: "#2F9E5E", fontSize: 10.5, fontWeight: 700 }}>✓ 반영됨 — 아래에서 수정 가능</span>
-          ) : (
-            <span style={{ padding: "2px 9px", borderRadius: 999, background: "#F1F3F8", color: "#7C87A4", fontSize: 10.5, fontWeight: 700 }}>AI 제안 — 반영 전</span>
-          )}
+          <span style={{ padding: "2px 9px", borderRadius: 999, background: "#ECFAF1", color: "#2F9E5E", fontSize: 10.5, fontWeight: 700 }}>STEP 7에서 최종 확정 · 제출 시 저장</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            {kr.plan ? (
-              <button
-                onClick={() => { if (window.confirm("현재 실행계획을 AI 제안으로 다시 덮어쓸까요?")) patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") }); }}
-                style={{ padding: "7px 13px", background: "#fff", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
-              >↻ AI 제안으로 재생성</button>
-            ) : (
-              <button
-                onClick={() => patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") })}
-                style={{ padding: "7px 13px", background: "#00A968", color: "#fff", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-sans)" }}
-              >📋 이 계획을 실행계획으로 반영</button>
-            )}
+            <button
+              onClick={() => { if (window.confirm("현재 실행계획을 AI 제안으로 다시 덮어쓸까요?")) patchKR(kr.id, { plan: generateInitiatives(kr).map((s, i) => `${i + 1}. ${s}`).join("\n") }); }}
+              style={{ padding: "7px 13px", background: "#fff", color: "#0A6B44", border: "1px solid #B9F1D8", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+            >↻ AI 제안으로 재생성</button>
           </div>
         </div>
-        <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 12 }}>
-          {kr.plan
-            ? "반영된 실행계획은 STEP 7에서 최종 확정하고 제출 시 함께 저장돼요. 여기서 바로 수정할 수 있어요."
-            : "등급 기준에 맞춘 AI 제안이에요. \"반영\"을 누르면 이 KR의 실행계획이 되고, STEP 7에서 최종 확정·제출 저장까지 이어져요."}
+        <div style={{ fontSize: 12, color: "#7C87A4", marginBottom: 12 }}>AI 제안이 자동으로 채워져 있어요. 항목을 바로 수정하거나 추가·삭제할 수 있어요.</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {planLines.map((line, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="mono" style={{ width: 28, height: 28, borderRadius: 8, background: "#00A968", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+              <input
+                value={line}
+                onChange={(e) => setPlanLine(i, e.target.value)}
+                placeholder="실행 항목을 입력하세요"
+                style={{ ...input, flex: 1, fontSize: 12.5 }}
+              />
+              <button
+                onClick={() => { if (window.confirm("이 실행계획 항목을 삭제할까요?")) removePlanLine(i); }}
+                title="항목 삭제"
+                style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #F5C6C6", background: "#fff", color: "#D14343", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0 }}
+              >×</button>
+            </div>
+          ))}
+          <button
+            onClick={addPlanLine}
+            style={{ alignSelf: "flex-start", padding: "8px 14px", background: "#fff", border: "1px dashed #B9F1D8", borderRadius: 9, fontSize: 12, fontWeight: 600, color: "#0A6B44", cursor: "pointer", fontFamily: "var(--font-sans)" }}
+          >+ 항목 추가</button>
         </div>
-        {kr.plan ? (
-          <textarea
-            value={kr.plan}
-            onChange={(e) => patchKR(kr.id, { plan: e.target.value })}
-            rows={5}
-            style={{ ...input, minHeight: 110, resize: "vertical", lineHeight: 1.6, fontSize: 12.5 }}
-          />
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            {generateInitiatives(kr).map((it, i) => (
-              <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "9px 12px", background: "#fff", border: "1px solid #DFF3E8", borderRadius: 9, fontSize: 12.5, color: "#3A4565", lineHeight: 1.55 }}>
-                <span className="mono" style={{ color: "#00A968", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                {it}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <AICoachOverlay kr={kr} onAutoFill={autoFill} />

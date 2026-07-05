@@ -81,23 +81,32 @@ const MOCK_KEYWORD_DICT: [RegExp, string][] = [
   [/데이터|정합성/, "데이터 정합성"],
 ];
 
+// 목 basic 대화 — 질문(flow)과 추천 칩이 항상 짝이 되도록 한 곳에서 정의
+const MOCK_BASIC_FLOW: { q: string; chips: string[] }[] = [
+  { q: "다음 질문: 새로 도전하고 싶은 일 1가지는요? (작년에 못 했던 것, 미뤄둔 것도 좋아요)", chips: ["작년에 못 했던 걸 해보고 싶어요", "테스트 커버리지를 올리고 싶어요", "새 도전은 아직 고민 중이에요"] },
+  { q: "협업이 필요한 부분이 있나요? 있다면 수준도 함께요 — ① 단순 신청·요청(티켓/결재) ② 정기 협조 ③ 공동 구축·신규 도입. 수준에 따라 통제가능성 평가가 달라져요.", chips: ["단순 요청 수준이에요", "정기적으로 협조가 필요해요", "협업 없이 진행할 수 있어요"] },
+  { q: "목표 수치가 있다면 산출 근거는요? (작년 실적 · 측정 데이터 · 업계 기준)", chips: ["작년 실적 기준이에요", "측정 데이터가 있어요", "근거는 아직 없어요"] },
+  { q: "재료가 꽤 모였어요. 더 이야기해도 좋고, 준비되면 다음 단계로 가도 돼요. 다른 업무 이야기가 있나요?", chips: ["다른 업무도 있어요", "조금 더 얘기할게요", "이제 다음 단계로 갈게요"] },
+];
+const MOCK_BASIC_LOOP: { q: string; chips: string[] }[] = [
+  { q: "이 업무에서 측정 가능한 지표(수치·건수·시간)가 있다면 무엇인가요?", chips: ["처리 시간 지표가 있어요", "건수 지표가 있어요", "측정 지표가 아직 없어요"] },
+  { q: "그 일의 현재 수준과 올해 도달하고 싶은 수준을 숫자로 말해볼까요?", chips: ["현재값·목표값을 말할게요", "수치는 아직 몰라요", "측정부터 시작해야 해요"] },
+  { q: "이 업무가 기존 업무 분장과 어떻게 다른가요? 기존 수준을 넘어서는 변화 1가지를 짚어주세요.", chips: ["기존엔 수동, 올해는 자동화예요", "범위가 크게 늘어요", "기존과 같지만 품질을 올려요"] },
+  { q: "정리했어요. 다른 업무 영역 이야기도 있나요? 편하게 이어가도 되고, 준비되면 다음 단계로 가도 됩니다.", chips: ["다른 업무도 있어요", "조금 더 얘기할게요", "다음 단계로 갈게요"] },
+];
+const mockBasicStage = (turn: number) =>
+  turn <= MOCK_BASIC_FLOW.length
+    ? MOCK_BASIC_FLOW[turn - 1]
+    : MOCK_BASIC_LOOP[(turn - MOCK_BASIC_FLOW.length - 1) % MOCK_BASIC_LOOP.length];
+
 function mockMeta(req: CoachRequest): CoachMeta {
   // 최근 사용자 발화 2개에서 추출 — 대화에서도 키워드 산출이 이어지게
   const userMsgs = req.messages.filter((m) => m.role === "user").map((m) => m.content);
   const recentText = userMsgs.slice(-2).join(" ");
   const turn = userMsgs.length;
   const keywords = MOCK_KEYWORD_DICT.filter(([re]) => re.test(recentText)).map(([, kw]) => kw);
-  // 대화 진행 단계에 따라 다음 질문 흐름에 맞는 추천을 순환 제공 (이후엔 무한 순환)
-  const stages: string[][] = [
-    ["결제 안정성이 제일 중요해요", "응답속도를 개선하고 싶어요", "운영 자동화에 도전하고 싶어요"],
-    ["작년에 못 했던 걸 해보고 싶어요", "테스트 커버리지를 올리고 싶어요", "문서화를 표준화하고 싶어요"],
-    ["SRE팀 협업이 필요해요", "인프라팀 도움이 필요해요", "독립적으로 진행할 수 있어요"],
-    ["목표 수치의 근거를 설명할게요", "측정 도구는 이미 있어요", "이 정도면 충분한 것 같아요"],
-    ["다른 업무 얘기도 할게요", "하나 더 추가하고 싶어요", "다음 단계로 넘어갈게요"],
-    ["데이터 정합성도 챙기고 싶어요", "보안 점검 업무가 있어요", "문서화 얘기를 해볼게요"],
-  ];
-  const idx = turn < stages.length ? turn : stages.length - 2 + (turn % 2); // 이후 마지막 2개 순환
-  return { keywords, suggestions: stages[Math.min(idx, stages.length - 1)] };
+  // 추천 칩 = 방금 던진 질문(mockBasicStage)의 자연스러운 대답 (질문-칩 짝 보장)
+  return { keywords, suggestions: mockBasicStage(turn).chips };
 }
 
 // LLM 응답에서 메타 라인(##키워드/##추천/##정제/##신규KR) 분리
@@ -224,24 +233,15 @@ function mockReply(req: CoachRequest): string {
   const firstKr = req.context?.krs?.[0];
   switch (req.mode) {
     case "basic": {
-      const turn = req.messages.filter((m) => m.role === "user").length;
+      const userMsgs = req.messages.filter((m) => m.role === "user").map((m) => m.content);
+      const turn = userMsgs.length;
       const kws = MOCK_KEYWORD_DICT.filter(([re]) => re.test(last)).map(([, kw]) => kw);
-      const ack = kws.length > 0 ? `키워드 반영: ${kws.join(", ")}.\n` : "";
-      const flow = [
-        `${ack}다음 질문: 새로 도전하고 싶은 일 1가지는요? (작년에 못 했던 것, 미뤄둔 것도 좋아요)`,
-        `${ack}협업이 필요한 부분이 있나요? 있다면 수준도 함께요 — ① 단순 신청·요청(티켓/결재) ② 정기 협조 ③ 공동 구축·신규 도입. 수준에 따라 통제가능성 평가가 달라져요.`,
-        `${ack}목표 수치가 있다면 산출 근거는요? (작년 실적 · 측정 데이터 · 업계 기준)`,
-        `${ack}재료가 충분해요. 우측 키워드의 체크를 조정한 뒤 다음 단계로 넘어가도 좋아요. 더 추가할 내용이 있나요?`,
-      ];
-      if (turn <= flow.length) return flow[turn - 1];
-      // 이후엔 무한 순환 — 같은 문구 반복 없이 대화를 계속 이어간다
-      const loop = [
-        `${ack}이 업무에서 측정 가능한 지표(수치·건수·시간)가 있다면 무엇인가요?`,
-        `${ack}그 일의 현재 수준과 올해 도달하고 싶은 수준을 숫자로 말해볼까요?`,
-        `${ack}이 업무가 기존 업무 분장과 어떻게 다른가요? 기존 수준을 넘어서는 변화 1가지를 짚어주세요.`,
-        `${ack}좋아요, 정리했어요. 다른 업무 영역 이야기도 있나요? 없으면 다음 단계로 넘어가도 됩니다.`,
-      ];
-      return loop[(turn - flow.length - 1) % loop.length];
+      // 이전 발화와 다른 키워드가 나오면 주제 전환으로 인식해 짚어준다
+      const prevText = userMsgs.slice(0, -1).join(" ");
+      const prevKws = MOCK_KEYWORD_DICT.filter(([re]) => re.test(prevText)).map(([, kw]) => kw);
+      const isNewTopic = turn > 2 && kws.length > 0 && kws.every((k) => !prevKws.includes(k));
+      const ack = kws.length > 0 ? `${isNewTopic ? "새 주제네요 — " : "키워드 반영: "}${kws.join(", ")}${isNewTopic ? "(으)로 정리할게요." : "."}\n` : "";
+      return `${ack}${mockBasicStage(turn).q}`;
     }
     case "refine":
       if (/평균|p9\d|퍼센타일/.test(last))
